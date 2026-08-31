@@ -1,0 +1,41 @@
+# Offline model training & experimentation dependencies (see ml/).
+#
+# Install ONLY when training/retraining a model:
+#   pip install -r requirements-ml.txt
+#
+# The API itself should not import these unless a real (non-stub) inference
+# backend is enabled for a given AI feature -- with default stub backends,
+# requirements.txt alone is enough to run and test the service. This split
+# keeps the production/API image free of multi-GB GPU frameworks it doesn't
+# need at request time. See .agents/skills/ml-feature/SKILL.md for the
+# stub-vs-real backend convention.
+
+# Vision (EfficientNet transfer learning, Grad-CAM)
+torch>=2.2.0
+torchvision>=0.17.0
+
+# Behavioural / sensor model (1D-CNN-LSTM or temporal Transformer)
+# (uses the same torch/torchvision above)
+
+# NLP (fine-tuned lightweight BERT/RoBERTa for symptom extraction)
+transformers>=4.39.0
+tokenizers>=0.15.0
+
+# Classical ML, calibration (temperature scaling), evaluation metrics
+scikit-learn>=1.4.0
+scipy>=1.12.0
+
+# Image preprocessing / Grad-CAM heatmaps beyond what Pillow covers
+opencv-python-headless>=4.9.0
+
+# Data handling for training scripts and notebooks
+pandas>=2.2.0
+numpy>=1.26.0
+matplotlib>=3.8.0
+
+# Experiment tracking
+tensorboard>=2.16.0
+
+# Optional: export trained models to a lighter runtime for serving
+onnx>=1.16.0
+onnxruntime>=1.17.0

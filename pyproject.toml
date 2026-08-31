@@ -24,6 +24,17 @@ dev = [
     "ruff>=0.3.0",
     "mypy>=1.9.0",
 ]
+# Heavy training/inference frameworks -- see requirements-ml.txt.
+# Install with: pip install -e ".[ml]"
+ml = [
+    "torch>=2.2.0",
+    "torchvision>=0.17.0",
+    "transformers>=4.39.0",
+    "scikit-learn>=1.4.0",
+    "opencv-python-headless>=4.9.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

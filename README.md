@@ -31,13 +31,61 @@ Infrastructure (SQLAlchemy Models, Concrete Repositories, External APIs)
 
 ---
 
+## 🤖 AI/ML Architecture
+
+AI/ML inference lives **inside** this backend as ordinary feature modules —
+it does not need (or get) a separate repo. A vision/sensor/NLP model is just
+another external dependency behind a `Protocol`, the same way SQLAlchemy is:
+
+- **`app/features/<feature>/domain/repositories.py`** declares an
+  `<X>InferenceEngineProtocol` alongside the usual persistence-repository
+  Protocol. The application layer's use cases depend on that Protocol only —
+  never on `torch`/`tensorflow`/`transformers`/`opencv` directly — so they
+  stay unit-testable with zero ML frameworks installed.
+- **`app/features/<feature>/infrastructure/ml/`** is the *only* place allowed
+  to import those frameworks: `engine.py` holds a dependency-free
+  `StubXEngine` (default, used in dev/tests/CI) and the real trained-model
+  engine; `preprocessing.py` holds cheap input-quality checks.
+- **Serving vs. training are split.** `app/` only *loads* a finished
+  checkpoint and runs inference at request time. Offline training,
+  experimentation, and evaluation live in **`ml/`** at the repo root, and
+  read/write versioned checkpoints in **`model_registry/`** (gitignored —
+  large binaries don't belong in git; see `model_registry/README.md`). This
+  keeps `pip install -r requirements.txt && pytest` fast and GPU-free; heavy
+  training deps are opt-in via `requirements-ml.txt`.
+
+No AI feature is built yet — `app/features/sample/` remains the only
+concrete feature module in the repo. What's scaffolded and ready is the
+*supporting* structure this pattern needs: the offline training workspace
+(`ml/`), the trained-checkpoint store (`model_registry/`), and the
+opt-in heavy dependencies (`requirements-ml.txt`). The same shape applies to
+each of the proposal's AI modules once built — vision, behavioural/sensor
+analysis, NLP symptom extraction, the Confidence-Weighted Adaptive Fusion
+Mechanism, and the Disease Progression and Risk Prediction Engine (DPRPE).
+Full guide: [`.agents/skills/ml-feature/SKILL.md`](.agents/skills/ml-feature/SKILL.md).
+
+```
+canivue-api/
+├── app/features/<feature_name>/       # Each AI feature, once added: same 4 layers, + infrastructure/ml/
+├── ml/                                 # Offline training & evaluation (not imported by app/)
+│   ├── common/                         # Shared metrics, dog-level data splitting
+│   ├── vision/                         # EfficientNet training (worked example)
+│   ├── behavioural/                    # 1D-CNN-LSTM training (skeleton)
+│   └── nlp/                            # Symptom-model training (skeleton)
+├── model_registry/                     # Versioned trained checkpoints (gitignored binaries)
+└── requirements-ml.txt                 # torch/tensorflow/transformers/opencv — opt-in
+```
+
+---
+
 ## 📁 Project Folder Structure
 
 ```
 canivue-api/
-├── .gitignore                           # Excludes .agents/, virtualenvs, caches, etc.
+├── .gitignore                           # Excludes .agents/, virtualenvs, caches, model weights, etc.
 ├── requirements.txt                     # Production and development dependencies
-├── pyproject.toml                       # Build & tool configurations (pytest, ruff)
+├── requirements-ml.txt                  # Opt-in training deps: torch, transformers, opencv, scikit-learn...
+├── pyproject.toml                       # Build & tool configurations (pytest, ruff, optional [ml] extra)
 ├── .env.example                         # Environment variable template
 ├── README.md                            # Architecture & onboarding guide
 │
@@ -58,26 +106,46 @@ canivue-api/
 │   │   └── repository.py                # Generic BaseRepositoryProtocol
 │   │
 │   └── features/                        # Self-contained feature modules
-│       └── sample/                      # Sample Feature Blueprint
-│           ├── __init__.py
-│           ├── domain/                  # 1. Pure Domain Logic & Interfaces
-│           │   ├── __init__.py
-│           │   ├── entities.py          # SampleItem entity
-│           │   ├── exceptions.py        # Domain exceptions
-│           │   └── repositories.py      # SampleRepositoryProtocol
-│           ├── application/             # 2. Use Cases & DTOs
-│           │   ├── __init__.py
-│           │   ├── dtos.py              # Input/Output DTOs
-│           │   └── use_cases.py         # Create/Get/List/Update/Delete Use Cases
-│           ├── infrastructure/          # 3. Persistence & Adapters
-│           │   ├── __init__.py
-│           │   ├── models.py            # SampleModel (SQLAlchemy)
-│           │   └── repositories.py      # SQLAlchemySampleRepository
-│           └── presentation/            # 4. Delivery / Web API
-│               ├── __init__.py
-│               ├── schemas.py           # Request & Response Pydantic models
-│               ├── dependencies.py      # Dependency Injection providers
-│               └── router.py            # APIRouter endpoints
+│       ├── sample/                      # Sample Feature Blueprint (plain CRUD)
+│       │   ├── __init__.py
+│       │   ├── domain/                  # 1. Pure Domain Logic & Interfaces
+│       │   │   ├── __init__.py
+│       │   │   ├── entities.py          # SampleItem entity
+│       │   │   ├── exceptions.py        # Domain exceptions
+│       │   │   └── repositories.py      # SampleRepositoryProtocol
+│       │   ├── application/             # 2. Use Cases & DTOs
+│       │   │   ├── __init__.py
+│       │   │   ├── dtos.py              # Input/Output DTOs
+│       │   │   └── use_cases.py         # Create/Get/List/Update/Delete Use Cases
+│       │   ├── infrastructure/          # 3. Persistence & Adapters
+│       │   │   ├── __init__.py
+│       │   │   ├── models.py            # SampleModel (SQLAlchemy)
+│       │   │   └── repositories.py      # SQLAlchemySampleRepository
+│       │   └── presentation/            # 4. Delivery / Web API
+│       │       ├── __init__.py
+│       │       ├── schemas.py           # Request & Response Pydantic models
+│       │       ├── dependencies.py      # Dependency Injection providers
+│       │       └── router.py            # APIRouter endpoints
+│       │
+│       └── (future AI features go here, e.g. vision_diagnosis/, behavioural_analysis/, symptom_nlp/,
+│            adaptive_fusion/, progression_risk/ -- same 4 layers + an infrastructure/ml/ sub-package,
+│            see 🤖 AI/ML Architecture above and .agents/skills/ml-feature/SKILL.md)
+│
+├── ml/                                  # Offline training & evaluation -- NOT imported by app/ at runtime
+│   ├── README.md                        # app/ vs ml/ split, rationale, layout
+│   ├── common/
+│   │   ├── data_splitting.py            # Dog-level train/val/test split (prevents leakage)
+│   │   └── metrics.py                   # Accuracy/F1/ROC-AUC/Brier/ECE/temperature scaling
+│   ├── vision/                          # Fully worked training example
+│   │   ├── dataset.py, train.py, evaluate.py, README.md
+│   ├── behavioural/                     # Skeleton -- same shape as vision/
+│   │   ├── dataset.py, train.py, README.md
+│   └── nlp/                             # Skeleton -- same shape as vision/
+│       ├── dataset.py, train.py, README.md
+│
+├── model_registry/                      # Versioned trained checkpoints (binaries gitignored)
+│   ├── README.md                        # Naming convention, why weights aren't committed
+│   ├── vision/ behavioural/ nlp/
 │
 └── tests/
     ├── __init__.py
@@ -153,10 +221,20 @@ To add a new feature (e.g. `dogs` or `users`):
    ```
 4. **Add tests** in `tests/features/<feature_name>/`.
 
+## ➕ Adding a New AI/ML Feature
+
+Same steps as above, plus an `infrastructure/ml/` sub-package (`engine.py`
+with a stub + real backend, `preprocessing.py` for input-quality checks) and
+an `<X>InferenceEngineProtocol` in `domain/repositories.py`. Follow
+[`.agents/skills/ml-feature/SKILL.md`](.agents/skills/ml-feature/SKILL.md)
+step by step. Offline training code for the new model goes in `ml/<modality>/`,
+not in `app/` — see [`ml/README.md`](ml/README.md).
+
 ---
 
 ## 🤖 Local Agent Skills (Untracked)
 
 The local `.agents/skills/` directory provides workflow guides that assist development agents without polluting git history:
-- `clean-architecture-feature`: Instructions and boilerplate rules for scaffolding new features.
+- `clean-architecture-feature`: Instructions and boilerplate rules for scaffolding new (non-ML) features.
+- `ml-feature`: Instructions for scaffolding AI/ML inference features (vision, sensor, NLP, fusion, progression) using the same clean-architecture pattern.
 - `standard-git-commit`: Guidelines for Conventional Commits.

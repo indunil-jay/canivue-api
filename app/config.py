@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "default_dev_secret_key_change_in_production"
     ALLOWED_ORIGINS: List[str] = ["*"]
 
+    # AI / ML
+    # Root directory for versioned trained-model artifacts (see model_registry/README.md).
+    # Per-model settings (e.g. <X>_MODEL_BACKEND, <X>_MODEL_WEIGHTS_PATH) belong here too,
+    # added alongside each AI feature as it's built -- see .agents/skills/ml-feature/SKILL.md.
+    MODEL_REGISTRY_DIR: str = "./model_registry"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -35,6 +35,7 @@ env/
 
 # Local Agent customizations and IDE AI data (MUST NOT BE COMMITTED)
 .agents/
+.claude/
 .gemini/
 .antigravity/
 
@@ -55,3 +56,24 @@ data/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+
+# ML model artifacts (trained weights are large binaries -- ship them via
+# release assets, DVC, or cloud storage instead of git; see model_registry/README.md)
+model_registry/**/*.pt
+model_registry/**/*.pth
+model_registry/**/*.onnx
+model_registry/**/*.h5
+model_registry/**/*.safetensors
+model_registry/**/*checkpoint*/
+!model_registry/**/README.md
+!model_registry/**/.gitkeep
+
+# ML training/experimentation outputs (see ml/)
+ml/**/runs/
+ml/**/wandb/
+ml/**/*.ckpt
+ml/**/mlruns/
+
+# Raw/derived datasets (see ml/*/README.md for where real data should live)
+datasets/
+*.csv.gz
