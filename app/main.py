@@ -56,10 +56,9 @@ def create_app() -> FastAPI:
             data={"status": "healthy", "environment": settings.APP_ENV},
         )
 
-    # Register Feature Routers here
-    # Example:
-    # from app.features.sample.presentation.router import router as sample_router
-    # app.include_router(sample_router, prefix="/api/v1/samples", tags=["Sample Feature"])
+    # Register Feature Routers
+    from app.features.sample.presentation.router import router as sample_router
+    app.include_router(sample_router, prefix="/api/v1/samples", tags=["Sample Feature"])
 
     return app
 
