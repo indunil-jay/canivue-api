@@ -1,6 +1,6 @@
 # Spec: NLP Symptom Parser Module
 
-**Status:** `ready-for-agent`  
+**Status:** `completed`  
 **Origin:** Multi-round interview synthesis via `grillme` & `grill-with-docs`  
 **ADRs Referenced:** [ADR-0001](file:///C:/Users/indun/OneDrive/Desktop/canivue-api/docs/adr/0001-modular-monolith-clean-architecture.md), [ADR-0002](file:///C:/Users/indun/OneDrive/Desktop/canivue-api/docs/adr/0002-nlp-symptom-parser-architecture.md), [ADR-0003](file:///C:/Users/indun/OneDrive/Desktop/canivue-api/docs/adr/0003-clinical-safety-guardrails-and-negation.md)  
 **Glossary:** [GLOSSARY.md](file:///C:/Users/indun/OneDrive/Desktop/canivue-api/GLOSSARY.md)
