@@ -34,7 +34,6 @@ env/
 !.env.example
 
 # Local Agent customizations and IDE AI data (MUST NOT BE COMMITTED)
-.agents/
 .claude/
 .gemini/
 .antigravity/
