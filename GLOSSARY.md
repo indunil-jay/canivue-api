@@ -31,3 +31,29 @@ _Avoid_: Model store, weights repo
 **Seam**:
 The public boundary where testing and module interaction occurs (e.g. use case execution method with DTOs, or REST API endpoint with AsyncClient).
 _Avoid_: Internal boundary, private interface
+
+**Symptom Parsing**:
+The extraction of structured clinical concepts (symptom, body location, duration, frequency, progression, severity cues) and condition probabilities from informal owner text.
+_Avoid_: Medical text summarization, symptom chatbot
+
+**Text Quality Score**:
+A deterministic heuristic score (0.0 to 1.0) assessing the clinical completeness and syntactic informativeness of owner-written text for adaptive fusion.
+_Avoid_: Text confidence, text length score
+
+**Model Confidence**:
+The NLP model's estimated prediction certainty (0.0 to 1.0) regarding its symptom extraction and condition classification.
+_Avoid_: Text quality score (keep confidence and quality strictly separate)
+
+**Negated Symptom**:
+A clinical sign explicitly described by the dog owner as absent, stopped, or resolved (e.g., "no vomiting", "stopped scratching"), preserved for differential diagnostic history but excluded from active condition probability inflation.
+_Avoid_: Inactive symptom, ignored symptom
+
+**Emergency Triage Flag**:
+An automated clinical safety alert triggered when owner text contains life-threatening cues (collapse, respiratory distress, cyanosis, seizures, severe trauma) advising immediate emergency veterinary care.
+_Avoid_: Urgent symptom, severe warning
+
+**Modality Reliability Score**:
+The composite reliability weight (0.0 to 1.0) calculated from text quality and prediction confidence, consumed by the Adaptive Multimodal Fusion Mechanism to balance the NLP evidence stream.
+_Avoid_: Text weight, NLP confidence
+
+
