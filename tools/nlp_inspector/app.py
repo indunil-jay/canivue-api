@@ -16,6 +16,13 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from ml.nlp.pipeline import SymptomParserPipeline
+from tools.nlp_inspector.chat_service import (
+    create_new_session,
+    delete_session_by_id,
+    get_session_by_id,
+    load_all_sessions,
+    process_user_chat_message,
+)
 
 app = FastAPI(
     title="Canivue AI — NLP Clinical Inspector & Active Learning Studio",
@@ -41,6 +48,14 @@ class ParseRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Raw canine symptom text")
 
 
+class ChatMessageRequest(BaseModel):
+    message: str = Field(..., min_length=1, description="User message text")
+
+
+class CreateChatRequest(BaseModel):
+    title: str | None = None
+
+
 class FeedbackSample(BaseModel):
     text: str
     condition_label: str
@@ -49,6 +64,62 @@ class FeedbackSample(BaseModel):
     is_emergency: bool = False
     pet_id: str = "dog_annotated_hitl"
     feedback_notes: str | None = None
+
+
+@app.get("/api/chats")
+def list_chats() -> list[dict[str, Any]]:
+    """List all saved chat sessions."""
+    sessions = load_all_sessions()
+    return [
+        {
+            "id": s["id"],
+            "title": s.get("title", "Consultation"),
+            "created_at": s.get("created_at"),
+            "updated_at": s.get("updated_at"),
+            "message_count": len(s.get("messages", [])),
+            "last_condition": s.get("accumulated_context", {}).get("last_condition"),
+            "emergency": s.get("accumulated_context", {}).get("emergency", False),
+        }
+        for s in sessions
+    ]
+
+
+@app.post("/api/chats")
+def create_chat(req: CreateChatRequest | None = None) -> dict[str, Any]:
+    """Create a new chat session."""
+    title = req.title if req else None
+    return create_new_session(initial_title=title)
+
+
+@app.get("/api/chats/{chat_id}")
+def get_chat(chat_id: str) -> dict[str, Any]:
+    """Get full chat session with all messages."""
+    session = get_session_by_id(chat_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return session
+
+
+@app.post("/api/chats/{chat_id}/messages")
+def send_chat_message(chat_id: str, req: ChatMessageRequest) -> dict[str, Any]:
+    """Send a message to a chat session, run reasoning and assumptions, and return assistant reply."""
+    try:
+        return process_user_chat_message(
+            session_id=chat_id,
+            user_text=req.message,
+            pipeline=PIPELINE,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.delete("/api/chats/{chat_id}")
+def delete_chat(chat_id: str) -> dict[str, Any]:
+    """Delete a chat session."""
+    deleted = delete_session_by_id(chat_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return {"success": True, "message": "Chat session deleted"}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -160,6 +231,121 @@ def get_feedback_stats() -> dict[str, Any]:
         "total_feedback_samples": total_samples,
         "feedback_file": str(FEEDBACK_FILE),
     }
+
+
+@app.get("/api/evaluate")
+def evaluate_dataset() -> dict[str, Any]:
+    """Dynamically evaluate the current NLP AI engine across all benchmark samples and active learning pool."""
+    records: list[dict[str, Any]] = []
+    seed_file = DATA_DIR / "seed_symptoms.jsonl"
+    if seed_file.exists():
+        with open(seed_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    records.append(json.loads(line))
+
+    feedback_records = []
+    if FEEDBACK_FILE.exists():
+        with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    r = json.loads(line)
+                    feedback_records.append(r)
+                    records.append(r)
+
+    if not records:
+        return {
+            "success": False,
+            "message": "No evaluation records found in data/seed_symptoms.jsonl",
+        }
+
+    total = len(records)
+    correct = 0
+    by_cond: dict[str, dict[str, Any]] = {}
+    misclassified: list[dict[str, Any]] = []
+
+    for r in records:
+        gt = r.get("condition_label", "other")
+        if gt not in by_cond:
+            by_cond[gt] = {"total": 0, "correct": 0, "accuracy": 0.0}
+        by_cond[gt]["total"] += 1
+
+        pred_res = PIPELINE.predict(r["text"])
+        probs = pred_res["condition_probabilities"]
+        pred = max(probs, key=probs.get) if probs else "other"
+
+        if pred == gt:
+            correct += 1
+            by_cond[gt]["correct"] += 1
+        else:
+            misclassified.append({
+                "record_id": r.get("record_id", "seed"),
+                "text": r["text"],
+                "ground_truth": gt,
+                "predicted": pred,
+                "confidence": probs.get(pred, 0.0),
+                "probabilities": probs,
+                "emergency": pred_res.get("emergency_triage", {}).get("is_critical", False),
+            })
+
+    for v in by_cond.values():
+        v["accuracy"] = round(v["correct"] / v["total"], 4) if v["total"] > 0 else 0.0
+
+    overall_acc = round(correct / total, 4) if total > 0 else 0.0
+
+    return {
+        "success": True,
+        "overall_accuracy": overall_acc,
+        "overall_accuracy_percent": f"{overall_acc * 100:.1f}%",
+        "total_samples": total,
+        "correct_count": correct,
+        "misclassified_count": len(misclassified),
+        "feedback_samples_count": len(feedback_records),
+        "by_condition": by_cond,
+        "misclassified_samples": misclassified,
+        "model_version": PIPELINE.model_version,
+    }
+
+
+@app.post("/api/train")
+def train_model() -> dict[str, Any]:
+    """Execute active learning consolidation and trigger training if torch is present."""
+    feedback_count = 0
+    if FEEDBACK_FILE.exists():
+        with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+            feedback_count = sum(1 for line in f if line.strip())
+
+    torch_available = False
+    try:
+        import torch  # noqa: F401
+        import transformers  # noqa: F401
+        torch_available = True
+    except ImportError:
+        torch_available = False
+
+    if torch_available:
+        from ml.nlp.train import train_multitask_nlp
+        history = train_multitask_nlp(
+            data_path=str(FEEDBACK_FILE) if feedback_count >= 10 else "data/seed_symptoms.jsonl",
+            epochs=2,
+            out_dir="model_registry/nlp/symptom_distilbert_v1",
+        )
+        return {
+            "success": True,
+            "mode": "neural_fine_tuning",
+            "message": "Fine-tuning completed successfully using Multi-Task DistilBERT!",
+            "feedback_samples_used": feedback_count,
+            "training_history": history,
+        }
+    else:
+        return {
+            "success": True,
+            "mode": "active_learning_pool_ready",
+            "message": f"Active learning feedback pool consolidated with {feedback_count} verified samples.",
+            "feedback_samples_count": feedback_count,
+            "command": f"python -m ml.nlp.train --data-path {FEEDBACK_FILE if feedback_count > 0 else 'data/seed_symptoms.jsonl'}",
+            "hint": "PyTorch is not installed in the lightweight runtime. Verified samples are saved in data/active_learning_feedback.jsonl ready for offline fine-tuning.",
+        }
 
 
 @app.get("/api/scenarios")

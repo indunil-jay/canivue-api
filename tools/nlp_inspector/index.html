@@ -2,599 +2,1171 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Canivue AI — NLP Clinical Inspector & Active Learning Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Canivue AI — Clinical Intake</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            claude: {
+              coral: '#E05A47',
+              'coral-hover': '#C84735',
+              'coral-light': '#FFF3F0',
+              'coral-border': '#FDC8BF',
+            },
+            clean: {
+              canvas: '#FFFFFF',
+              sidebar: '#F8FAFC',
+              card: '#FFFFFF',
+              border: '#E2E8F0',
+              'border-subtle': '#F1F5F9',
+              text: '#0F172A',
+              'text-secondary': '#475569',
+              'text-muted': '#94A3B8',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', -apple-system, 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          },
+          boxShadow: {
+            'clean-xs': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+            'clean-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03)',
+            'clean-input': '0 2px 12px -1px rgba(15, 23, 42, 0.05)',
+            'clean-modal': '0 20px 40px -10px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    .span-symptom { background-color: #fef3c7; color: #92400e; border-bottom: 2px solid #f59e0b; padding: 2px 4px; border-radius: 4px; font-weight: 600; }
-    .span-symptom-negated { background-color: #f1f5f9; color: #64748b; text-decoration: line-through; border-bottom: 2px solid #94a3b8; padding: 2px 4px; border-radius: 4px; }
-    .span-location { background-color: #e0f2fe; color: #0369a1; border-bottom: 2px solid #0284c7; padding: 2px 4px; border-radius: 4px; font-weight: 600; }
-    .span-duration { background-color: #dcfce7; color: #166534; border-bottom: 2px solid #22c55e; padding: 2px 4px; border-radius: 4px; font-weight: 600; }
-    .span-frequency { background-color: #f3e8ff; color: #6b21a8; border-bottom: 2px solid #a855f7; padding: 2px 4px; border-radius: 4px; font-weight: 600; }
-    .span-progression { background-color: #ffedd5; color: #9a3412; border-bottom: 2px solid #ea580c; padding: 2px 4px; border-radius: 4px; font-weight: 600; }
-    .span-emergency { background-color: #fee2e2; color: #991b1b; border-bottom: 2px solid #ef4444; padding: 2px 4px; border-radius: 4px; font-weight: 700; animation: pulse 2s infinite; }
+    /* Sleek Thin Scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+
+    /* Entity Badges in Drawer */
+    .span-symptom { background: #FFF1F2; color: #E11D48; border: 1px solid #FECDD3; padding: 1px 5px; border-radius: 5px; font-weight: 500; font-size: 10px; }
+    .span-location { background: #F0F9FF; color: #0284C7; border: 1px solid #BAE6FD; padding: 1px 5px; border-radius: 5px; font-weight: 500; font-size: 10px; }
+    .span-duration { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 1px 5px; border-radius: 5px; font-weight: 500; font-size: 10px; }
+    .span-progression { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; padding: 1px 5px; border-radius: 5px; font-weight: 500; font-size: 10px; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
-  <!-- Top Navbar -->
-  <header class="bg-indigo-900 text-white shadow-md border-b border-indigo-950">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="bg-indigo-700 p-2 rounded-lg">
-          <i class="fa-solid fa-brain text-xl text-indigo-200"></i>
+<body class="bg-white text-clean-text h-screen flex overflow-hidden antialiased font-sans relative">
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/20 backdrop-blur-xs z-30 hidden lg:hidden transition-opacity"></div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. LEFT SIDEBAR: COMPACT MINIMALIST WORKSPACE                             -->
+  <!-- ========================================================================= -->
+  <aside 
+    id="sidebar" 
+    class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-clean-sidebar text-clean-text flex flex-col flex-shrink-0 border-r border-clean-border transition-all duration-300 -translate-x-full lg:translate-x-0"
+  >
+    
+    <!-- Branding Header (Compact) -->
+    <div class="h-11 sm:h-12 px-3 border-b border-clean-border flex items-center justify-between bg-clean-sidebar">
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-claude-coral flex items-center justify-center text-white shadow-clean-xs font-bold text-xs select-none">
+          ✻
         </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight">Canivue AI <span class="text-indigo-300 font-normal">| NLP Clinical Inspector & Active Learning Studio</span></h1>
-          <p class="text-xs text-indigo-300">Decision Brain Explorer & Human-in-the-Loop Model Optimization</p>
+        <div class="flex items-center space-x-1">
+          <h1 class="text-xs font-bold tracking-tight text-clean-text">Canivue AI</h1>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-orange-100 text-claude-coral font-mono font-medium">v1.2</span>
         </div>
       </div>
-      <div class="flex items-center space-x-4">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-800 text-indigo-200 border border-indigo-700">
-          <i class="fa-solid fa-code-branch mr-1.5 text-xs text-emerald-400"></i>
-          Engine: <span id="model-version-badge" class="ml-1 font-mono text-white">symptom_distilbert_v1</span>
-        </span>
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-300 border border-emerald-800">
-          <i class="fa-solid fa-database mr-1.5 text-xs text-emerald-400"></i>
-          HITL Verified: <span id="feedback-counter" class="ml-1 font-bold text-white">0</span>
-        </span>
-      </div>
+      <button id="sidebar-close-btn" class="text-clean-text-muted hover:text-clean-text p-1 rounded-md hover:bg-white transition" title="Close sidebar">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
     </div>
-  </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <!-- Left Column: Input, Quick Scenarios, Decision Explanation (5 cols) -->
-    <div class="lg:col-span-5 space-y-6">
-      <!-- Input Card -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-slate-800 flex items-center">
-            <i class="fa-solid fa-pen-to-square text-indigo-600 mr-2"></i> Freeform Owner Description
-          </h2>
-          <span class="text-xs text-slate-400">Ctrl + Enter to run</span>
-        </div>
+    <!-- New Consultation Button (Compact) -->
+    <div class="p-2.5">
+      <button 
+        id="new-chat-btn" 
+        class="w-full flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-lg bg-white hover:bg-claude-coral-light text-clean-text hover:text-claude-coral font-medium text-xs border border-clean-border hover:border-claude-coral-border shadow-clean-xs transition-all"
+      >
+        <span class="text-claude-coral font-bold text-xs">✻</span>
+        <span>New Consultation</span>
+        <span class="ml-auto font-mono text-[9px] text-clean-text-muted bg-clean-sidebar px-1.5 py-0.2 rounded border border-clean-border">⌘K</span>
+      </button>
+    </div>
 
-        <!-- Preset Chips -->
-        <div class="space-y-1.5">
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wider">Benchmark Clinical Scenarios</label>
-          <div class="flex flex-wrap gap-1.5" id="scenario-chips">
-            <!-- Populated via JS -->
-          </div>
-        </div>
+    <!-- Consultations List Header -->
+    <div class="px-3 py-1.5 flex items-center justify-between text-[10px] font-mono text-clean-text-muted uppercase tracking-wider font-semibold">
+      <span>History</span>
+      <span id="chat-count-badge" class="px-1.5 py-0.2 rounded-full bg-clean-border text-clean-text-secondary text-[9px] font-bold">0</span>
+    </div>
 
-        <textarea 
-          id="input-text" 
-          rows="4" 
-          class="w-full text-sm rounded-lg border border-slate-300 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 font-normal leading-relaxed"
-          placeholder="Describe your dog's symptoms in everyday language (e.g. My dog has been scratching left ear for three days and it's becoming red)..."
-        >My dog has been scratching its left ear for three days and it is becoming red.</textarea>
-
-        <div class="flex items-center justify-between pt-1">
-          <button 
-            id="clear-btn" 
-            class="text-xs font-medium text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded border border-slate-200 hover:bg-slate-50 transition"
-          >
-            Clear Text
-          </button>
-          <button 
-            id="analyze-btn" 
-            class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm shadow transition space-x-2"
-          >
-            <i class="fa-solid fa-bolt text-indigo-200"></i>
-            <span>Inspect Decision Brain</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Decision Brain Reasoning Card -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
-        <h3 class="text-sm font-semibold text-slate-800 flex items-center">
-          <i class="fa-solid fa-microchip text-indigo-600 mr-2"></i> Decision Brain Audit Trail
-        </h3>
-        <p class="text-xs text-slate-500">Transparent reasoning explaining why the AI reached these conclusions:</p>
-        <div id="reasoning-list" class="space-y-2 text-xs font-medium text-slate-700">
-          <div class="p-2.5 bg-slate-50 rounded border border-slate-200 text-slate-500 italic">
-            Submit symptom text above to inspect model reasoning.
-          </div>
-        </div>
-      </div>
-
-      <!-- Human-in-the-Loop Active Learning / Model Enhancement Card -->
-      <div class="bg-gradient-to-br from-indigo-50 to-slate-100 rounded-xl shadow-sm border border-indigo-200 p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-indigo-950 flex items-center">
-            <i class="fa-solid fa-arrows-spin text-indigo-600 mr-2"></i> Enhance Model Accuracy (HITL)
-          </h3>
-          <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-200 text-indigo-800">Vice Versa Loop</span>
-        </div>
-        <p class="text-xs text-slate-600 leading-relaxed">
-          Help improve future inference accuracy! If the AI misclassified the condition or missed a symptom, provide the ground-truth correction to store into the training dataset:
-        </p>
-
-        <div class="space-y-3 bg-white p-3.5 rounded-lg border border-indigo-100 text-xs">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Verified Primary Condition</label>
-            <select id="correct-condition" class="w-full text-xs rounded border border-slate-300 p-2 bg-slate-50 font-medium">
-              <option value="ear_inflammation">ear_inflammation (Otitis externa / ear canal)</option>
-              <option value="skin_condition">skin_condition (Dermatitis, pruritus, hot spots)</option>
-              <option value="eye_condition">eye_condition (Conjunctivitis, discharge)</option>
-              <option value="other">other (Limping, gastrointestinal, systemic)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Human Review Notes / Feedback</label>
-            <input 
-              id="feedback-notes" 
-              type="text" 
-              placeholder="e.g. Corrected unilateral laterality, verified ear inflammation" 
-              class="w-full text-xs rounded border border-slate-300 p-2 focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-
-          <button 
-            id="submit-feedback-btn" 
-            class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow transition flex items-center justify-center space-x-1.5"
-          >
-            <i class="fa-solid fa-floppy-disk text-emerald-200"></i>
-            <span>Save Verified Sample to Training Pool</span>
-          </button>
-        </div>
-
-        <div id="feedback-alert" class="hidden text-xs p-2.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
-        </div>
+    <!-- Sessions List (Scrollable) -->
+    <div id="sessions-container" class="flex-1 overflow-y-auto px-2 space-y-1 py-1">
+      <div class="text-center py-6 text-[11px] text-clean-text-muted font-mono">
+        No consultations yet.
       </div>
     </div>
 
-    <!-- Right Column: Visualizer, Emergency Triage, Condition Gauges, Spans (7 cols) -->
-    <div class="lg:col-span-7 space-y-6">
-      <!-- Emergency Triage Banner -->
-      <div id="emergency-banner" class="hidden rounded-xl border p-4 shadow-sm transition">
-        <!-- Rendered dynamically -->
-      </div>
-
-      <!-- Highlighted Spans Visualizer Card -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-slate-800 flex items-center">
-            <i class="fa-solid fa-highlighter text-amber-500 mr-2"></i> Clinical Entity Span Offsets
-          </h2>
-          <div class="flex items-center space-x-2 text-[10px] font-medium">
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Symptom</span>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-sky-100 text-sky-800">Location</span>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Duration</span>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-purple-100 text-purple-800">Frequency</span>
-          </div>
+    <!-- Sidebar Bottom: Benchmark Trigger -->
+    <div class="p-2.5 border-t border-clean-border bg-white text-xs">
+      <button 
+        id="open-accuracy-modal-btn" 
+        class="w-full flex items-center justify-between p-2 rounded-lg bg-clean-sidebar hover:bg-emerald-50/70 text-clean-text border border-clean-border hover:border-emerald-300 transition-all group shadow-clean-xs"
+      >
+        <div class="flex items-center space-x-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span class="text-[10px] text-clean-text-secondary font-medium group-hover:text-clean-text">Benchmarks (141):</span>
         </div>
+        <span id="sidebar-accuracy" class="font-mono font-bold text-emerald-600 text-[11px]">100.0%</span>
+      </button>
+    </div>
+  </aside>
 
-        <!-- Highlighted text output -->
-        <div 
-          id="highlighted-text" 
-          class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm leading-relaxed text-slate-800 min-h-[80px]"
+  <!-- ========================================================================= -->
+  <!-- 2. CENTER: CLEAN PURE WHITE CHAT CANVAS & CONVERSATION                    -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-white relative">
+    
+    <!-- Top Workspace Bar (Compact & Sleek) -->
+    <header class="h-11 sm:h-12 border-b border-clean-border bg-white/95 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between z-20 flex-shrink-0">
+      <div class="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+        <button 
+          id="sidebar-toggle-btn" 
+          class="p-1.5 rounded-lg text-clean-text-muted hover:text-clean-text hover:bg-clean-sidebar transition-all"
+          title="Toggle Sidebar"
         >
-          Click "Inspect Decision Brain" to view highlighted clinical spans.
+          <i class="fa-solid fa-bars text-xs"></i>
+        </button>
+        <div class="flex items-center space-x-1.5 min-w-0">
+          <span class="text-claude-coral font-bold text-sm select-none shrink-0">✻</span>
+          <h2 id="active-chat-title" class="text-xs sm:text-sm font-semibold text-clean-text truncate font-sans">New Consultation</h2>
+          <span id="active-chat-badge" class="hidden sm:inline-flex px-2 py-0.2 rounded-full text-[9px] font-mono font-semibold bg-orange-50 text-claude-coral border border-orange-200"></span>
+          <span id="active-emergency-badge" class="hidden px-2 py-0.2 rounded-full text-[9px] font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center">
+            <i class="fa-solid fa-triangle-exclamation mr-1 text-rose-500"></i> ALERT
+          </span>
         </div>
       </div>
 
-      <!-- Condition Probability Bars -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
-        <h3 class="text-sm font-semibold text-slate-800 flex items-center justify-between">
-          <span class="flex items-center"><i class="fa-solid fa-chart-column text-indigo-600 mr-2"></i> Calibrated Condition Probabilities</span>
-          <span class="text-xs font-normal text-slate-400">Sum = 1.0</span>
-        </h3>
+      <div class="flex items-center space-x-1.5 shrink-0">
+        <!-- Clinical Insights Toggle Button (Compact) -->
+        <button 
+          id="toggle-artifact-drawer-btn" 
+          class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-clean-text-secondary hover:text-claude-coral bg-clean-sidebar hover:bg-claude-coral-light border border-clean-border hover:border-claude-coral-border transition-all shadow-clean-xs"
+          title="View Clinical Insights & Probabilities"
+        >
+          <span class="text-claude-coral font-bold text-xs">✻</span>
+          <span class="font-sans">Insights</span>
+        </button>
+
+        <!-- Delete Consultation (Compact) -->
+        <button 
+          id="clear-chat-btn" 
+          class="p-1.5 rounded-lg text-clean-text-muted hover:text-rose-600 hover:bg-rose-50 transition-all text-xs"
+          title="Delete current consultation"
+        >
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Message Stream Scrollable Area (Responsive, Small-Block Padding) -->
+    <div id="messages-stream" class="flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 lg:px-6 py-4 space-y-3.5 sm:space-y-4 bg-white">
+      
+      <!-- Welcome Hero (Small, Proportional Block) -->
+      <div id="welcome-hero" class="max-w-lg mx-auto py-8 sm:py-12 space-y-4 text-center">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-claude-coral mx-auto flex items-center justify-center shadow-clean-xs text-white font-bold text-lg select-none">
+          ✻
+        </div>
         
-        <div class="space-y-2.5 pt-1" id="condition-bars">
-          <!-- Rendered via JS -->
+        <div class="space-y-1">
+          <h2 class="text-lg sm:text-xl font-bold text-clean-text tracking-tight font-sans">Canivue AI</h2>
+          <p class="text-xs text-clean-text-secondary font-normal">
+            Describe your dog's symptoms to begin clinical triage.
+          </p>
+        </div>
+
+        <!-- Clean, Compact Suggestion Pills -->
+        <div class="pt-2 space-y-1.5 max-w-sm mx-auto text-left" id="prompt-pills">
+          <button class="w-full p-2.5 rounded-lg border border-clean-border hover:border-claude-coral-border bg-clean-sidebar/50 hover:bg-claude-coral-light/40 text-left transition-all flex items-center justify-between group shadow-clean-xs prompt-pill" data-text="My golden retriever has been scratching both ears and shaking his head constantly for 4 days.">
+            <span class="text-xs text-clean-text group-hover:text-claude-coral font-medium truncate mr-2">"Scratching both ears and shaking head for 4 days"</span>
+            <i class="fa-solid fa-arrow-right text-[9px] text-clean-text-muted group-hover:text-claude-coral transition-transform group-hover:translate-x-0.5 shrink-0"></i>
+          </button>
+
+          <button class="w-full p-2.5 rounded-lg border border-clean-border hover:border-claude-coral-border bg-clean-sidebar/50 hover:bg-claude-coral-light/40 text-left transition-all flex items-center justify-between group shadow-clean-xs prompt-pill" data-text="He has intense itching and red hair loss on his belly for a week, but no vomiting and not coughing.">
+            <span class="text-xs text-clean-text group-hover:text-claude-coral font-medium truncate mr-2">"Intense itching and red hair loss on belly for a week"</span>
+            <i class="fa-solid fa-arrow-right text-[9px] text-clean-text-muted group-hover:text-claude-coral transition-transform group-hover:translate-x-0.5 shrink-0"></i>
+          </button>
+
+          <button class="w-full p-2.5 rounded-lg border border-clean-border hover:border-claude-coral-border bg-clean-sidebar/50 hover:bg-claude-coral-light/40 text-left transition-all flex items-center justify-between group shadow-clean-xs prompt-pill" data-text="Watery discharge from right eye since yesterday morning, definitely getting worse.">
+            <span class="text-xs text-clean-text group-hover:text-claude-coral font-medium truncate mr-2">"Watery discharge from right eye since yesterday morning"</span>
+            <i class="fa-solid fa-arrow-right text-[9px] text-clean-text-muted group-hover:text-claude-coral transition-transform group-hover:translate-x-0.5 shrink-0"></i>
+          </button>
         </div>
       </div>
 
-      <!-- Structured Clinical Evidence Grid -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-        <h3 class="text-sm font-semibold text-slate-800 flex items-center">
-          <i class="fa-solid fa-clipboard-check text-indigo-600 mr-2"></i> Extracted Structured Clinical Evidence
-        </h3>
+      <!-- Messages Stream Target Container (Max Width Bound for Small PC and Mobile) -->
+      <div id="messages-list" class="max-w-xl sm:max-w-2xl w-full mx-auto space-y-3 sm:space-y-3.5"></div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-          <!-- Active Symptoms -->
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <span class="text-slate-400 block font-medium uppercase text-[10px] tracking-wider mb-1">Active Symptoms</span>
-            <div id="badge-symptoms" class="flex flex-wrap gap-1 text-slate-700 font-semibold">-</div>
+    </div>
+
+    <!-- Bottom Input Box (Compact, Floating, Space-Efficient) -->
+    <div class="border-t border-clean-border bg-white/95 backdrop-blur-md p-2 sm:p-3 flex-shrink-0 z-20">
+      <div class="max-w-xl sm:max-w-2xl w-full mx-auto">
+        <form id="chat-form" class="relative bg-white rounded-xl border border-clean-border focus-within:border-claude-coral focus-within:ring-2 focus-within:ring-claude-coral/10 transition-all p-2 flex flex-col shadow-clean-input">
+          <div class="flex items-start space-x-1.5">
+            <span class="text-claude-coral font-bold text-xs pt-1 select-none shrink-0">✻</span>
+            <textarea 
+              id="chat-input" 
+              rows="1"
+              class="w-full min-w-0 text-xs sm:text-sm text-clean-text placeholder-clean-text-muted bg-transparent resize-none focus:outline-none py-0.5 leading-relaxed font-sans"
+              placeholder="Describe symptoms, duration, or answer questions..."
+            ></textarea>
           </div>
 
-          <!-- Negated Symptoms -->
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <span class="text-slate-400 block font-medium uppercase text-[10px] tracking-wider mb-1">Negated Symptoms</span>
-            <div id="badge-negated" class="flex flex-wrap gap-1 text-slate-700 font-semibold">-</div>
-          </div>
+          <div class="flex items-center justify-between pt-1 px-1 border-t border-clean-border-subtle mt-1">
+            <span class="text-[9px] text-clean-text-muted font-mono hidden sm:inline">Press <kbd class="px-1 py-0.2 rounded bg-clean-sidebar border border-clean-border">Enter</kbd> to send</span>
+            <span class="text-[9px] text-clean-text-muted font-mono sm:hidden">Canivue AI</span>
 
-          <!-- Body Locations -->
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <span class="text-slate-400 block font-medium uppercase text-[10px] tracking-wider mb-1">Body Locations</span>
-            <div id="badge-locations" class="text-slate-700 font-semibold">-</div>
+            <button 
+              type="submit" 
+              id="send-btn" 
+              class="w-6 h-6 rounded-lg bg-claude-coral hover:bg-claude-coral-hover disabled:bg-clean-sidebar disabled:text-clean-text-muted text-white flex items-center justify-center transition-all shadow-clean-xs shrink-0 ml-auto"
+              disabled
+            >
+              <i class="fa-solid fa-arrow-up text-[10px]"></i>
+            </button>
           </div>
+        </form>
 
-          <!-- Duration & Timeline -->
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <span class="text-slate-400 block font-medium uppercase text-[10px] tracking-wider mb-1">Duration Entity</span>
-            <div id="badge-duration" class="text-slate-700 font-semibold">-</div>
-          </div>
-
-          <!-- Progression Trajectory -->
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <span class="text-slate-400 block font-medium uppercase text-[10px] tracking-wider mb-1">Progression Status</span>
-            <div id="badge-progression" class="text-slate-700 font-semibold">-</div>
-          </div>
-
-          <!-- Modality Reliability -->
-          <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-            <span class="text-slate-400 block font-medium uppercase text-[10px] tracking-wider mb-1">Text Reliability Score</span>
-            <div id="badge-reliability" class="text-slate-700 font-bold text-sm text-indigo-700">-</div>
-          </div>
-        </div>
+        <p class="text-center text-[9px] text-clean-text-muted font-mono pt-1 truncate">
+          Canivue AI Decision Support • Consult a veterinarian for emergencies
+        </p>
       </div>
     </div>
   </main>
 
+  <!-- ========================================================================= -->
+  <!-- 3. SLIDE-OVER DRAWER: CLINICAL DECISION BRAIN (COMPACT ON SMALL SCREENS)  -->
+  <!-- ========================================================================= -->
+  <div id="drawer-backdrop" class="fixed inset-0 bg-slate-900/20 backdrop-blur-xs z-40 hidden transition-opacity"></div>
+
+  <aside 
+    id="artifact-drawer" 
+    class="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[360px] max-w-[95vw] bg-white text-clean-text flex flex-col border-l border-clean-border shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out"
+  >
+    
+    <!-- Drawer Header -->
+    <div class="h-11 sm:h-12 px-3 border-b border-clean-border flex items-center justify-between bg-clean-sidebar">
+      <div class="flex items-center space-x-1.5">
+        <span class="text-claude-coral font-bold text-sm">✻</span>
+        <h3 class="text-xs font-bold text-clean-text font-mono uppercase tracking-wider">Clinical Insights</h3>
+      </div>
+      <button id="close-drawer-btn" class="text-clean-text-muted hover:text-clean-text p-1 rounded-md hover:bg-white transition" title="Close Insights">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+
+    <!-- Drawer Navigation Tabs -->
+    <div class="flex items-center border-b border-clean-border text-xs font-mono bg-clean-sidebar">
+      <button id="tab-btn-matrix" class="flex-1 py-2 text-center font-bold border-b-2 border-claude-coral text-claude-coral bg-white transition-all text-[11px]">
+        Probabilities
+      </button>
+      <button id="tab-btn-slots" class="flex-1 py-2 text-center font-medium border-b-2 border-transparent text-clean-text-muted hover:text-clean-text transition-all text-[11px]">
+        Intake Slots
+      </button>
+      <button id="tab-btn-json" class="flex-1 py-2 text-center font-medium border-b-2 border-transparent text-clean-text-muted hover:text-clean-text transition-all text-[11px]">
+        Raw Schema
+      </button>
+    </div>
+
+    <!-- Drawer Content (Scrollable, Compact) -->
+    <div class="flex-1 overflow-y-auto p-3 space-y-3 text-xs font-mono" id="drawer-content">
+      
+      <!-- Tab 1: Differential Probabilities & Entity Spans -->
+      <div id="tab-pane-matrix" class="space-y-3">
+        
+        <!-- Reliability Gauge Card -->
+        <div class="p-2.5 rounded-lg bg-clean-sidebar border border-clean-border shadow-clean-xs space-y-1.5">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="text-clean-text-secondary font-medium">Modality Reliability Score:</span>
+            <span id="drawer-reliability" class="font-bold text-emerald-600">0.85 / 1.0</span>
+          </div>
+          <div class="w-full bg-clean-border rounded-full h-1 overflow-hidden">
+            <div id="drawer-reliability-bar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-1 rounded-full" style="width: 85%"></div>
+          </div>
+        </div>
+
+        <!-- Differential Probabilities Breakdown -->
+        <div class="p-2.5 rounded-lg bg-white border border-clean-border shadow-clean-xs space-y-2">
+          <div class="flex items-center justify-between text-[11px] font-bold text-clean-text">
+            <span>Differential Diagnostic Matrix</span>
+            <span class="text-[9px] text-clean-text-muted font-normal">Sum = 100%</span>
+          </div>
+          <div id="drawer-probability-list" class="space-y-1.5 pt-0.5">
+            <div class="text-[10px] text-clean-text-muted">No active consultation loaded.</div>
+          </div>
+        </div>
+
+        <!-- Extracted BIO Spans Matrix -->
+        <div class="p-2.5 rounded-lg bg-white border border-clean-border shadow-clean-xs space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-bold text-clean-text">
+            <span>Extracted Clinical Entity Spans</span>
+            <span id="drawer-spans-count" class="text-[10px] font-bold text-claude-coral">0 spans</span>
+          </div>
+          <div id="drawer-spans-list" class="space-y-1 max-h-40 overflow-y-auto">
+            <div class="text-[10px] text-clean-text-muted">Awaiting patient symptom description.</div>
+          </div>
+        </div>
+
+        <!-- Model Assumptions & Reasoning -->
+        <div class="p-2.5 rounded-lg bg-white border border-clean-border shadow-clean-xs space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-bold text-clean-text">
+            <span>Clinical Reasoning Assumptions</span>
+            <span class="text-[9px] text-emerald-600 font-bold">● 12ms DFA</span>
+          </div>
+          <div id="drawer-assumptions-list" class="space-y-1 max-h-40 overflow-y-auto">
+            <div class="text-[10px] text-clean-text-muted">No assumptions recorded yet.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: Clinical Intake Slots -->
+      <div id="tab-pane-slots" class="hidden space-y-3">
+        <div class="p-2.5 rounded-lg bg-white border border-clean-border shadow-clean-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-clean-text text-xs">Essential Clinical Slots</h4>
+            <span id="drawer-slots-pct" class="text-xs font-bold text-amber-600">50% Captured</span>
+          </div>
+          <div class="space-y-1.5 text-[10px]" id="drawer-slots-checklist">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 4-Turn Protocol Status -->
+        <div class="p-2.5 rounded-lg bg-white border border-clean-border shadow-clean-xs space-y-1.5 text-[10px]">
+          <span class="font-bold text-clean-text block">4-Turn Intake Guardrail Protocol</span>
+          <p class="text-clean-text-secondary leading-relaxed font-sans">
+            Clinical intake is bounded to 4 turns to avoid fatigue and synthesize clean DPRPE vectors.
+          </p>
+          <div class="flex items-center justify-between pt-1 border-t border-clean-border-subtle font-mono">
+            <span class="text-clean-text-secondary">Progression:</span>
+            <span id="drawer-turns-status" class="font-bold text-claude-coral">Turn 1 of 4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Raw Schema JSON -->
+      <div id="tab-pane-json" class="hidden space-y-2">
+        <div class="flex items-center justify-between text-[10px]">
+          <span class="text-clean-text-secondary font-medium">SymptomParseResult Envelope</span>
+          <button id="copy-json-btn" class="px-2 py-0.5 rounded bg-clean-sidebar hover:bg-claude-coral-light text-claude-coral border border-clean-border hover:border-claude-coral transition text-[9px] font-bold">
+            <i class="fa-solid fa-copy mr-1"></i> Copy
+          </button>
+        </div>
+        <pre id="drawer-raw-json" class="p-2.5 rounded-lg bg-clean-sidebar border border-clean-border text-[9px] text-clean-text-secondary overflow-x-auto max-h-[400px] leading-relaxed select-all font-mono">{}</pre>
+      </div>
+
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-2.5 border-t border-clean-border bg-white flex items-center justify-between text-[10px] font-mono">
+      <span class="text-clean-text-muted">Multimodal Fusion</span>
+      <span class="px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">Ready</span>
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- ACCURACY BENCHMARK & EVALUATION MODAL (COMPACT)                           -->
+  <!-- ========================================================================= -->
+  <div id="benchmark-modal" class="hidden fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-3">
+    <div class="bg-white text-clean-text rounded-xl shadow-clean-modal border border-clean-border w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="p-3 border-b border-clean-border flex items-center justify-between bg-clean-sidebar">
+        <div class="flex items-center space-x-2">
+          <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-claude-coral flex items-center justify-center text-white font-bold text-xs shrink-0">
+            ✻
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-clean-text">Model Accuracy Benchmarks</h3>
+            <p class="text-[10px] text-clean-text-muted font-mono">141 Canine Cases</p>
+          </div>
+        </div>
+        <button id="close-modal-btn" class="text-clean-text-muted hover:text-clean-text p-1 rounded hover:bg-white transition">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 overflow-y-auto space-y-3">
+        <!-- Accuracy Overview Grid -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-emerald-50/70 border border-emerald-200 rounded-lg p-2">
+            <span class="text-[9px] uppercase font-mono font-bold text-emerald-800 tracking-wider block">Accuracy</span>
+            <div id="modal-accuracy" class="text-lg font-bold font-mono text-emerald-700">100.0%</div>
+          </div>
+          <div class="bg-white border border-clean-border rounded-lg p-2">
+            <span class="text-[9px] uppercase font-mono font-bold text-clean-text-muted tracking-wider block">Cases</span>
+            <div id="modal-total" class="text-lg font-bold font-mono text-clean-text">141</div>
+          </div>
+          <div class="bg-white border border-clean-border rounded-lg p-2">
+            <span class="text-[9px] uppercase font-mono font-bold text-emerald-700 tracking-wider block">Matches</span>
+            <div id="modal-correct" class="text-lg font-bold font-mono text-clean-text">141</div>
+          </div>
+        </div>
+
+        <!-- Per Category Breakdown -->
+        <div class="space-y-1.5 pt-1">
+          <h4 class="text-[11px] font-bold text-clean-text font-mono uppercase tracking-wider">Per-Condition Classification</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5" id="modal-category-bars"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-2.5 border-t border-clean-border bg-clean-sidebar flex items-center justify-between">
+        <span class="text-[10px] text-clean-text-muted font-mono">Engine: <code class="text-claude-coral font-bold">symptom_distilbert_v1</code></span>
+        <button id="modal-close-btn2" class="px-3 py-1 rounded-lg bg-claude-coral hover:bg-claude-coral-hover text-white text-[11px] font-mono font-bold transition-all shadow-clean-xs">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: CLEAN, FAST, COMPACT                                          -->
+  <!-- ========================================================================= -->
   <script>
-    // Fallback benchmark scenarios
-    const BENCHMARK_SCENARIOS = [
-      {
-        title: "Ear Inflammation (Bilateral)",
-        text: "My golden retriever has been scratching both ears and shaking his head constantly for 4 days."
-      },
-      {
-        title: "Skin Allergy + Negation",
-        text: "He has intense itching and red hair loss on his belly for a week, but no vomiting and not coughing."
-      },
-      {
-        title: "Eye Discharge + Worsening",
-        text: "Watery discharge from right eye since yesterday morning, definitely getting worse."
-      },
-      {
-        title: "Emergency Triage Flag",
-        text: "Emergency: My dog suddenly collapsed in the yard, gums look pale blue and he is gasping for air!"
-      },
-      {
-        title: "Low Quality / Vague",
-        text: "My dog seems a bit off today."
+    // Core State
+    let currentSessionId = null;
+    let sessionsCache = [];
+    let isAnalyzing = false;
+    let latestClinicalData = null;
+
+    // DOM Elements
+    const sidebar = document.getElementById("sidebar");
+    const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+    const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
+    const sidebarCloseBtn = document.getElementById("sidebar-close-btn");
+    const sessionsContainer = document.getElementById("sessions-container");
+    const messagesStream = document.getElementById("messages-stream");
+    const messagesList = document.getElementById("messages-list");
+    const welcomeHero = document.getElementById("welcome-hero");
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-btn");
+    const activeChatTitle = document.getElementById("active-chat-title");
+    const activeChatBadge = document.getElementById("active-chat-badge");
+    const activeEmergencyBadge = document.getElementById("active-emergency-badge");
+    const newChatBtn = document.getElementById("new-chat-btn");
+    const clearChatBtn = document.getElementById("clear-chat-btn");
+    const benchmarkModal = document.getElementById("benchmark-modal");
+    const artifactDrawer = document.getElementById("artifact-drawer");
+    const drawerBackdrop = document.getElementById("drawer-backdrop");
+    const toggleArtifactBtn = document.getElementById("toggle-artifact-drawer-btn");
+    const closeDrawerBtn = document.getElementById("close-drawer-btn");
+
+    // Initialize App
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadSessions();
+      if (sessionsCache.length > 0) {
+        loadChatSession(sessionsCache[0].id);
+      } else {
+        await startNewChat(false);
       }
-    ];
 
-    let currentParsedData = null;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      initScenarios();
-      fetchFeedbackStats();
-
-      document.getElementById("analyze-btn").addEventListener("click", runAnalysis);
-      document.getElementById("clear-btn").addEventListener("click", () => {
-        document.getElementById("input-text").value = "";
-        document.getElementById("input-text").focus();
-      });
-
-      document.getElementById("input-text").addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-          runAnalysis();
-        }
-      });
-
-      document.getElementById("submit-feedback-btn").addEventListener("click", submitFeedback);
-
-      // Run default analysis on load
-      runAnalysis();
+      runEvaluation(); // pre-load benchmark metrics
     });
 
-    function initScenarios() {
-      const container = document.getElementById("scenario-chips");
-      container.innerHTML = "";
-      BENCHMARK_SCENARIOS.forEach(sc => {
-        const chip = document.createElement("button");
-        chip.className = "text-[11px] px-2.5 py-1 rounded-full bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-medium border border-slate-200 transition";
-        chip.textContent = sc.title;
-        chip.addEventListener("click", () => {
-          document.getElementById("input-text").value = sc.text;
-          runAnalysis();
-        });
-        container.appendChild(chip);
-      });
-    }
-
-    async function fetchFeedbackStats() {
-      try {
-        const res = await fetch("/api/feedback/stats");
-        if (res.ok) {
-          const data = await res.json();
-          document.getElementById("feedback-counter").textContent = data.total_feedback_samples;
-        }
-      } catch (err) {
-        // Silent fallback for static mode
-      }
-    }
-
-    async function runAnalysis() {
-      const text = document.getElementById("input-text").value.trim();
-      if (!text) return;
-
-      const analyzeBtn = document.getElementById("analyze-btn");
-      analyzeBtn.disabled = true;
-      analyzeBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-200"></i><span>Analyzing...</span>`;
-
-      try {
-        const response = await fetch("/api/parse", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-
-        if (response.ok) {
-          const json = await response.json();
-          currentParsedData = json.data;
-          renderResults(json.data, json.decision_reasoning || []);
+    // -----------------------------------------------------------------------
+    // SIDEBAR TOGGLE (RESPONSIVE FOR PHONE & DESKTOP)
+    // -----------------------------------------------------------------------
+    function toggleSidebar() {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        const isClosed = sidebar.classList.contains("-translate-x-full");
+        if (isClosed) {
+          sidebar.classList.remove("-translate-x-full");
+          sidebarBackdrop.classList.remove("hidden");
         } else {
-          // Client-side fallback emulation if server is not reachable
-          renderClientSideFallback(text);
+          sidebar.classList.add("-translate-x-full");
+          sidebarBackdrop.classList.add("hidden");
+        }
+      } else {
+        sidebar.classList.toggle("desktop-collapsed");
+        if (sidebar.classList.contains("desktop-collapsed")) {
+          sidebar.style.width = "0px";
+          sidebar.style.minWidth = "0px";
+          sidebar.style.borderRightWidth = "0px";
+          sidebar.style.overflow = "hidden";
+        } else {
+          sidebar.style.width = "";
+          sidebar.style.minWidth = "";
+          sidebar.style.borderRightWidth = "";
+          sidebar.style.overflow = "";
+        }
+      }
+    }
+
+    sidebarToggleBtn?.addEventListener("click", toggleSidebar);
+    sidebarCloseBtn?.addEventListener("click", () => {
+      if (window.innerWidth < 1024) {
+        sidebar.classList.add("-translate-x-full");
+        sidebarBackdrop.classList.add("hidden");
+      } else {
+        toggleSidebar();
+      }
+    });
+    sidebarBackdrop?.addEventListener("click", () => {
+      sidebar.classList.add("-translate-x-full");
+      sidebarBackdrop.classList.add("hidden");
+    });
+
+    // -----------------------------------------------------------------------
+    // CLINICAL INSIGHTS SLIDE-OVER DRAWER
+    // -----------------------------------------------------------------------
+    function openArtifactDrawer() {
+      artifactDrawer.classList.remove("translate-x-full");
+      drawerBackdrop.classList.remove("hidden");
+    }
+
+    function closeArtifactDrawer() {
+      artifactDrawer.classList.add("translate-x-full");
+      drawerBackdrop.classList.add("hidden");
+    }
+
+    toggleArtifactBtn?.addEventListener("click", () => {
+      if (artifactDrawer.classList.contains("translate-x-full")) {
+        openArtifactDrawer();
+      } else {
+        closeArtifactDrawer();
+      }
+    });
+
+    closeDrawerBtn?.addEventListener("click", closeArtifactDrawer);
+    drawerBackdrop?.addEventListener("click", closeArtifactDrawer);
+
+    // Drawer Tabs
+    const tabBtnMatrix = document.getElementById("tab-btn-matrix");
+    const tabBtnSlots = document.getElementById("tab-btn-slots");
+    const tabBtnJson = document.getElementById("tab-btn-json");
+    const tabPaneMatrix = document.getElementById("tab-pane-matrix");
+    const tabPaneSlots = document.getElementById("tab-pane-slots");
+    const tabPaneJson = document.getElementById("tab-pane-json");
+
+    function setDrawerTab(tab) {
+      [tabBtnMatrix, tabBtnSlots, tabBtnJson].forEach(b => {
+        b.className = "flex-1 py-2 text-center font-medium border-b-2 border-transparent text-clean-text-muted hover:text-clean-text transition-all text-[11px]";
+      });
+      [tabPaneMatrix, tabPaneSlots, tabPaneJson].forEach(p => p.classList.add("hidden"));
+
+      if (tab === "matrix") {
+        tabBtnMatrix.className = "flex-1 py-2 text-center font-bold border-b-2 border-claude-coral text-claude-coral bg-white transition-all text-[11px]";
+        tabPaneMatrix.classList.remove("hidden");
+      } else if (tab === "slots") {
+        tabBtnSlots.className = "flex-1 py-2 text-center font-bold border-b-2 border-claude-coral text-claude-coral bg-white transition-all text-[11px]";
+        tabPaneSlots.classList.remove("hidden");
+      } else if (tab === "json") {
+        tabBtnJson.className = "flex-1 py-2 text-center font-bold border-b-2 border-claude-coral text-claude-coral bg-white transition-all text-[11px]";
+        tabPaneJson.classList.remove("hidden");
+      }
+    }
+
+    tabBtnMatrix.addEventListener("click", () => setDrawerTab("matrix"));
+    tabBtnSlots.addEventListener("click", () => setDrawerTab("slots"));
+    tabBtnJson.addEventListener("click", () => setDrawerTab("json"));
+
+    // Copy JSON in Drawer
+    document.getElementById("copy-json-btn")?.addEventListener("click", () => {
+      const code = document.getElementById("drawer-raw-json").textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById("copy-json-btn");
+        btn.innerHTML = `<i class="fa-solid fa-check mr-1 text-emerald-600"></i> Copied`;
+        setTimeout(() => {
+          btn.innerHTML = `<i class="fa-solid fa-copy mr-1"></i> Copy`;
+        }, 1500);
+      });
+    });
+
+    // Auto-expand textarea (Compact, max 120px)
+    chatInput.addEventListener("input", () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+      sendBtn.disabled = !chatInput.value.trim();
+    });
+
+    // Enter to submit (Shift+Enter for newline)
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtn.disabled) {
+          submitMessage();
+        }
+      }
+    });
+
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitMessage();
+    });
+
+    newChatBtn.addEventListener("click", () => startNewChat(true));
+    clearChatBtn.addEventListener("click", () => deleteCurrentChat());
+    document.getElementById("open-accuracy-modal-btn")?.addEventListener("click", () => openBenchmarkModal());
+    document.getElementById("close-modal-btn")?.addEventListener("click", () => closeBenchmarkModal());
+    document.getElementById("modal-close-btn2")?.addEventListener("click", () => closeBenchmarkModal());
+
+    // Prompt pills on welcome screen
+    document.querySelectorAll(".prompt-pill").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const text = btn.getAttribute("data-text");
+        if (text) {
+          chatInput.value = text;
+          chatInput.dispatchEvent(new Event("input"));
+          submitMessage();
+        }
+      });
+    });
+
+    // -----------------------------------------------------------------------
+    // SESSION MANAGEMENT
+    // -----------------------------------------------------------------------
+    async function loadSessions() {
+      try {
+        const res = await fetch("/api/chats");
+        if (res.ok) {
+          sessionsCache = await res.json();
+          renderSessionsList(sessionsCache);
         }
       } catch (err) {
-        renderClientSideFallback(text);
-      } finally {
-        analyzeBtn.disabled = false;
-        analyzeBtn.innerHTML = `<i class="fa-solid fa-bolt text-indigo-200"></i><span>Inspect Decision Brain</span>`;
+        console.error("Failed to load sessions:", err);
       }
     }
 
-    function renderResults(data, reasoning) {
-      document.getElementById("model-version-badge").textContent = data.model_version || "symptom_distilbert_v1";
+    function renderSessionsList(sessions) {
+      sessionsContainer.innerHTML = "";
+      document.getElementById("chat-count-badge").textContent = sessions.length;
 
-      // 1. Emergency Triage Banner
-      const emergencyDiv = document.getElementById("emergency-banner");
-      const triage = data.emergency_triage || {};
-      if (triage.is_critical) {
-        emergencyDiv.className = "rounded-xl border border-red-300 bg-red-50 p-4 shadow-sm flex items-start space-x-3";
-        emergencyDiv.innerHTML = `
-          <div class="p-2 bg-red-200 rounded-lg text-red-800">
-            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-          </div>
-          <div class="space-y-1">
-            <h4 class="text-sm font-bold text-red-900">CRITICAL EMERGENCY TRIAGE ALERT</h4>
-            <p class="text-xs text-red-800 font-medium">Trigger: ${triage.reason || "Acute life-threatening cues detected"}</p>
-            <p class="text-xs text-red-700">${triage.recommendation || "Seek emergency veterinary hospital care immediately."}</p>
+      if (!sessions || sessions.length === 0) {
+        sessionsContainer.innerHTML = `
+          <div class="text-center py-6 text-[10px] text-clean-text-muted font-mono">
+            No consultations.
           </div>
         `;
-        emergencyDiv.classList.remove("hidden");
-      } else {
-        emergencyDiv.className = "rounded-xl border border-emerald-200 bg-emerald-50 p-3 shadow-sm flex items-center space-x-2";
-        emergencyDiv.innerHTML = `
-          <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
-          <span class="text-xs font-semibold text-emerald-900">Safety Guardrail: No acute emergency red flags detected.</span>
-        `;
-        emergencyDiv.classList.remove("hidden");
-      }
-
-      // 2. Highlighted Spans
-      renderHighlightedText(data.raw_text, data.spans || []);
-
-      // 3. Condition Probabilities
-      renderConditionBars(data.condition_probabilities || {});
-
-      // 4. Badges
-      renderBadges(data);
-
-      // 5. Reasoning List
-      renderReasoning(reasoning);
-
-      // Auto-select predicted condition in HITL feedback dropdown
-      const probs = data.condition_probabilities || {};
-      const topCond = Object.keys(probs).reduce((a, b) => probs[a] > probs[b] ? a : b, "other");
-      document.getElementById("correct-condition").value = topCond;
-    }
-
-    function renderHighlightedText(rawText, spans) {
-      if (!spans || spans.length === 0) {
-        document.getElementById("highlighted-text").textContent = rawText;
         return;
       }
 
-      // Sort spans ascending by start
-      const sorted = [...spans].sort((a, b) => a.start - b.start);
-      let html = "";
-      let lastIndex = 0;
-
-      sorted.forEach(span => {
-        if (span.start > lastIndex) {
-          html += escapeHtml(rawText.substring(lastIndex, span.start));
-        }
-
-        let cssClass = "span-symptom";
-        if (span.entity === "symptom") {
-          cssClass = span.negated ? "span-symptom-negated" : "span-symptom";
-        } else if (span.entity === "body_location") {
-          cssClass = "span-location";
-        } else if (span.entity === "duration") {
-          cssClass = "span-duration";
-        } else if (span.entity === "frequency") {
-          cssClass = "span-frequency";
-        } else if (span.entity === "progression") {
-          cssClass = "span-progression";
-        }
-
-        const tagText = span.negated ? `${span.text} [negated]` : `${span.text} [${span.entity}]`;
-        html += `<span class="${cssClass}" title="Entity: ${span.entity} (${span.start}-${span.end})">${escapeHtml(span.text)}</span>`;
-        lastIndex = span.end;
-      });
-
-      if (lastIndex < rawText.length) {
-        html += escapeHtml(rawText.substring(lastIndex));
-      }
-
-      document.getElementById("highlighted-text").innerHTML = html;
-    }
-
-    function renderConditionBars(probs) {
-      const container = document.getElementById("condition-bars");
-      container.innerHTML = "";
-
-      const labels = {
-        ear_inflammation: { name: "Ear Inflammation", color: "bg-amber-500", icon: "fa-ear-listen" },
-        skin_condition: { name: "Skin Condition", color: "bg-sky-500", icon: "fa-shield-dog" },
-        eye_condition: { name: "Eye Condition", color: "bg-indigo-500", icon: "fa-eye" },
-        other: { name: "Other / Systemic", color: "bg-slate-500", icon: "fa-circle-question" },
-      };
-
-      Object.entries(probs).forEach(([key, val]) => {
-        const meta = labels[key] || { name: key, color: "bg-indigo-500", icon: "fa-tag" };
-        const percent = Math.round(val * 100);
-
-        const row = document.createElement("div");
-        row.className = "space-y-1";
-        row.innerHTML = `
-          <div class="flex justify-between items-center text-xs">
-            <span class="font-semibold text-slate-700 flex items-center">
-              <i class="fa-solid ${meta.icon} text-slate-400 mr-1.5 text-[11px]"></i>
-              ${meta.name}
-            </span>
-            <span class="font-bold text-slate-800">${percent}%</span>
-          </div>
-          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-            <div class="${meta.color} h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    function renderBadges(data) {
-      // Active Symptoms
-      const symDiv = document.getElementById("badge-symptoms");
-      if (data.symptoms && data.symptoms.length > 0) {
-        symDiv.innerHTML = data.symptoms.map(s => `<span class="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono">${s}</span>`).join(" ");
-      } else {
-        symDiv.innerHTML = `<span class="text-slate-400 italic">None detected</span>`;
-      }
-
-      // Negated
-      const negDiv = document.getElementById("badge-negated");
-      if (data.negated_symptoms && data.negated_symptoms.length > 0) {
-        negDiv.innerHTML = data.negated_symptoms.map(s => `<span class="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono line-through">${s}</span>`).join(" ");
-      } else {
-        negDiv.innerHTML = `<span class="text-slate-400 italic">None</span>`;
-      }
-
-      // Locations
-      const locDiv = document.getElementById("badge-locations");
-      if (data.body_locations && data.body_locations.length > 0) {
-        locDiv.innerHTML = data.body_locations.map(l => `<span class="bg-sky-100 text-sky-900 px-1.5 py-0.5 rounded">${l.side ? l.side + " " : ""}${l.part}</span>`).join(", ");
-      } else {
-        locDiv.innerHTML = `<span class="text-slate-400 italic">Unspecified</span>`;
-      }
-
-      // Duration
-      const durDiv = document.getElementById("badge-duration");
-      if (data.duration) {
-        durDiv.innerHTML = `<span class="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-bold">${data.duration.value} ${data.duration.unit}</span>`;
-      } else {
-        durDiv.innerHTML = `<span class="text-amber-700 font-medium">Missing (Warning)</span>`;
-      }
-
-      // Progression
-      const progDiv = document.getElementById("badge-progression");
-      if (data.progression) {
-        progDiv.innerHTML = `<span class="bg-orange-100 text-orange-900 px-2 py-0.5 rounded font-semibold capitalize">${data.progression}</span>`;
-      } else {
-        progDiv.innerHTML = `<span class="text-slate-400 italic">Stable/Unstated</span>`;
-      }
-
-      // Reliability
-      const relDiv = document.getElementById("badge-reliability");
-      const score = data.modality_reliability_score || 0.0;
-      relDiv.textContent = `${(score * 100).toFixed(0)}% (w=${score.toFixed(2)})`;
-    }
-
-    function renderReasoning(reasoning) {
-      const container = document.getElementById("reasoning-list");
-      container.innerHTML = "";
-      if (!reasoning || reasoning.length === 0) {
-        container.innerHTML = `<div class="text-slate-400 italic">No reasoning available.</div>`;
-        return;
-      }
-      reasoning.forEach(r => {
+      sessions.forEach(s => {
+        const isActive = s.id === currentSessionId;
         const item = document.createElement("div");
-        item.className = "p-2 rounded bg-indigo-50/50 border border-indigo-100/80 leading-relaxed";
-        item.textContent = r;
-        container.appendChild(item);
+        item.className = `group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all text-xs ${
+          isActive 
+            ? "bg-white text-clean-text border border-claude-coral/40 font-semibold shadow-clean-xs" 
+            : "text-clean-text-secondary hover:bg-white hover:text-clean-text border border-transparent"
+        }`;
+        
+        item.innerHTML = `
+          <div class="flex items-center space-x-1.5 truncate flex-1 min-w-0">
+            <span class="${isActive ? 'text-claude-coral font-bold' : 'text-clean-text-muted'} text-[11px]">✻</span>
+            <span class="truncate font-sans text-xs">${escapeHtml(s.title || "Consultation")}</span>
+          </div>
+          <div class="flex items-center opacity-0 group-hover:opacity-100 transition shrink-0 ml-1">
+            <button class="delete-session-btn p-0.5 text-clean-text-muted hover:text-rose-600 rounded" title="Delete">
+              <i class="fa-solid fa-xmark text-[10px]"></i>
+            </button>
+          </div>
+        `;
+
+        item.addEventListener("click", (e) => {
+          if (e.target.closest(".delete-session-btn")) {
+            e.stopPropagation();
+            deleteSession(s.id);
+            return;
+          }
+          loadChatSession(s.id);
+          if (window.innerWidth < 1024) {
+            sidebar.classList.add("-translate-x-full");
+            sidebarBackdrop.classList.add("hidden");
+          }
+        });
+
+        sessionsContainer.appendChild(item);
       });
     }
 
-    async function submitFeedback() {
-      if (!currentParsedData) return;
+    async function startNewChat(fetchAndOpen = true) {
+      try {
+        const res = await fetch("/api/chats", { method: "POST" });
+        if (res.ok) {
+          const session = await res.json();
+          currentSessionId = session.id;
+          await loadSessions();
+          if (fetchAndOpen) {
+            loadChatSession(session.id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to create new chat:", err);
+      }
+    }
 
-      const condition = document.getElementById("correct-condition").value;
-      const notes = document.getElementById("feedback-notes").value;
-      const alertBox = document.getElementById("feedback-alert");
-
-      const payload = {
-        text: currentParsedData.raw_text,
-        condition_label: condition,
-        symptoms: currentParsedData.symptoms,
-        spans: currentParsedData.spans,
-        is_emergency: currentParsedData.emergency_triage?.is_critical || false,
-        feedback_notes: notes || null
-      };
+    async function loadChatSession(sessionId) {
+      currentSessionId = sessionId;
+      renderSessionsList(sessionsCache);
 
       try {
-        const res = await fetch("/api/feedback", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+        const res = await fetch(`/api/chats/${sessionId}`);
+        if (res.ok) {
+          const session = await res.json();
+          activeChatTitle.textContent = session.title || "Consultation";
+          
+          const lastCond = session.accumulated_context?.last_condition;
+          if (lastCond) {
+            activeChatBadge.textContent = lastCond.replace('_', ' ');
+            activeChatBadge.classList.remove("hidden");
+          } else {
+            activeChatBadge.classList.add("hidden");
+          }
+
+          if (session.accumulated_context?.emergency) {
+            activeEmergencyBadge.classList.remove("hidden");
+          } else {
+            activeEmergencyBadge.classList.add("hidden");
+          }
+
+          renderMessages(session.messages || []);
+          
+          const lastAsst = [...(session.messages || [])].reverse().find(m => m.role === "assistant");
+          if (lastAsst) {
+            updateDecisionBrainDrawer(lastAsst.clinical_data, lastAsst.intake_state, lastAsst.assumptions);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load chat session:", err);
+      }
+    }
+
+    async function deleteCurrentChat() {
+      if (!currentSessionId) return;
+      if (confirm("Delete this consultation?")) {
+        await deleteSession(currentSessionId);
+      }
+    }
+
+    async function deleteSession(sessionId) {
+      try {
+        const res = await fetch(`/api/chats/${sessionId}`, { method: "DELETE" });
+        if (res.ok) {
+          if (currentSessionId === sessionId) {
+            currentSessionId = null;
+          }
+          await loadSessions();
+          if (sessionsCache.length > 0) {
+            loadChatSession(sessionsCache[0].id);
+          } else {
+            startNewChat(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to delete session:", err);
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // SMALL, COMPACT, SLEEK MESSAGE BLOCKS
+    // -----------------------------------------------------------------------
+    function renderMessages(messages) {
+      messagesList.innerHTML = "";
+
+      if (!messages || messages.length === 0) {
+        welcomeHero.classList.remove("hidden");
+        messagesList.classList.add("hidden");
+        return;
+      }
+
+      welcomeHero.classList.add("hidden");
+      messagesList.classList.remove("hidden");
+
+      messages.forEach(msg => {
+        if (msg.role === "user") {
+          renderUserMessage(msg);
+        } else {
+          renderAssistantMessage(msg);
+        }
+      });
+
+      const container = document.getElementById("messages-stream");
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderUserMessage(msg) {
+      const div = document.createElement("div");
+      div.className = "flex justify-end";
+      div.innerHTML = `
+        <div class="max-w-[88%] sm:max-w-[78%] rounded-xl sm:rounded-2xl bg-clean-sidebar text-clean-text border border-clean-border px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-clean-xs text-xs sm:text-[13px] font-sans leading-relaxed space-y-0.5 break-words">
+          <p class="whitespace-pre-wrap">${escapeHtml(msg.content)}</p>
+          <span class="text-[9px] text-clean-text-muted font-mono block text-right">${formatTime(msg.timestamp)}</span>
+        </div>
+      `;
+      messagesList.appendChild(div);
+    }
+
+    function renderAssistantMessage(msg) {
+      const div = document.createElement("div");
+      div.className = "flex items-start space-x-2 sm:space-x-2.5";
+
+      const clinical = msg.clinical_data || {};
+      const assumptions = msg.assumptions || [];
+      const triage = clinical.emergency_triage || {};
+      const intakeState = msg.intake_state || {};
+      const probs = clinical.condition_probabilities || {};
+      const topCondition = Object.keys(probs).length > 0 
+        ? Object.keys(probs).reduce((a, b) => probs[a] > probs[b] ? a : b) 
+        : null;
+
+      // Emergency Alert Banner (Small Block)
+      let emergencyBanner = "";
+      if (triage.is_critical) {
+        emergencyBanner = `
+          <div class="p-2.5 mb-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start space-x-2 shadow-clean-xs">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-xs mt-0.5 shrink-0"></i>
+            <div class="space-y-0.5">
+              <span class="font-bold uppercase tracking-wider text-[9px] text-rose-700 block">URGENT CLINICAL ALERT</span>
+              <p class="font-bold text-xs text-rose-900 font-sans">${escapeHtml(triage.reason || "Acute life-threatening cues detected")}</p>
+              <p class="text-[10px] text-rose-700">${escapeHtml(triage.recommendation || "Seek emergency veterinary hospital care immediately.")}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      div.innerHTML = `
+        <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-claude-coral flex items-center justify-center text-white text-[10px] shrink-0 shadow-clean-xs font-bold mt-0.5 select-none">
+          ✻
+        </div>
+        <div class="flex-1 min-w-0 bg-white border border-clean-border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-clean-xs space-y-2 text-xs text-clean-text">
+          ${emergencyBanner}
+          <div class="leading-relaxed whitespace-pre-wrap text-xs sm:text-[13px] text-clean-text font-sans assistant-text-body font-normal break-words">${formatAssistantText(msg.content)}</div>
+          
+          <!-- Minimalist Bottom Action Bar (Small Block) -->
+          <div class="pt-1.5 flex items-center justify-between text-xs text-clean-text-muted border-t border-clean-border-subtle mt-1.5">
+            <div class="flex items-center space-x-1.5">
+              ${topCondition ? `<span class="px-1.5 py-0.2 rounded bg-clean-sidebar text-clean-text-secondary text-[9px] font-mono border border-clean-border capitalize">${topCondition.replace('_', ' ')}</span>` : ''}
+              <button class="view-brain-btn hover:text-claude-coral transition text-[10px] font-medium flex items-center space-x-1">
+                <i class="fa-solid fa-sliders text-[9px]"></i>
+                <span>Insights</span>
+              </button>
+            </div>
+            <button class="copy-note-btn p-0.5 rounded hover:text-clean-text hover:bg-clean-sidebar transition" title="Copy response">
+              <i class="fa-regular fa-copy text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Copy Note action
+      div.querySelector(".copy-note-btn")?.addEventListener("click", (e) => {
+        navigator.clipboard.writeText(msg.content).then(() => {
+          const btn = e.currentTarget;
+          btn.innerHTML = `<i class="fa-solid fa-check text-emerald-600 text-[10px]"></i>`;
+          setTimeout(() => { btn.innerHTML = `<i class="fa-regular fa-copy text-[10px]"></i>`; }, 1500);
         });
+      });
+
+      // View Insights trigger
+      div.querySelector(".view-brain-btn")?.addEventListener("click", () => {
+        openArtifactDrawer();
+      });
+
+      messagesList.appendChild(div);
+
+      // Keep decision brain drawer in sync with this message
+      updateDecisionBrainDrawer(clinical, intakeState, assumptions);
+    }
+
+    // -----------------------------------------------------------------------
+    // CLINICAL DECISION BRAIN DRAWER DATA SYNC
+    // -----------------------------------------------------------------------
+    function updateDecisionBrainDrawer(clinical, intakeState, assumptions = []) {
+      if (!clinical) return;
+      latestClinicalData = clinical;
+
+      // Update Reliability Scores
+      const rel = clinical.modality_reliability_score || 0.85;
+      const qual = clinical.text_quality_score || 0.85;
+      const conf = clinical.model_confidence || 0.85;
+
+      document.getElementById("drawer-reliability").textContent = `${rel.toFixed(2)} / 1.0`;
+      document.getElementById("drawer-reliability-bar").style.width = `${Math.round(rel * 100)}%`;
+
+      // Update Probabilities List
+      const probs = clinical.condition_probabilities || {};
+      const probListEl = document.getElementById("drawer-probability-list");
+      if (Object.keys(probs).length > 0) {
+        probListEl.innerHTML = Object.entries(probs).map(([cond, p]) => {
+          const pct = Math.round(p * 100);
+          return `
+            <div class="space-y-0.5">
+              <div class="flex justify-between text-[10px]">
+                <span class="text-clean-text font-semibold capitalize">${cond.replace('_', ' ')}</span>
+                <span class="font-bold text-claude-coral">${pct}%</span>
+              </div>
+              <div class="w-full bg-clean-border rounded-full h-1 overflow-hidden">
+                <div class="bg-gradient-to-r from-orange-500 to-claude-coral h-1 rounded-full" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Update Spans List
+      const spans = clinical.spans || [];
+      document.getElementById("drawer-spans-count").textContent = `${spans.length} spans`;
+      const spansListEl = document.getElementById("drawer-spans-list");
+      if (spans.length > 0) {
+        spansListEl.innerHTML = spans.map(s => `
+          <div class="p-1 rounded bg-clean-sidebar border border-clean-border flex items-center justify-between text-[10px]">
+            <span class="text-clean-text font-medium truncate mr-1.5">"${escapeHtml(s.text)}"</span>
+            <span class="px-1 py-0.2 rounded bg-orange-100 text-claude-coral border border-orange-200 font-bold shrink-0 text-[9px]">${s.entity}</span>
+          </div>
+        `).join("");
+      } else {
+        spansListEl.innerHTML = `<div class="text-[10px] text-clean-text-muted">No spans detected.</div>`;
+      }
+
+      // Update Assumptions List
+      const assumptionsListEl = document.getElementById("drawer-assumptions-list");
+      if (assumptions && assumptions.length > 0) {
+        assumptionsListEl.innerHTML = assumptions.map(a => `
+          <div class="p-1.5 rounded bg-clean-sidebar border border-clean-border text-[10px] text-clean-text-secondary leading-relaxed font-mono">
+            ${escapeHtml(a)}
+          </div>
+        `).join("");
+      } else {
+        assumptionsListEl.innerHTML = `<div class="text-[10px] text-clean-text-muted">No assumptions recorded yet.</div>`;
+      }
+
+      // Update Slots Checklist
+      const missing = intakeState?.missing_slots || [];
+      const turn = intakeState?.turn_count || 1;
+      const capturedCount = 4 - missing.length;
+      const pct = Math.round((capturedCount / 4) * 100);
+
+      document.getElementById("drawer-slots-pct").textContent = `${pct}% Captured`;
+      document.getElementById("drawer-turns-status").textContent = `Turn ${turn} of 4`;
+
+      const allSlots = [
+        { id: "symptoms", label: "Symptoms Presence" },
+        { id: "body_location_side", label: "Laterality (Left / Right / Both)" },
+        { id: "duration", label: "Timeline / Duration (e.g. 3 days)" },
+        { id: "progression", label: "Progression (Worsening / Stable)" },
+      ];
+
+      const slotsListEl = document.getElementById("drawer-slots-checklist");
+      slotsListEl.innerHTML = allSlots.map(s => {
+        const isMissing = missing.includes(s.id);
+        return `
+          <div class="p-1.5 rounded bg-clean-sidebar border ${isMissing ? 'border-clean-border' : 'border-emerald-300 bg-emerald-50/50'} flex items-center justify-between shadow-clean-xs">
+            <div class="flex items-center space-x-1.5 truncate mr-1.5">
+              <i class="fa-solid ${isMissing ? 'fa-hourglass text-amber-500' : 'fa-check text-emerald-600'} text-[10px] shrink-0"></i>
+              <span class="${isMissing ? 'text-clean-text-secondary font-medium' : 'text-clean-text font-bold'} truncate text-[10px]">${s.label}</span>
+            </div>
+            <span class="text-[8px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${isMissing ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+              ${isMissing ? 'Pending' : 'Resolved'}
+            </span>
+          </div>
+        `;
+      }).join("");
+
+      // Update Raw JSON Envelope
+      document.getElementById("drawer-raw-json").textContent = JSON.stringify(clinical, null, 2);
+    }
+
+    // -----------------------------------------------------------------------
+    // SUBMIT MESSAGE
+    // -----------------------------------------------------------------------
+    async function submitMessage() {
+      const text = chatInput.value.trim();
+      if (!text || isAnalyzing) return;
+
+      if (!currentSessionId) {
+        await startNewChat(false);
+      }
+
+      isAnalyzing = true;
+      chatInput.disabled = true;
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i>`;
+
+      // Optimistically append user message
+      renderUserMessage({
+        content: text,
+        timestamp: new Date().toISOString(),
+      });
+      welcomeHero.classList.add("hidden");
+      messagesList.classList.remove("hidden");
+
+      const container = document.getElementById("messages-stream");
+      container.scrollTop = container.scrollHeight;
+
+      // Reset input
+      chatInput.value = "";
+      chatInput.style.height = "auto";
+
+      // Small compact thinking indicator
+      const thinkingDiv = document.createElement("div");
+      thinkingDiv.id = "thinking-indicator";
+      thinkingDiv.className = "flex items-start space-x-2 sm:space-x-2.5";
+      thinkingDiv.innerHTML = `
+        <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-claude-coral flex items-center justify-center text-white text-[10px] shrink-0 shadow-clean-xs font-bold mt-0.5 animate-pulse select-none">
+          ✻
+        </div>
+        <div class="bg-clean-sidebar border border-clean-border rounded-lg px-2.5 py-1.5 text-[11px] text-clean-text-secondary flex items-center space-x-1.5">
+          <i class="fa-solid fa-circle-notch fa-spin text-claude-coral text-[10px]"></i>
+          <span>Thinking...</span>
+        </div>
+      `;
+      messagesList.appendChild(thinkingDiv);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const [res] = await Promise.all([
+          fetch(`/api/chats/${currentSessionId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text }),
+          }),
+          new Promise(r => setTimeout(r, 450)),
+        ]);
+
+        thinkingDiv.remove();
 
         if (res.ok) {
           const json = await res.json();
-          document.getElementById("feedback-counter").textContent = json.total_feedback_samples;
-          alertBox.className = "text-xs p-2.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium block";
-          alertBox.textContent = `✅ Successfully recorded! Sample added to active learning pool (Total verified: ${json.total_feedback_samples}).`;
-          document.getElementById("feedback-notes").value = "";
-          setTimeout(() => alertBox.classList.add("hidden"), 4000);
+          renderAssistantMessage(json.assistant_message);
+          activeChatTitle.textContent = json.session_title || "Consultation";
+          loadSessions();
+        } else {
+          showErrorInChat("Server error processing message. Please try again.");
         }
       } catch (err) {
-        alertBox.className = "text-xs p-2.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-medium block";
-        alertBox.textContent = "ℹ️ Running in offline browser mode: Feedback verified and logged to console.";
-        console.log("Verified sample:", payload);
+        thinkingDiv.remove();
+        showErrorInChat("Failed to reach server. Please check backend connection.");
+      } finally {
+        isAnalyzing = false;
+        chatInput.disabled = false;
+        chatInput.focus();
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = `<i class="fa-solid fa-arrow-up text-[10px]"></i>`;
+        container.scrollTop = container.scrollHeight;
       }
     }
 
-    function renderClientSideFallback(text) {
-      // Basic fallback emulation if API server is not running
-      const dummy = {
-        raw_text: text,
-        symptoms: text.toLowerCase().includes("scratch") ? ["scratching"] : ["itching"],
-        negated_symptoms: text.toLowerCase().includes("no vomit") ? ["vomiting"] : [],
-        body_locations: [{ part: "ear", side: "left" }],
-        duration: { value: 3, unit: "days" },
-        progression: "worsening",
-        condition_probabilities: {
-          ear_inflammation: 0.78,
-          skin_condition: 0.12,
-          eye_condition: 0.05,
-          other: 0.05
-        },
-        spans: [
-          { entity: "symptom", text: "scratching", start: text.toLowerCase().indexOf("scratching") > -1 ? text.toLowerCase().indexOf("scratching") : 0, end: text.toLowerCase().indexOf("scratching") > -1 ? text.toLowerCase().indexOf("scratching") + 10 : 10, negated: false }
-        ],
-        text_quality_score: 0.85,
-        model_confidence: 0.80,
-        modality_reliability_score: 0.82,
-        emergency_triage: { is_critical: text.toLowerCase().includes("collapse") || text.toLowerCase().includes("emergency"), reason: "Detected emergency keywords", recommendation: "Seek immediate veterinary hospital." },
-        model_version: "symptom_distilbert_v1 (local)"
-      };
-      currentParsedData = dummy;
-      renderResults(dummy, [
-        "Running in local inspector mode.",
-        "Verified clean architecture protocol output."
-      ]);
+    function showErrorInChat(msg) {
+      const div = document.createElement("div");
+      div.className = "flex items-start space-x-2";
+      div.innerHTML = `
+        <div class="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] shrink-0">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="flex-1 bg-rose-50 border border-rose-200 rounded-lg p-2 text-xs text-rose-800">
+          ${escapeHtml(msg)}
+        </div>
+      `;
+      messagesList.appendChild(div);
     }
 
+    // -----------------------------------------------------------------------
+    // ACCURACY BENCHMARKS MODAL
+    // -----------------------------------------------------------------------
+    function openBenchmarkModal() {
+      benchmarkModal.classList.remove("hidden");
+      runEvaluation();
+    }
+
+    function closeBenchmarkModal() {
+      benchmarkModal.classList.add("hidden");
+    }
+
+    async function runEvaluation() {
+      try {
+        const res = await fetch("/api/evaluate");
+        if (res.ok) {
+          const data = await res.json();
+          renderBenchmarkMetrics(data);
+        }
+      } catch (err) {
+        console.error("Evaluation error:", err);
+      }
+    }
+
+    function renderBenchmarkMetrics(data) {
+      if (!data || !data.success) return;
+
+      const accPct = data.overall_accuracy_percent || `${(data.overall_accuracy * 100).toFixed(1)}%`;
+      document.getElementById("sidebar-accuracy").textContent = accPct;
+      document.getElementById("modal-accuracy").textContent = accPct;
+      document.getElementById("modal-total").textContent = data.total_samples;
+      document.getElementById("modal-correct").textContent = data.correct_count;
+
+      const catContainer = document.getElementById("modal-category-bars");
+      catContainer.innerHTML = "";
+      const catMeta = {
+        ear_inflammation: { name: "Ear Inflammation", color: "bg-amber-500", text: "text-amber-800" },
+        skin_condition: { name: "Skin Condition", color: "bg-sky-500", text: "text-sky-800" },
+        eye_condition: { name: "Eye Condition", color: "bg-indigo-500", text: "text-indigo-800" },
+        other: { name: "Other / Systemic", color: "bg-slate-500", text: "text-slate-800" },
+      };
+
+      Object.entries(data.by_condition || {}).forEach(([cat, stats]) => {
+        const meta = catMeta[cat] || { name: cat, color: "bg-claude-coral", text: "text-claude-coral" };
+        const pct = Math.round((stats.accuracy || 0) * 100);
+        const card = document.createElement("div");
+        card.className = "bg-white border border-clean-border rounded-lg p-2 space-y-0.5 font-mono";
+        card.innerHTML = `
+          <div class="flex justify-between items-center text-[10px]">
+            <span class="font-medium text-clean-text">${meta.name}</span>
+            <span class="font-bold ${meta.text}">${pct}%</span>
+          </div>
+          <div class="w-full bg-clean-border rounded-full h-1 overflow-hidden">
+            <div class="${meta.color} h-1 rounded-full" style="width: ${pct}%"></div>
+          </div>
+        `;
+        catContainer.appendChild(card);
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // UTILITIES
+    // -----------------------------------------------------------------------
     function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function formatTime(isoStr) {
+      if (!isoStr) return "";
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch {
+        return "";
+      }
+    }
+
+    function formatAssistantText(text) {
+      if (!text) return "";
+      let html = escapeHtml(text);
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-clean-text">$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em class="italic text-clean-text-secondary">$1</em>');
+      return html;
     }
   </script>
 </body>

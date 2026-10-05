@@ -1,0 +1,27 @@
+{
+  "base_model_name": "distilbert-base-uncased",
+  "num_ner_labels": 13,
+  "num_conditions": 4,
+  "dropout_prob": 0.2,
+  "ner_labels": [
+    "O",
+    "B-symptom",
+    "I-symptom",
+    "B-body_location",
+    "I-body_location",
+    "B-duration",
+    "I-duration",
+    "B-severity",
+    "I-severity",
+    "B-frequency",
+    "I-frequency",
+    "B-progression",
+    "I-progression"
+  ],
+  "condition_labels": [
+    "ear_inflammation",
+    "skin_condition",
+    "eye_condition",
+    "other"
+  ]
+}

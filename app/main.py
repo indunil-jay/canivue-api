@@ -70,6 +70,14 @@ def create_app() -> FastAPI:
     from app.features.symptom_nlp.presentation.router import router as symptom_nlp_router
     app.include_router(symptom_nlp_router, prefix="/api/v1/symptoms", tags=["Symptoms NLP"])
 
+    # Mount Clinical Inspector & Active Learning Studio in development
+    if settings.DEBUG:
+        try:
+            from tools.nlp_inspector.app import app as inspector_app
+            app.mount("/inspector", inspector_app)
+        except Exception:
+            pass
+
     return app
 
 

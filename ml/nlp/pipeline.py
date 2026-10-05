@@ -38,11 +38,6 @@ class SymptomParserPipeline:
         checkpoint_path: str | Path | None = None,
         device: str | None = None,
     ):
-        if checkpoint_path is None:
-            default_path = Path("model_registry/nlp/symptom_distilbert_v1")
-            if default_path.exists() and (default_path / "pytorch_model.bin").exists():
-                checkpoint_path = default_path
-
         self.checkpoint_path = Path(checkpoint_path) if checkpoint_path else None
         self.device = device
         self.model = None
@@ -53,11 +48,9 @@ class SymptomParserPipeline:
         if self.checkpoint_path and self.checkpoint_path.exists():
             self._load_model()
         else:
-            # Fallback heuristic mode when checkpoint is not yet generated
+            # Fallback heuristic mode when checkpoint is not explicitly specified
             self._is_fallback = True
-            self.model_version = (
-                self.checkpoint_path.name if self.checkpoint_path else "symptom_fallback_v1"
-            )
+            self.model_version = "symptom_fallback_v1"
 
     def _load_model(self) -> None:
         """Load tokenizer and trained multi-task transformer checkpoint."""
@@ -397,13 +390,32 @@ class SymptomParserPipeline:
                         }
                     )
 
+        # Anatomical Context Weighting & Emergency Prioritization
+        emergency_alert = check_emergency_triage(text)
+        if emergency_alert.is_critical:
+            condition_votes["other"] += 4
+
+        if any(s["entity"] == "body_location" and "ear" in s["text"].lower() for s in spans):
+            condition_votes["ear_inflammation"] += 3
+        if any(s["entity"] == "body_location" and any(e in s["text"].lower() for e in ["eye", "eyelid"]) for s in spans):
+            condition_votes["eye_condition"] += 3
+            if any(k in normalized_lower for k in ["around", "film", "discharge", "squinting"]):
+                condition_votes["eye_condition"] += 2
+        if any(s["entity"] == "body_location" and any(b in s["text"].lower() for b in ["skin", "belly", "abdomen", "paw", "back"]) for s in spans):
+            condition_votes["skin_condition"] += 2
+
         total_votes = sum(condition_votes.values())
         if total_votes > 0:
             probs = {k: round(v / total_votes, 2) for k, v in condition_votes.items()}
             remainder = round(1.0 - sum(probs.values()), 2)
             probs["other"] = round(probs["other"] + remainder, 2)
         else:
-            probs = {c: 0.25 for c in CONDITION_LABELS}
+            probs = {
+                "ear_inflammation": 0.0,
+                "skin_condition": 0.0,
+                "eye_condition": 0.0,
+                "other": 1.0,
+            }
 
         confidence = 0.85 if total_votes > 0 else 0.30
         return spans, probs, confidence

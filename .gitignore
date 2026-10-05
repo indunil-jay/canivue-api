@@ -65,12 +65,17 @@ htmlcov/
 # release assets, DVC, or cloud storage instead of git; see model_registry/README.md)
 model_registry/**/*.pt
 model_registry/**/*.pth
+model_registry/**/*.bin
 model_registry/**/*.onnx
 model_registry/**/*.h5
 model_registry/**/*.safetensors
 model_registry/**/*checkpoint*/
 !model_registry/**/README.md
 !model_registry/**/.gitkeep
+
+# Windows builds & installers
+*.exe
+vc_layout/
 
 # ML training/experimentation outputs (see ml/)
 ml/**/runs/

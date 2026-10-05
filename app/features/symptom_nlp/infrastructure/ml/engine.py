@@ -23,6 +23,8 @@ SYMPTOM_LEXICON: dict[str, tuple[str, str]] = {
     "head shaking": ("head_shaking", "ear_inflammation"),
     "shaking his head": ("head_shaking", "ear_inflammation"),
     "shaking her head": ("head_shaking", "ear_inflammation"),
+    "shaking head": ("head_shaking", "ear_inflammation"),
+    "ear canal": ("ear_canal", "ear_inflammation"),
     "redness": ("redness", "skin_condition"),
     "red": ("redness", "skin_condition"),
     "bad smell": ("bad_smell", "ear_inflammation"),
@@ -37,16 +39,30 @@ SYMPTOM_LEXICON: dict[str, tuple[str, str]] = {
     "swollen": ("swelling", "skin_condition"),
     "discharge": ("discharge", "eye_condition"),
     "watery eyes": ("discharge", "eye_condition"),
+    "watery eye": ("discharge", "eye_condition"),
     "cloudy eye": ("cloudy_eye", "eye_condition"),
+    "cloudy film": ("cloudy_eye", "eye_condition"),
+    "cloudy": ("cloudy_eye", "eye_condition"),
+    "squinting": ("squinting", "eye_condition"),
     "limping": ("limping", "other"),
     "lethargic": ("lethargy", "other"),
     "reduced activity": ("reduced_activity", "other"),
     "coughing": ("coughing", "other"),
     "vomiting": ("vomiting", "other"),
     "diarrhea": ("diarrhea", "other"),
+    "collapsed": ("collapse", "other"),
+    "collapse": ("collapse", "other"),
+    "struggling to breathe": ("dyspnea", "other"),
+    "rapid breathing": ("dyspnea", "other"),
+    "gasping": ("dyspnea", "other"),
+    "blue gums": ("cyanosis", "other"),
+    "pale blue": ("cyanosis", "other"),
+    "seizures": ("seizures", "other"),
+    "seizure": ("seizures", "other"),
+    "unresponsive": ("unresponsive", "other"),
 }
 
-BODY_PARTS: list[str] = ["ear", "eye", "paw", "back", "abdomen", "skin", "belly", "leg", "tail", "mouth"]
+BODY_PARTS: list[str] = ["ear", "eye", "eyelid", "paw", "back", "abdomen", "skin", "belly", "leg", "tail", "mouth"]
 SIDES: list[str] = ["left", "right", "both"]
 
 DURATION_PATTERNS = [
@@ -255,14 +271,18 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
             if "redness" not in new_symptoms and "redness" in symptoms:
                 new_symptoms.append("redness")
 
-        # 6. Calculate Condition Probabilities
-        # Default baseline bias based on extracted locations/symptoms
+        # 7. Calculate Condition Probabilities with Anatomical Context
+        if emergency_alert.is_critical:
+            condition_votes["other"] += 4
+
         if any(loc.part == "ear" for loc in body_locations):
             condition_votes["ear_inflammation"] += 3
-        if any(loc.part == "eye" for loc in body_locations):
+        if any(loc.part in {"eye", "eyelid"} for loc in body_locations):
             condition_votes["eye_condition"] += 3
-        if any(loc.part in {"skin", "belly", "back"} for loc in body_locations):
-            condition_votes["skin_condition"] += 3
+            if any(k in normalized_lower for k in ["around", "film", "discharge", "squinting"]):
+                condition_votes["eye_condition"] += 2
+        if any(loc.part in {"skin", "belly", "abdomen", "paw", "back"} for loc in body_locations):
+            condition_votes["skin_condition"] += 2
 
         total_votes = sum(condition_votes.values())
         if total_votes > 0:
@@ -272,10 +292,10 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
             probs["other"] = round(probs["other"] + remainder, 2)
         else:
             probs = {
-                "ear_inflammation": 0.25,
-                "skin_condition": 0.25,
-                "eye_condition": 0.25,
-                "other": 0.25,
+                "ear_inflammation": 0.0,
+                "skin_condition": 0.0,
+                "eye_condition": 0.0,
+                "other": 1.0,
             }
 
         # 7. Quality & Confidence Scores
