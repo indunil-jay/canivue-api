@@ -4,13 +4,13 @@
 
 **Blocked by:** 01: Core Clean Architecture Scaffolding and Stub API Endpoint
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Acceptance Criteria
 
-- [ ] `ml/nlp/model.py` defines `MultiTaskSymptomTransformer` with a shared Transformer encoder and dual heads for token NER and sequence classification.
-- [ ] `ml/nlp/dataset.py` aligns token spans with subword tokenizers and integrates `dog_level_train_val_test_split` to avoid animal data leakage.
-- [ ] `ml/nlp/seed_data.py` generates a rich, realistic veterinary seed dataset (JSONL) covering diverse symptoms, body parts, durations, and conditions.
-- [ ] `ml/nlp/train.py` trains the multi-task model with joint weighted loss ($\alpha=0.6 \cdot \text{Loss}_{\text{NER}} + 0.4 \cdot \text{Loss}_{\text{condition}}$) and exports checkpoints to `model_registry/nlp/`.
-- [ ] `ml/nlp/evaluate.py` computes span Macro/Micro F1, condition Macro-F1, Accuracy, and Expected Calibration Error (ECE from `ml.common.metrics`).
-- [ ] Unit tests verify model forward pass shapes, seed dataset generation, and loss calculation.
+- [x] `ml/nlp/model.py` defines `MultiTaskSymptomTransformer` with a shared Transformer encoder and dual heads for token NER and sequence classification.
+- [x] `ml/nlp/dataset.py` aligns token spans with subword tokenizers and integrates `dog_level_train_val_test_split` to avoid animal data leakage.
+- [x] `ml/nlp/seed_data.py` generates a rich, realistic veterinary seed dataset (JSONL) covering diverse symptoms, body parts, durations, and conditions.
+- [x] `ml/nlp/train.py` trains the multi-task model with joint weighted loss ($\alpha=0.6 \cdot \text{Loss}_{\text{NER}} + 0.4 \cdot \text{Loss}_{\text{condition}}$) and exports checkpoints to `model_registry/nlp/`.
+- [x] `ml/nlp/evaluate.py` computes span Macro/Micro F1, condition Macro-F1, Accuracy, and Expected Calibration Error (ECE from `ml.common.metrics`).
+- [x] Unit tests verify model forward pass shapes, seed dataset generation, and loss calculation.
