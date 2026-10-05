@@ -152,3 +152,28 @@ async def test_missing_duration_returns_none_without_fabrication():
 
     assert result.duration is None
     assert "DURATION_NOT_PROVIDED" in result.warnings
+
+
+@pytest.mark.asyncio
+async def test_trained_nlp_engine_with_use_case():
+    from app.features.symptom_nlp.infrastructure.ml.engine import TrainedNLPSymptomEngine
+    from ml.nlp.pipeline import SymptomParserPipeline
+
+    pipeline = SymptomParserPipeline()
+    engine = TrainedNLPSymptomEngine(pipeline=pipeline)
+    use_case = ParseSymptomTextUseCase(engine=engine)
+
+    text = "My dog has been scratching left ear for three days and getting worse."
+    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+
+    assert result.raw_text == text
+    assert "scratching" in result.symptoms
+    assert any(loc.part == "ear" for loc in result.body_locations)
+    assert result.duration is not None
+    assert result.duration.value == 3
+    assert result.duration.unit == "days"
+    assert result.progression == "worsening"
+    assert "ear_inflammation" in result.condition_probabilities
+    assert result.model_version is not None
+    assert result.model_version != "stub_nlp_engine_v1"
+

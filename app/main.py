@@ -19,6 +19,13 @@ async def lifespan(app: FastAPI):
     if settings.DEBUG:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
+    # Pre-warm real ML engines on startup if configured (lifespan eager loading)
+    if settings.USE_REAL_ML_MODELS:
+        from app.features.symptom_nlp.presentation.dependencies import get_symptom_engine
+
+        get_symptom_engine()
+
     yield
     # Shutdown: Dispose engine connection pool
     await engine.dispose()

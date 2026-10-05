@@ -1,8 +1,10 @@
 import re
+from typing import Any
 
 from app.features.symptom_nlp.domain.entities import (
     BodyLocation,
     DurationEntity,
+    EmergencyTriageAlert,
     ExtractedSpan,
     SymptomParseResult,
 )
@@ -312,3 +314,81 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
             warnings=warnings,
             model_version=self.get_version(),
         )
+
+
+class TrainedNLPSymptomEngine(NLPSymptomEngineProtocol):
+    """Production Clean Architecture adapter wrapping SymptomParserPipeline.
+
+    Loads model weights from model_registry/nlp/ and executes inference in a
+    worker thread (asyncio.to_thread) to prevent blocking the FastAPI event loop.
+    """
+
+    def __init__(
+        self,
+        checkpoint_path: str | None = None,
+        pipeline: Any = None,
+    ):
+        if pipeline is not None:
+            self._pipeline = pipeline
+        else:
+            from ml.nlp.pipeline import SymptomParserPipeline
+
+            self._pipeline = SymptomParserPipeline(checkpoint_path=checkpoint_path)
+
+    def get_version(self) -> str:
+        return getattr(self._pipeline, "model_version", "symptom_distilbert_v1")
+
+    async def parse(self, text: str) -> SymptomParseResult:
+        import asyncio
+
+        res = await asyncio.to_thread(self._pipeline.predict, text)
+
+        # Convert dictionary output to domain dataclass entities
+        body_locations = [
+            BodyLocation(part=loc["part"], side=loc.get("side"))
+            for loc in res.get("body_locations", [])
+        ]
+        duration = None
+        if res.get("duration"):
+            duration = DurationEntity(
+                value=res["duration"]["value"],
+                unit=res["duration"]["unit"],
+            )
+        spans = [
+            ExtractedSpan(
+                entity=s["entity"],
+                text=s["text"],
+                start=s["start"],
+                end=s["end"],
+                negated=s.get("negated", False),
+            )
+            for s in res.get("spans", [])
+        ]
+        emergency_raw = res.get("emergency_triage", {})
+        emergency = EmergencyTriageAlert(
+            is_critical=emergency_raw.get("is_critical", False),
+            reason=emergency_raw.get("reason"),
+            recommendation=emergency_raw.get("recommendation"),
+        )
+
+        return SymptomParseResult(
+            raw_text=res["raw_text"],
+            symptoms=res.get("symptoms", []),
+            negated_symptoms=res.get("negated_symptoms", []),
+            body_locations=body_locations,
+            duration=duration,
+            frequency=res.get("frequency"),
+            severity_cues=res.get("severity_cues", []),
+            new_symptoms=res.get("new_symptoms", []),
+            progression=res.get("progression"),
+            behaviours=res.get("behaviours", []),
+            condition_probabilities=res.get("condition_probabilities", {}),
+            spans=spans,
+            text_quality_score=res.get("text_quality_score", 0.0),
+            model_confidence=res.get("model_confidence", 0.0),
+            modality_reliability_score=res.get("modality_reliability_score", 0.0),
+            emergency_triage=emergency,
+            warnings=res.get("warnings", []),
+            model_version=self.get_version(),
+        )
+

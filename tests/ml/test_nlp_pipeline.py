@@ -1,5 +1,7 @@
 """Tests for ml/nlp multi-task offline training pipeline."""
 
+import pytest
+
 from ml.nlp.dataset import (
     CONDITION_LABELS,
     LABEL2ID,
@@ -101,3 +103,48 @@ def test_compute_spans_helper():
     assert spans[0]["end"] == 10
     assert spans[1]["text"] == "ear"
     assert spans[2]["text"] == "3 days"
+
+
+def test_symptom_parser_pipeline_single_prediction():
+    """Verify SymptomParserPipeline produces valid structured output in fallback/heuristic mode."""
+    from ml.nlp.pipeline import SymptomParserPipeline
+
+    pipeline = SymptomParserPipeline()
+    text = "My dog has been scratching left ear for two days and getting worse."
+    result = pipeline.predict(text)
+
+    assert result["raw_text"] == text
+    assert "scratching" in result["symptoms"]
+    assert any(loc["part"] == "ear" for loc in result["body_locations"])
+    assert result["duration"]["value"] == 2
+    assert result["duration"]["unit"] == "days"
+    assert result["progression"] == "worsening"
+    assert "ear_inflammation" in result["condition_probabilities"]
+    assert result["emergency_triage"]["is_critical"] is False
+    assert len(result["spans"]) > 0
+
+
+def test_symptom_parser_pipeline_batch_prediction():
+    """Verify SymptomParserPipeline batch prediction handles multiple inputs."""
+    from ml.nlp.pipeline import SymptomParserPipeline
+
+    pipeline = SymptomParserPipeline()
+    texts = [
+        "Scratching ear constantly for 3 days.",
+        "Emergency: Dog collapsed and has severe trauma.",
+    ]
+    results = pipeline.predict_batch(texts)
+
+    assert len(results) == 2
+    assert results[0]["emergency_triage"]["is_critical"] is False
+    assert results[1]["emergency_triage"]["is_critical"] is True
+
+
+def test_symptom_parser_pipeline_empty_text_raises():
+    """Verify SymptomParserPipeline raises ValueError on empty text."""
+    from ml.nlp.pipeline import SymptomParserPipeline
+
+    pipeline = SymptomParserPipeline()
+    with pytest.raises(ValueError, match="Input text cannot be empty"):
+        pipeline.predict("   ")
+

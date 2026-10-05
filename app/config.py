@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     # Per-model settings (e.g. <X>_MODEL_BACKEND, <X>_MODEL_WEIGHTS_PATH) belong here too,
     # added alongside each AI feature as it's built -- see .agents/skills/ml-feature/SKILL.md.
     MODEL_REGISTRY_DIR: str = "./model_registry"
+    USE_REAL_ML_MODELS: bool = False
+    NLP_MODEL_CHECKPOINT: str = "nlp/symptom_distilbert_v1"
 
     model_config = SettingsConfigDict(
         env_file=".env",

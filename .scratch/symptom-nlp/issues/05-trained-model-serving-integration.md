@@ -4,12 +4,12 @@
 
 **Blocked by:** 02: Emergency Red-Flag Triage Interceptor and Negation Scoping, 03: Temporal Duration Normalization, Frequency Mapping, and Span Offsets, 04: Offline Multi-Task Training Pipeline (ml/nlp)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Acceptance Criteria
 
-- [ ] `ml/nlp/pipeline.py` implements `SymptomParserPipeline` supporting single and batch inference with automatic fallback for cold starts.
-- [ ] `TrainedNLPSymptomEngine` loads model weights from `MODEL_REGISTRY_DIR/nlp/<checkpoint>` and conforms strictly to `NLPSymptomEngineProtocol`.
-- [ ] FastAPI dependency injection provider conditionally supplies `TrainedNLPSymptomEngine` or `StubNLPSymptomEngine` based on application settings.
-- [ ] Response stamps `model_version` matching the checkpoint identifier for audit compliance (FR-16).
-- [ ] Integration tests verify that swapping from stub to trained engine produces valid API responses matching the exact same schema.
+- [x] `ml/nlp/pipeline.py` implements `SymptomParserPipeline` supporting single and batch inference with automatic fallback for cold starts.
+- [x] `TrainedNLPSymptomEngine` loads model weights from `MODEL_REGISTRY_DIR/nlp/<checkpoint>` and conforms strictly to `NLPSymptomEngineProtocol`.
+- [x] FastAPI dependency injection provider conditionally supplies `TrainedNLPSymptomEngine` or `StubNLPSymptomEngine` based on application settings.
+- [x] Response stamps `model_version` matching the checkpoint identifier for audit compliance (FR-16).
+- [x] Integration tests verify that swapping from stub to trained engine produces valid API responses matching the exact same schema.
