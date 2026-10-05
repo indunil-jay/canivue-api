@@ -10,6 +10,7 @@ EMERGENCY_RED_FLAGS: list[tuple[str, str]] = [
     (r"\b(seizures?|convulsing|convulsions?)\b", "Acute neurological seizure activity"),
     (r"\b(poison(ed|ing)?|ate chocolate|swallowed battery|rat poison|toxic)\b", "Suspected acute toxic ingestion"),
     (r"\b(heavy bleeding|arterial bleeding|hit by car)\b", "Severe acute trauma or hemorrhage"),
+    (r"\b(distended abdomen|distended stomach|bloat(ed)?|dry heaving and bloated)\b", "Suspected acute gastric dilatation-volvulus (bloat)"),
 ]
 
 

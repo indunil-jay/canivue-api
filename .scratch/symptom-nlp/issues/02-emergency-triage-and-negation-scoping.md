@@ -4,13 +4,13 @@
 
 **Blocked by:** 01: Core Clean Architecture Scaffolding and Stub API Endpoint
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Acceptance Criteria
 
-- [ ] `preprocessing.py` implements an emergency keyword triage detector covering acute respiratory, cardiovascular, toxicological, and neurological red flags.
-- [ ] Emergency alert schema (`EmergencyTriageAlert`) returned in API payload whenever acute cues are detected, with empty/safe defaults otherwise.
-- [ ] Negation scope detector recognizes common negation particles ("no", "not", "stopped", "never", "without", "resolved") within symptom windows.
-- [ ] Negated symptoms are retained in `negated_symptoms` for clinical history but excluded from `symptoms` and condition probability calculations.
-- [ ] Unit tests verify emergency trigger phrases and safe non-emergency phrases.
-- [ ] Unit tests verify negation scoping on sentences containing mixed active and negated symptoms.
+- [x] `preprocessing.py` implements an emergency keyword triage detector covering acute respiratory, cardiovascular, toxicological, and neurological red flags.
+- [x] Emergency alert schema (`EmergencyTriageAlert`) returned in API payload whenever acute cues are detected, with empty/safe defaults otherwise.
+- [x] Negation scope detector recognizes common negation particles ("no", "not", "stopped", "never", "without", "resolved") within symptom windows.
+- [x] Negated symptoms are retained in `negated_symptoms` for clinical history but excluded from `symptoms` and condition probability calculations.
+- [x] Unit tests verify emergency trigger phrases and safe non-emergency phrases.
+- [x] Unit tests verify negation scoping on sentences containing mixed active and negated symptoms.

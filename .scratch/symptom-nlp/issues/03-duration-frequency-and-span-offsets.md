@@ -4,12 +4,12 @@
 
 **Blocked by:** 01: Core Clean Architecture Scaffolding and Stub API Endpoint
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Acceptance Criteria
 
-- [ ] Deterministic temporal duration parser converts numeric and word numerals (e.g. "three", "2") with units (hours, days, weeks, months) into `{value: int, unit: str}`.
-- [ ] Relative time phrases (e.g. "since yesterday" -> 1 day, "since this morning" -> hours) normalize accurately. Missing duration returns `null` without fabricating data.
-- [ ] Frequency and progression classifiers identify trajectory terms (`worsening`, `improving`, `stable`) and behavioural descriptors.
-- [ ] Extracted entities populate a `spans` array with `{entity: str, text: str, start: int, end: int, negated: bool}` verified against original string indices.
-- [ ] Full unit test suite asserting accuracy of duration normalization, frequency extraction, and span offset bounds.
+- [x] Deterministic temporal duration parser converts numeric and word numerals (e.g. "three", "2") with units (hours, days, weeks, months) into `{value: int, unit: str}`.
+- [x] Relative time phrases (e.g. "since yesterday" -> 1 day, "since this morning" -> hours) normalize accurately. Missing duration returns `null` without fabricating data.
+- [x] Frequency and progression classifiers identify trajectory terms (`worsening`, `improving`, `stable`) and behavioural descriptors.
+- [x] Extracted entities populate a `spans` array with `{entity: str, text: str, start: int, end: int, negated: bool}` verified against original string indices.
+- [x] Full unit test suite asserting accuracy of duration normalization, frequency extraction, and span offset bounds.

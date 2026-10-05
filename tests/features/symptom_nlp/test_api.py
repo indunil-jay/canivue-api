@@ -32,3 +32,31 @@ async def test_parse_symptoms_api_empty_text(client: AsyncClient):
     body = response.json()
     assert body["success"] is False
     assert body["error"]["message"] == "Symptom description text cannot be empty."
+
+
+@pytest.mark.asyncio
+async def test_parse_symptoms_api_emergency_alert(client: AsyncClient):
+    payload = {"text": "My dog collapsed and is gasping for air."}
+    response = await client.post("/api/v1/symptoms/parse", json=payload)
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["success"] is True
+    triage = body["data"]["emergency_triage"]
+    assert triage["is_critical"] is True
+    assert "Sudden collapse" in triage["reason"] or "respiratory" in triage["reason"].lower()
+
+
+@pytest.mark.asyncio
+async def test_parse_symptoms_api_negation(client: AsyncClient):
+    payload = {"text": "Dog has hair loss on skin, no vomiting, not coughing."}
+    response = await client.post("/api/v1/symptoms/parse", json=payload)
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["success"] is True
+    data = body["data"]
+    assert "hair_loss" in data["symptoms"]
+    assert "vomiting" in data["negated_symptoms"]
+    assert "coughing" in data["negated_symptoms"]
+    assert "vomiting" not in data["symptoms"]

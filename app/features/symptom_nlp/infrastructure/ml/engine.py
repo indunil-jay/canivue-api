@@ -48,11 +48,23 @@ BODY_PARTS: list[str] = ["ear", "eye", "paw", "back", "abdomen", "skin", "belly"
 SIDES: list[str] = ["left", "right", "both"]
 
 DURATION_PATTERNS = [
-    (r"\b(?:for\s+)?(one|two|three|four|five|six|seven|\d+)\s*(days?)\b", "days"),
-    (r"\b(?:for\s+)?(one|two|three|four|\d+)\s*(weeks?)\b", "weeks"),
-    (r"\b(?:for\s+)?(one|two|three|\d+)\s*(months?)\b", "months"),
-    (r"\b(?:for\s+)?(one|two|three|\d+)\s*(hours?)\b", "hours"),
-    (r"\bsince yesterday\b", "yesterday"),
+    (r"\bsince this morning\b", "since_morning", 6, "hours"),
+    (r"\bsince yesterday\b", "yesterday", 1, "days"),
+    (r"\b(?:for\s+)?(?:a\s+)?couple(?:\s+of)?\s*(days?)\b", "couple_days", 2, "days"),
+    (r"\b(?:for\s+)?(?:a\s+)?couple(?:\s+of)?\s*(weeks?)\b", "couple_weeks", 2, "weeks"),
+    (r"\b(?:for\s+)?(?:a\s+)?week\b", "a_week", 1, "weeks"),
+    (r"\b(?:for\s+)?several\s*(days?)\b", "several_days", 3, "days"),
+    (r"\b(?:for\s+)?(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(days?)\b", "num", None, "days"),
+    (r"\b(?:for\s+)?(one|two|three|four|five|six|\d+)\s*(weeks?)\b", "num", None, "weeks"),
+    (r"\b(?:for\s+)?(one|two|three|four|five|six|\d+)\s*(months?)\b", "num", None, "months"),
+    (r"\b(?:for\s+)?(one|two|three|four|five|six|eight|twelve|twenty-four|\d+)\s*(hours?)\b", "num", None, "hours"),
+]
+
+FREQUENCY_PATTERNS = [
+    (r"\b(constantly|all day|non-stop|continuous(?:ly)?)\b", "constant", "high"),
+    (r"\b(several times a day|multiple times daily|frequently|often)\b", "frequent", "moderate_high"),
+    (r"\b(once a day|daily|every day)\b", "daily", "regular"),
+    (r"\b(occasionally|intermittently|sometimes|now and then)\b", "intermittent", "low"),
 ]
 
 WORD_TO_NUM = {
@@ -63,6 +75,11 @@ WORD_TO_NUM = {
     "five": 5,
     "six": 6,
     "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "twelve": 12,
+    "twenty-four": 24,
 }
 
 
@@ -144,28 +161,92 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
 
         # 4. Extract Duration
         duration_entity: DurationEntity | None = None
-        for pattern, unit in DURATION_PATTERNS:
+        for pattern, kind, default_val, unit in DURATION_PATTERNS:
             match = re.search(pattern, normalized_lower)
             if match:
-                if unit == "yesterday":
-                    duration_entity = DurationEntity(value=1, unit="days")
-                else:
+                if kind == "num":
                     val_str = match.group(1).lower()
                     val = WORD_TO_NUM.get(val_str, int(val_str) if val_str.isdigit() else 1)
                     duration_entity = DurationEntity(value=val, unit=unit)
-                spans.append(ExtractedSpan(entity="duration", text=match.group(0), start=match.start(), end=match.end()))
+                else:
+                    duration_entity = DurationEntity(value=default_val, unit=unit)
+                spans.append(
+                    ExtractedSpan(
+                        entity="duration",
+                        text=text[match.start():match.end()],
+                        start=match.start(),
+                        end=match.end(),
+                    )
+                )
                 break
 
-        # 5. Extract Progression & Severity Cues
+        # 5. Extract Frequency
+        frequency_dict: dict[str, str] | None = None
+        for pattern, descriptor, rate in FREQUENCY_PATTERNS:
+            match = re.search(pattern, normalized_lower)
+            if match:
+                frequency_dict = {
+                    "descriptor": descriptor,
+                    "frequency_rate": rate,
+                }
+                spans.append(
+                    ExtractedSpan(
+                        entity="frequency",
+                        text=text[match.start():match.end()],
+                        start=match.start(),
+                        end=match.end(),
+                    )
+                )
+                break
+
+        # 6. Extract Progression & Severity Cues
         progression: str | None = None
-        if re.search(r"\b(getting worse|worse|worsening|increasing|becoming redder|spreading)\b", normalized_lower):
+        prog_match = re.search(
+            r"\b(getting worse|worse|worsening|increasing|becoming redder|spreading)\b",
+            normalized_lower,
+        )
+        if prog_match:
             progression = "worsening"
             severity_cues.append("getting_worse")
-        elif re.search(r"\b(getting better|improving|less frequent|reduced)\b", normalized_lower):
-            progression = "improving"
-            severity_cues.append("improving")
-        elif re.search(r"\b(unchanged|same as before|no change|stable)\b", normalized_lower):
-            progression = "stable"
+            spans.append(
+                ExtractedSpan(
+                    entity="progression",
+                    text=text[prog_match.start():prog_match.end()],
+                    start=prog_match.start(),
+                    end=prog_match.end(),
+                )
+            )
+        else:
+            prog_match = re.search(
+                r"\b(getting better|improving|less frequent|reduced)\b",
+                normalized_lower,
+            )
+            if prog_match:
+                progression = "improving"
+                severity_cues.append("improving")
+                spans.append(
+                    ExtractedSpan(
+                        entity="progression",
+                        text=text[prog_match.start():prog_match.end()],
+                        start=prog_match.start(),
+                        end=prog_match.end(),
+                    )
+                )
+            else:
+                prog_match = re.search(
+                    r"\b(unchanged|same as before|no change|stable)\b",
+                    normalized_lower,
+                )
+                if prog_match:
+                    progression = "stable"
+                    spans.append(
+                        ExtractedSpan(
+                            entity="progression",
+                            text=text[prog_match.start():prog_match.end()],
+                            start=prog_match.start(),
+                            end=prog_match.end(),
+                        )
+                    )
 
         if re.search(r"\b(becoming red|getting red)\b", normalized_lower):
             severity_cues.append("becoming_red")
@@ -217,7 +298,7 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
             negated_symptoms=negated_symptoms,
             body_locations=body_locations,
             duration=duration_entity,
-            frequency=None,
+            frequency=frequency_dict,
             severity_cues=severity_cues,
             new_symptoms=new_symptoms,
             progression=progression,
