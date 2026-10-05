@@ -4,14 +4,14 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 ## Acceptance Criteria
 
-- [ ] Domain layer (`domain/entities.py`, `domain/repositories.py`) defines pure entities (`SymptomParseResult`, `ConditionProbability`, `EmergencyTriageAlert`) and the `NLPSymptomEngineProtocol` with zero framework dependencies.
-- [ ] Application layer (`application/use_cases.py`, `application/dtos.py`) coordinates input parsing and invokes the engine protocol.
-- [ ] Infrastructure layer (`infrastructure/ml/engine.py`, `infrastructure/ml/preprocessing.py`) implements `StubNLPSymptomEngine` with baseline heuristic symptom extraction, 4-class condition probabilities (`ear_inflammation`, `skin_condition`, `eye_condition`, `other`), and initial text quality scoring.
-- [ ] Presentation layer (`presentation/schemas.py`, `presentation/dependencies.py`, `presentation/router.py`) exposes `POST /api/v1/symptoms/parse` returning standard `APIResponse` envelopes.
-- [ ] Router registered in `app/main.py` under prefix `/api/v1/symptoms`.
-- [ ] Unit tests in `tests/features/symptom_nlp/test_use_cases.py` verify use case behavior.
-- [ ] Integration tests in `tests/features/symptom_nlp/test_api.py` verify HTTP status codes, validation errors, and response shapes with `httpx.AsyncClient`.
+- [x] Domain layer (`domain/entities.py`, `domain/repositories.py`) defines pure entities (`SymptomParseResult`, `ConditionProbability`, `EmergencyTriageAlert`) and the `NLPSymptomEngineProtocol` with zero framework dependencies.
+- [x] Application layer (`application/use_cases.py`, `application/dtos.py`) coordinates input parsing and invokes the engine protocol.
+- [x] Infrastructure layer (`infrastructure/ml/engine.py`, `infrastructure/ml/preprocessing.py`) implements `StubNLPSymptomEngine` with baseline heuristic symptom extraction, 4-class condition probabilities (`ear_inflammation`, `skin_condition`, `eye_condition`, `other`), and initial text quality scoring.
+- [x] Presentation layer (`presentation/schemas.py`, `presentation/dependencies.py`, `presentation/router.py`) exposes `POST /api/v1/symptoms/parse` returning standard `APIResponse` envelopes.
+- [x] Router registered in `app/main.py` under prefix `/api/v1/symptoms`.
+- [x] Unit tests in `tests/features/symptom_nlp/test_use_cases.py` verify use case behavior.
+- [x] Integration tests in `tests/features/symptom_nlp/test_api.py` verify HTTP status codes, validation errors, and response shapes with `httpx.AsyncClient`.

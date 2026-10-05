@@ -60,6 +60,9 @@ def create_app() -> FastAPI:
     from app.features.sample.presentation.router import router as sample_router
     app.include_router(sample_router, prefix="/api/v1/samples", tags=["Sample Feature"])
 
+    from app.features.symptom_nlp.presentation.router import router as symptom_nlp_router
+    app.include_router(symptom_nlp_router, prefix="/api/v1/symptoms", tags=["Symptoms NLP"])
+
     return app
 
 
