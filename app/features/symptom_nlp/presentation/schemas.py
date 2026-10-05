@@ -54,3 +54,27 @@ class SymptomParseResponseData(BaseModel):
     emergency_triage: EmergencyTriageSchema
     warnings: list[str] = Field(default_factory=list)
     model_version: str
+
+
+class StartIntakeRequest(BaseModel):
+    dog_id: str = Field(..., description="Unique canine identifier")
+    initial_text: str = Field(..., min_length=1, description="Initial symptom text reported by dog owner")
+
+
+class IntakeTurnRequest(BaseModel):
+    message: str = Field(..., min_length=1, description="Follow-up response or clarification from dog owner")
+
+
+class IntakeSessionResponseData(BaseModel):
+    session_id: str
+    dog_id: str
+    status: str
+    turn_count: int
+    agent_message: str
+    missing_slots: list[str] = Field(default_factory=list)
+    current_parse: SymptomParseResponseData
+    emergency_triage: EmergencyTriageSchema
+    is_complete: bool
+    created_at: str
+    updated_at: str
+

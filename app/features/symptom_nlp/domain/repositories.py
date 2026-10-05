@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.features.symptom_nlp.domain.entities import SymptomParseResult
+from app.features.symptom_nlp.domain.entities import IntakeSession, SymptomParseResult
 
 
 class NLPSymptomEngineProtocol(Protocol):
@@ -17,3 +17,20 @@ class NLPSymptomEngineProtocol(Protocol):
     def get_version(self) -> str:
         """Return the version identifier of the loaded model checkpoint."""
         ...
+
+
+class IntakeSessionRepositoryProtocol(Protocol):
+    """Protocol for persisting and retrieving multi-turn intake sessions."""
+
+    async def get(self, session_id: str) -> "IntakeSession | None":
+        """Retrieve an intake session by unique identifier."""
+        ...
+
+    async def save(self, session: "IntakeSession") -> None:
+        """Persist or update an intake session."""
+        ...
+
+    async def delete(self, session_id: str) -> bool:
+        """Delete an intake session."""
+        ...
+

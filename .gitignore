@@ -37,6 +37,11 @@ env/
 .claude/
 .gemini/
 .antigravity/
+.scratch/
+docs/wayfinder/
+docs/specs/canine-intake-agent-spec.md
+
+
 
 # IDE & Editors
 .vscode/

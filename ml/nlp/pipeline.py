@@ -38,6 +38,11 @@ class SymptomParserPipeline:
         checkpoint_path: str | Path | None = None,
         device: str | None = None,
     ):
+        if checkpoint_path is None:
+            default_path = Path("model_registry/nlp/symptom_distilbert_v1")
+            if default_path.exists() and (default_path / "pytorch_model.bin").exists():
+                checkpoint_path = default_path
+
         self.checkpoint_path = Path(checkpoint_path) if checkpoint_path else None
         self.device = device
         self.model = None

@@ -3,22 +3,30 @@ from pathlib import Path
 from fastapi import Depends
 
 from app.config import settings
-from app.features.symptom_nlp.application.use_cases import ParseSymptomTextUseCase
-from app.features.symptom_nlp.domain.repositories import NLPSymptomEngineProtocol
+from app.features.symptom_nlp.application.use_cases import (
+    CompleteIntakeSessionUseCase,
+    ConductIntakeTurnUseCase,
+    ParseSymptomTextUseCase,
+    StartIntakeSessionUseCase,
+)
+from app.features.symptom_nlp.domain.repositories import (
+    IntakeSessionRepositoryProtocol,
+    NLPSymptomEngineProtocol,
+)
 from app.features.symptom_nlp.infrastructure.ml.engine import (
     StubNLPSymptomEngine,
     TrainedNLPSymptomEngine,
 )
+from app.features.symptom_nlp.infrastructure.session_repository import (
+    InMemoryIntakeSessionRepository,
+)
 
 _cached_engine: NLPSymptomEngineProtocol | None = None
+_session_repo: IntakeSessionRepositoryProtocol | None = None
 
 
 def get_symptom_engine() -> NLPSymptomEngineProtocol:
-    """Dependency provider for the NLP Symptom engine.
-    
-    Returns TrainedNLPSymptomEngine when USE_REAL_ML_MODELS is True and checkpoint exists,
-    otherwise falls back to deterministic StubNLPSymptomEngine.
-    """
+    """Dependency provider for the NLP Symptom engine."""
     global _cached_engine
     if _cached_engine is not None:
         return _cached_engine
@@ -38,8 +46,42 @@ def set_symptom_engine_override(engine: NLPSymptomEngineProtocol | None) -> None
     _cached_engine = engine
 
 
+def get_intake_session_repository() -> IntakeSessionRepositoryProtocol:
+    """Dependency provider for the IntakeSessionRepository."""
+    global _session_repo
+    if _session_repo is None:
+        _session_repo = InMemoryIntakeSessionRepository()
+    return _session_repo
+
+
 def get_parse_symptom_use_case(
     engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
 ) -> ParseSymptomTextUseCase:
     """Dependency provider for ParseSymptomTextUseCase."""
     return ParseSymptomTextUseCase(engine=engine)
+
+
+def get_start_intake_use_case(
+    engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
+    session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
+) -> StartIntakeSessionUseCase:
+    """Dependency provider for StartIntakeSessionUseCase."""
+    return StartIntakeSessionUseCase(engine=engine, session_repo=session_repo)
+
+
+def get_conduct_intake_turn_use_case(
+    engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
+    session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
+) -> ConductIntakeTurnUseCase:
+    """Dependency provider for ConductIntakeTurnUseCase."""
+    return ConductIntakeTurnUseCase(engine=engine, session_repo=session_repo)
+
+
+def get_complete_intake_session_use_case(
+    session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
+) -> CompleteIntakeSessionUseCase:
+    """Dependency provider for CompleteIntakeSessionUseCase."""
+    return CompleteIntakeSessionUseCase(session_repo=session_repo)
+
+
+

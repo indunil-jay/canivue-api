@@ -55,3 +55,26 @@ class SymptomParseResult:
     emergency_triage: EmergencyTriageAlert = field(default_factory=EmergencyTriageAlert)
     warnings: list[str] = field(default_factory=list)
     model_version: str = "stub_nlp_engine_v1"
+
+
+@dataclass
+class IntakeMessage:
+    role: str
+    content: str
+    created_at: str
+
+
+@dataclass
+class IntakeSession:
+    session_id: str
+    dog_id: str
+    status: str
+    turn_count: int
+    messages: list[IntakeMessage]
+    accumulated_parse: SymptomParseResult
+    missing_slots: list[str]
+    agent_message: str
+    created_at: str
+    updated_at: str
+    is_complete: bool = False
+

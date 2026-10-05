@@ -65,6 +65,25 @@ RAW_TEMPLATES: dict[str, list[dict[str, Any]]] = {
             ],
             "is_emergency": False,
         },
+        {
+            "text": "Chronic odor and yellow discharge from left ear for 10 days.",
+            "entities": [
+                {"entity": "symptom", "text": "odor"},
+                {"entity": "symptom", "text": "discharge"},
+                {"entity": "body_location", "text": "left ear"},
+                {"entity": "duration", "text": "10 days"},
+            ],
+            "is_emergency": False,
+        },
+        {
+            "text": "Dog is tilting head and rubbing right ear on carpet constantly.",
+            "entities": [
+                {"entity": "symptom", "text": "tilting head"},
+                {"entity": "body_location", "text": "right ear"},
+                {"entity": "frequency", "text": "constantly"},
+            ],
+            "is_emergency": False,
+        },
     ],
     "skin_condition": [
         {
@@ -96,6 +115,28 @@ RAW_TEMPLATES: dict[str, list[dict[str, Any]]] = {
                 {"entity": "frequency", "text": "constantly"},
                 {"entity": "progression", "text": "spreading"},
                 {"entity": "duration", "text": "5 days"},
+            ],
+            "is_emergency": False,
+        },
+        {
+            "text": "Constant licking of front paw causing hair loss and bleeding for 4 days.",
+            "entities": [
+                {"entity": "frequency", "text": "Constant"},
+                {"entity": "symptom", "text": "licking"},
+                {"entity": "body_location", "text": "front paw"},
+                {"entity": "symptom", "text": "hair loss"},
+                {"entity": "symptom", "text": "bleeding"},
+                {"entity": "duration", "text": "4 days"},
+            ],
+            "is_emergency": False,
+        },
+        {
+            "text": "Crusty scabs and severe itching on belly since last week.",
+            "entities": [
+                {"entity": "symptom", "text": "scabs"},
+                {"entity": "symptom", "text": "itching"},
+                {"entity": "body_location", "text": "belly"},
+                {"entity": "duration", "text": "since last week"},
             ],
             "is_emergency": False,
         },
@@ -131,6 +172,27 @@ RAW_TEMPLATES: dict[str, list[dict[str, Any]]] = {
             ],
             "is_emergency": False,
         },
+        {
+            "text": "Squinting and yellow discharge from left eye for 2 days.",
+            "entities": [
+                {"entity": "symptom", "text": "Squinting"},
+                {"entity": "symptom", "text": "discharge"},
+                {"entity": "body_location", "text": "left eye"},
+                {"entity": "duration", "text": "2 days"},
+            ],
+            "is_emergency": False,
+        },
+        {
+            "text": "Cloudy film over right eye and redness around eyelid since morning.",
+            "entities": [
+                {"entity": "symptom", "text": "Cloudy"},
+                {"entity": "body_location", "text": "right eye"},
+                {"entity": "symptom", "text": "redness"},
+                {"entity": "body_location", "text": "eyelid"},
+                {"entity": "duration", "text": "since morning"},
+            ],
+            "is_emergency": False,
+        },
     ],
     "other": [
         {
@@ -153,6 +215,15 @@ RAW_TEMPLATES: dict[str, list[dict[str, Any]]] = {
             "is_emergency": False,
         },
         {
+            "text": "Severe coughing and wheezing after exercise for 1 week.",
+            "entities": [
+                {"entity": "symptom", "text": "coughing"},
+                {"entity": "symptom", "text": "wheezing"},
+                {"entity": "duration", "text": "1 week"},
+            ],
+            "is_emergency": False,
+        },
+        {
             "text": "Emergency: my dog collapsed and is struggling to breathe right now.",
             "entities": [
                 {"entity": "symptom", "text": "collapsed"},
@@ -160,8 +231,18 @@ RAW_TEMPLATES: dict[str, list[dict[str, Any]]] = {
             ],
             "is_emergency": True,
         },
+        {
+            "text": "Urgent alert: dog collapsed with blue gums and rapid breathing.",
+            "entities": [
+                {"entity": "symptom", "text": "collapsed"},
+                {"entity": "symptom", "text": "blue gums"},
+                {"entity": "symptom", "text": "breathing"},
+            ],
+            "is_emergency": True,
+        },
     ],
 }
+
 
 
 def compute_spans(text: str, entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -197,8 +278,8 @@ def compute_spans(text: str, entities: list[dict[str, Any]]) -> list[dict[str, A
 
 
 def generate_seed_records(
-    num_dogs: int = 25,
-    records_per_dog_range: tuple[int, int] = (1, 3),
+    num_dogs: int = 50,
+    records_per_dog_range: tuple[int, int] = (2, 4),
     seed: int = 42,
 ) -> list[dict[str, Any]]:
     """Generate a synthetic veterinary dataset ensuring multiple observations per dog.
@@ -264,10 +345,11 @@ def load_seed_dataset(input_path: str | Path) -> list[dict[str, Any]]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate veterinary NLP seed dataset")
     parser.add_argument("--out", type=str, default="data/seed_symptoms.jsonl")
-    parser.add_argument("--num-dogs", type=int, default=30)
+    parser.add_argument("--num-dogs", type=int, default=50)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
     generated = generate_seed_records(num_dogs=args.num_dogs, seed=args.seed)
     export_seed_dataset(args.out, generated)
     print(f"Generated {len(generated)} symptom records across {args.num_dogs} dogs -> {args.out}")
+
