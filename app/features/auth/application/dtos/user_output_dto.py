@@ -6,8 +6,6 @@ from app.features.auth.domain.enums.role import Role
 
 @dataclass(frozen=True)
 class UserOutputDTO:
-    """Standardized User DTO for cross-use-case output and presentation mapping."""
-
     id: int
     email: str
     role: Role
@@ -16,12 +14,3 @@ class UserOutputDTO:
     permissions: list[str]
     created_at: datetime
     updated_at: datetime
-
-
-@dataclass(frozen=True)
-class TokenPairOutputDTO:
-    """Standardized Token Pair DTO for access and refresh token outputs."""
-
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"

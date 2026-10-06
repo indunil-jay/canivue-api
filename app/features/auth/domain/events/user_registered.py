@@ -7,9 +7,7 @@ def _utc_now() -> datetime:
 
 
 @dataclass(frozen=True)
-class ClientCreatedEvent:
-    """Domain/Application event emitted when a new client user account is registered."""
-
+class UserRegisteredDomainEvent:
     user_id: int | None
     email: str
     full_name: str | None

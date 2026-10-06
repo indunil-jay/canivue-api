@@ -4,19 +4,19 @@ from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.features.auth.application.commands.create_client.command_handler import (
+from app.features.auth.application.commands.create_client.create_client_command_handler import (
     CreateClientCommandHandler,
 )
-from app.features.auth.application.commands.create_staff.command_handler import (
-    CreateStaffUserCommandHandler,
+from app.features.auth.application.commands.create_staff.create_staff_command_handler import (
+    CreateStaffCommandHandler,
 )
-from app.features.auth.application.commands.login.command_handler import (
+from app.features.auth.application.commands.login.login_user_command_handler import (
     LoginUserCommandHandler,
 )
-from app.features.auth.application.commands.rotate_token.command_handler import (
+from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
-from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.application.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
@@ -33,10 +33,10 @@ from app.features.auth.application.interfaces.services.password_hasher import (
 from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
-from app.features.auth.application.queries.get_current_user.query import (
+from app.features.auth.application.queries.get_current_user.get_current_user_query import (
     GetCurrentUserQuery,
 )
-from app.features.auth.application.queries.get_current_user.query_handler import (
+from app.features.auth.application.queries.get_current_user.get_current_user_query_handler import (
     GetCurrentUserQueryHandler,
 )
 from app.features.auth.domain.enums.role import Role
@@ -81,8 +81,8 @@ def get_create_client_command_handler(
 def get_create_staff_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
-) -> CreateStaffUserCommandHandler:
-    return CreateStaffUserCommandHandler(user_repo=user_repo, hasher=hasher)
+) -> CreateStaffCommandHandler:
+    return CreateStaffCommandHandler(user_repo=user_repo, hasher=hasher)
 
 
 def get_login_command_handler(

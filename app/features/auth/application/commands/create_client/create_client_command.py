@@ -4,10 +4,8 @@ from app.features.auth.domain.enums.role import Role
 
 
 @dataclass(frozen=True)
-class CreateStaffUserCommand:
-    """Command payload for onboarding a staff user (VET or ADMIN)."""
-
+class CreateClientCommand:
     email: str
     password: str
-    role: Role
     full_name: str | None = None
+    role: Role = Role.CLIENT

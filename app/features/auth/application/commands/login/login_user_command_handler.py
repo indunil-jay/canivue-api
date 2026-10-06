@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
 
-from app.features.auth.application.commands.login.command import LoginResult, LoginUserCommand
-from app.features.auth.application.commands.login.event_handler import UserLoggedInEventHandler
-from app.features.auth.application.commands.login.events import UserLoggedInEvent
-from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.commands.login.login_user_command import (
+    LoginUserCommand,
+)
+from app.features.auth.application.dtos.login_result_dto import LoginResultDTO
+from app.features.auth.application.event_handlers.user_logged_in_event_handler import (
+    UserLoggedInEventHandler,
+)
 from app.features.auth.application.exceptions import (
     AccountDisabledError,
     InvalidCredentialsError,
@@ -20,13 +23,15 @@ from app.features.auth.application.interfaces.services.password_hasher import (
 from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
+from app.features.auth.application.mappers.user_dto_mapper import UserDTOMapper
 from app.features.auth.domain.entities.refresh_token import RefreshToken
+from app.features.auth.domain.events.user_logged_in import (
+    UserLoggedInDomainEvent,
+)
 from app.features.auth.infrastructure.services.token_service import JwtTokenService
 
 
 class LoginUserCommandHandler:
-    """Command handler responsible for authenticating credentials, creating tokens, and emitting events."""
-
     def __init__(
         self,
         user_repo: UserRepository,
@@ -41,7 +46,7 @@ class LoginUserCommandHandler:
         self._refresh_token_repo = refresh_token_repo
         self._event_handler = event_handler or UserLoggedInEventHandler()
 
-    async def handle(self, command: LoginUserCommand) -> LoginResult:
+    async def handle(self, command: LoginUserCommand) -> LoginResultDTO:
         email = command.email.strip().lower()
         user = await self._user_repo.get_by_email(email)
         if not user:
@@ -75,27 +80,15 @@ class LoginUserCommandHandler:
                 )
             )
 
-        user_dto = UserOutputDTO(
-            id=user.id,
-            email=user.email,
-            role=user.role,
-            full_name=user.full_name,
-            is_active=user.is_active,
-            permissions=user.permissions,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
-
-        # Dispatch event
-        event = UserLoggedInEvent(
+        event = UserLoggedInDomainEvent(
             user_id=user.id,
             email=user.email,
         )
         await self._event_handler.handle(event)
 
-        return LoginResult(
+        return LoginResultDTO(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",
-            user=user_dto,
+            user=UserDTOMapper.to_output_dto(user),
         )

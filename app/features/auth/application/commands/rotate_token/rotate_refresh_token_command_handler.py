@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 
-from app.features.auth.application.commands.rotate_token.command import RotateRefreshTokenCommand
-from app.features.auth.application.commands.rotate_token.event_handler import (
+from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command import (
+    RotateRefreshTokenCommand,
+)
+from app.features.auth.application.dtos.token_pair_output_dto import (
+    TokenPairOutputDTO,
+)
+from app.features.auth.application.event_handlers.refresh_token_rotated_event_handler import (
     RefreshTokenRotatedEventHandler,
 )
-from app.features.auth.application.commands.rotate_token.events import RefreshTokenRotatedEvent
-from app.features.auth.application.common_dtos import TokenPairOutputDTO
 from app.features.auth.application.exceptions import (
     AccountDisabledError,
     TokenExpiredOrRevokedError,
@@ -20,12 +23,13 @@ from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
 from app.features.auth.domain.entities.refresh_token import RefreshToken
+from app.features.auth.domain.events.refresh_token_rotated import (
+    RefreshTokenRotatedDomainEvent,
+)
 from app.features.auth.infrastructure.services.token_service import JwtTokenService
 
 
 class RotateRefreshTokenCommandHandler:
-    """Command handler responsible for validating old refresh tokens, revoking them, and issuing a new token pair."""
-
     def __init__(
         self,
         user_repo: UserRepository,
@@ -69,7 +73,6 @@ class RotateRefreshTokenCommandHandler:
             await self._refresh_token_repo.revoke(token_hash)
             raise TokenExpiredOrRevokedError("Refresh token has expired.")
 
-        # Revoke the used token (rotation)
         await self._refresh_token_repo.revoke(token_hash)
 
         user = await self._user_repo.get_by_id(user_id)
@@ -100,8 +103,7 @@ class RotateRefreshTokenCommandHandler:
             )
         )
 
-        # Dispatch event
-        event = RefreshTokenRotatedEvent(user_id=user.id, occurred_at=now)
+        event = RefreshTokenRotatedDomainEvent(user_id=user.id, occurred_at=now)
         await self._event_handler.handle(event)
 
         return TokenPairOutputDTO(

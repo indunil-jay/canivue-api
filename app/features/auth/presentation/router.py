@@ -1,31 +1,31 @@
 from fastapi import APIRouter, Depends, status
 
 from app.core.response import APIResponse
-from app.features.auth.application.commands.create_client.command import (
+from app.features.auth.application.commands.create_client.create_client_command import (
     CreateClientCommand,
 )
-from app.features.auth.application.commands.create_client.command_handler import (
+from app.features.auth.application.commands.create_client.create_client_command_handler import (
     CreateClientCommandHandler,
 )
-from app.features.auth.application.commands.create_staff.command import (
-    CreateStaffUserCommand,
+from app.features.auth.application.commands.create_staff.create_staff_command import (
+    CreateStaffCommand,
 )
-from app.features.auth.application.commands.create_staff.command_handler import (
-    CreateStaffUserCommandHandler,
+from app.features.auth.application.commands.create_staff.create_staff_command_handler import (
+    CreateStaffCommandHandler,
 )
-from app.features.auth.application.commands.login.command import (
+from app.features.auth.application.commands.login.login_user_command import (
     LoginUserCommand,
 )
-from app.features.auth.application.commands.login.command_handler import (
+from app.features.auth.application.commands.login.login_user_command_handler import (
     LoginUserCommandHandler,
 )
-from app.features.auth.application.commands.rotate_token.command import (
+from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command import (
     RotateRefreshTokenCommand,
 )
-from app.features.auth.application.commands.rotate_token.command_handler import (
+from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
-from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.domain.enums.role import Role
 from app.features.auth.presentation.dependencies import (
     get_create_client_command_handler,
@@ -153,9 +153,9 @@ async def get_me(
 async def create_staff(
     payload: CreateStaffRequest,
     current_user: UserOutputDTO = Depends(require_permissions("users:manage")),
-    handler: CreateStaffUserCommandHandler = Depends(get_create_staff_command_handler),
+    handler: CreateStaffCommandHandler = Depends(get_create_staff_command_handler),
 ) -> APIResponse[UserResponseData]:
-    command = CreateStaffUserCommand(
+    command = CreateStaffCommand(
         email=payload.email,
         password=payload.password,
         role=Role(payload.role),

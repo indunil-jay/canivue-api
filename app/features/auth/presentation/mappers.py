@@ -1,8 +1,8 @@
-from app.features.auth.application.commands.login.command import LoginResult
-from app.features.auth.application.common_dtos import (
+from app.features.auth.application.dtos.login_result_dto import LoginResultDTO
+from app.features.auth.application.dtos.token_pair_output_dto import (
     TokenPairOutputDTO,
-    UserOutputDTO,
 )
+from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.presentation.responses.login_response import (
     LoginResponseData,
 )
@@ -29,7 +29,7 @@ class AuthPresentationMapper:
         )
 
     @staticmethod
-    def to_login_response(dto: LoginResult) -> LoginResponseData:
+    def to_login_response(dto: LoginResultDTO) -> LoginResponseData:
         return LoginResponseData(
             access_token=dto.access_token,
             refresh_token=dto.refresh_token,

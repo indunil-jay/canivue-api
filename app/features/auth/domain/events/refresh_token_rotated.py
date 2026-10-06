@@ -7,8 +7,6 @@ def _utc_now() -> datetime:
 
 
 @dataclass(frozen=True)
-class RefreshTokenRotatedEvent:
-    """Domain/Application event emitted when a refresh token is successfully rotated."""
-
+class RefreshTokenRotatedDomainEvent:
     user_id: int
     occurred_at: datetime = field(default_factory=_utc_now)

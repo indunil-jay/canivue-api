@@ -1,4 +1,4 @@
-from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.application.exceptions import (
     AccountDisabledError,
     InvalidCredentialsError,
@@ -6,12 +6,13 @@ from app.features.auth.application.exceptions import (
 from app.features.auth.application.interfaces.repositories.user_repository import (
     UserRepository,
 )
-from app.features.auth.application.queries.get_current_user.query import GetCurrentUserQuery
+from app.features.auth.application.mappers.user_dto_mapper import UserDTOMapper
+from app.features.auth.application.queries.get_current_user.get_current_user_query import (
+    GetCurrentUserQuery,
+)
 
 
 class GetCurrentUserQueryHandler:
-    """Query handler responsible for fetching active user profile by ID."""
-
     def __init__(self, user_repo: UserRepository):
         self._user_repo = user_repo
 
@@ -19,18 +20,9 @@ class GetCurrentUserQueryHandler:
         user_id = query.user_id if isinstance(query, GetCurrentUserQuery) else query
         user = await self._user_repo.get_by_id(user_id)
         if not user:
-            raise InvalidCredentialsError("User account not found.")
+            raise InvalidCredentialsError()
 
         if not user.is_active:
             raise AccountDisabledError()
 
-        return UserOutputDTO(
-            id=user.id,
-            email=user.email,
-            role=user.role,
-            full_name=user.full_name,
-            is_active=user.is_active,
-            permissions=user.permissions,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
+        return UserDTOMapper.to_output_dto(user)

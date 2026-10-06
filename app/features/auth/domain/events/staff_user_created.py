@@ -1,15 +1,17 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from app.features.auth.domain.enums.role import Role
+
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
 @dataclass(frozen=True)
-class UserLoggedInEvent:
-    """Domain/Application event emitted on successful user authentication."""
-
-    user_id: int
+class StaffUserCreatedDomainEvent:
+    user_id: int | None
     email: str
+    role: Role
+    full_name: str | None
     occurred_at: datetime = field(default_factory=_utc_now)
