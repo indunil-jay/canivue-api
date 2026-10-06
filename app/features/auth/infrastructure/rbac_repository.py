@@ -23,7 +23,9 @@ class SqlAlchemyRbacRepository(RbacRepository):
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
-    async def create_permission_if_not_exists(self, name: str, description: str | None = None) -> int:
+    async def create_permission_if_not_exists(
+        self, name: str, description: str | None = None
+    ) -> int:
         stmt = select(PermissionModel).where(PermissionModel.name == name)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()

@@ -44,7 +44,10 @@ async def test_refresh_token_rotation_success(client: AsyncClient):
         json={"refresh_token": refresh_token_1},
     )
     assert reuse_resp.status_code == 401
-    assert "revoked" in reuse_resp.json()["error"]["message"].lower() or "expired" in reuse_resp.json()["error"]["message"].lower()
+    assert (
+        "revoked" in reuse_resp.json()["error"]["message"].lower()
+        or "expired" in reuse_resp.json()["error"]["message"].lower()
+    )
 
 
 @pytest.mark.asyncio

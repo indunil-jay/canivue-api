@@ -46,7 +46,7 @@ class ValidationException(AppException):
     def __init__(self, message: str = "Validation failed", details: Optional[Any] = None):
         super().__init__(
             message=message,
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422),
             details=details,
         )
 

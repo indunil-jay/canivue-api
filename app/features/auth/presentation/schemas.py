@@ -11,14 +11,11 @@ from app.features.auth.presentation.responses import (
 )
 
 __all__ = [
-    "RegisterClientRequest",
     "CreateStaffRequest",
     "LoginRequest",
-    "RefreshTokenRequest",
-    "UserResponseData",
     "LoginResponseData",
+    "RefreshTokenRequest",
+    "RegisterClientRequest",
     "TokenPairResponseData",
+    "UserResponseData",
 ]
-
-
-

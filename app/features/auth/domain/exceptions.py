@@ -14,7 +14,6 @@ class UserAlreadyExistsError(ConflictException):
         super().__init__(message=err.message)
 
 
-
 class InvalidCredentialsError(AppException):
     def __init__(self, message: str = InvalidCredentialsDomainError.message):
         err = InvalidCredentialsDomainError(message=message)
@@ -37,4 +36,3 @@ class TokenExpiredOrRevokedError(AppException):
     def __init__(self, message: str = TokenExpiredOrRevokedDomainError.message):
         err = TokenExpiredOrRevokedDomainError(message=message)
         super().__init__(message=err.message, status_code=err.status_code)
-

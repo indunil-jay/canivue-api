@@ -14,5 +14,3 @@ RefreshTokenRepositoryProtocol = RefreshTokenRepository
 RbacRepositoryProtocol = RbacRepository
 PasswordHasherProtocol = PasswordHasher
 TokenServiceProtocol = TokenService
-
-

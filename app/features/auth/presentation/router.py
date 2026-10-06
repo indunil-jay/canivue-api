@@ -148,6 +148,3 @@ async def create_staff(
         message="Staff member created successfully",
         data=AuthPresentationMapper.to_user_response(result),
     )
-
-
-

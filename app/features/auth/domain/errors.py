@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from typing import Any
+
 from fastapi import status
 
 
 @dataclass(frozen=True)
 class DomainError:
     """Base domain business rule violation error."""
+
     message: str
     code: str = "DOMAIN_ERROR"
     status_code: int = status.HTTP_400_BAD_REQUEST
@@ -58,4 +60,4 @@ class UserNotFoundDomainError(DomainError):
 class ValidationErrorDomainError(DomainError):
     message: str = "Validation failed."
     code: str = "VALIDATION_FAILED"
-    status_code: int = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code: int = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422)

@@ -65,5 +65,3 @@ class RolePermissionModel(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, index=True)
     role: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     permission_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-
-

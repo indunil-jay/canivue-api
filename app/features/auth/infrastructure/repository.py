@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +12,6 @@ from app.features.auth.infrastructure.rbac_repository import SqlAlchemyRbacRepos
 
 class SqlAlchemyUserRepository(UserRepository):
     """SQLAlchemy implementation of the UserRepository interface."""
-
 
     def __init__(self, session: AsyncSession, rbac_repo: SqlAlchemyRbacRepository | None = None):
         self._session = session
@@ -80,7 +78,6 @@ class SqlAlchemyUserRepository(UserRepository):
         return await self._to_entity(model)
 
 
-
 class SqlAlchemyRefreshTokenRepository(RefreshTokenRepository):
     """SQLAlchemy implementation of RefreshTokenRepository interface."""
 
@@ -131,4 +128,3 @@ class SqlAlchemyRefreshTokenRepository(RefreshTokenRepository):
         for m in models:
             m.is_revoked = True
         await self._session.flush()
-

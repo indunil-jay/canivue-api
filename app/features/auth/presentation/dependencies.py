@@ -17,11 +17,13 @@ from app.features.auth.domain.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
 )
-from app.features.auth.domain.protocols import (
-    PasswordHasherProtocol,
-    RefreshTokenRepositoryProtocol,
-    TokenServiceProtocol,
-    UserRepositoryProtocol,
+from app.features.auth.domain.repositories import (
+    RefreshTokenRepository,
+    UserRepository,
+)
+from app.features.auth.domain.services import (
+    PasswordHasher,
+    TokenService,
 )
 from app.features.auth.infrastructure.hasher import Argon2PasswordHasher
 from app.features.auth.infrastructure.repository import (
@@ -34,44 +36,43 @@ _hasher_instance = Argon2PasswordHasher()
 _token_service_instance = JwtTokenService()
 
 
-def get_password_hasher() -> PasswordHasherProtocol:
+def get_password_hasher() -> PasswordHasher:
     return _hasher_instance
 
 
-def get_token_service() -> TokenServiceProtocol:
+def get_token_service() -> TokenService:
     return _token_service_instance
 
 
-def get_user_repository(session: AsyncSession = Depends(get_db_session)) -> UserRepositoryProtocol:
+def get_user_repository(session: AsyncSession = Depends(get_db_session)) -> UserRepository:
     return SqlAlchemyUserRepository(session=session)
 
 
 def get_refresh_token_repository(
     session: AsyncSession = Depends(get_db_session),
-) -> RefreshTokenRepositoryProtocol:
+) -> RefreshTokenRepository:
     return SqlAlchemyRefreshTokenRepository(session=session)
 
 
 def get_register_client_use_case(
-    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
-    hasher: PasswordHasherProtocol = Depends(get_password_hasher),
+    user_repo: UserRepository = Depends(get_user_repository),
+    hasher: PasswordHasher = Depends(get_password_hasher),
 ) -> RegisterClientUseCase:
     return RegisterClientUseCase(user_repo=user_repo, hasher=hasher)
 
 
 def get_create_staff_use_case(
-    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
-    hasher: PasswordHasherProtocol = Depends(get_password_hasher),
+    user_repo: UserRepository = Depends(get_user_repository),
+    hasher: PasswordHasher = Depends(get_password_hasher),
 ) -> CreateStaffUserUseCase:
     return CreateStaffUserUseCase(user_repo=user_repo, hasher=hasher)
 
 
-
 def get_login_use_case(
-    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
-    hasher: PasswordHasherProtocol = Depends(get_password_hasher),
-    token_service: TokenServiceProtocol = Depends(get_token_service),
-    refresh_token_repo: RefreshTokenRepositoryProtocol = Depends(get_refresh_token_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    hasher: PasswordHasher = Depends(get_password_hasher),
+    token_service: TokenService = Depends(get_token_service),
+    refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
 ) -> LoginUseCase:
     return LoginUseCase(
         user_repo=user_repo,
@@ -82,9 +83,9 @@ def get_login_use_case(
 
 
 def get_refresh_token_use_case(
-    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
-    refresh_token_repo: RefreshTokenRepositoryProtocol = Depends(get_refresh_token_repository),
-    token_service: TokenServiceProtocol = Depends(get_token_service),
+    user_repo: UserRepository = Depends(get_user_repository),
+    refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
+    token_service: TokenService = Depends(get_token_service),
 ) -> RefreshTokenUseCase:
     return RefreshTokenUseCase(
         user_repo=user_repo,
@@ -94,15 +95,14 @@ def get_refresh_token_use_case(
 
 
 def get_current_user_use_case(
-    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
 ) -> GetCurrentUserUseCase:
     return GetCurrentUserUseCase(user_repo=user_repo)
 
 
-
 async def get_current_user(
     authorization: str | None = Header(None, alias="Authorization"),
-    token_service: TokenServiceProtocol = Depends(get_token_service),
+    token_service: TokenService = Depends(get_token_service),
     use_case: GetCurrentUserUseCase = Depends(get_current_user_use_case),
 ) -> UserOutputDTO:
     """Security seam extracting Bearer JWT and resolving active user."""
@@ -147,7 +147,10 @@ def require_roles(*allowed_roles: Role | str) -> Callable:
 
 def require_permissions(*required_permissions: str) -> Callable:
     """Dependency factory checking that caller possesses all required permissions."""
-    async def _permission_guard(current_user: UserOutputDTO = Depends(get_current_user)) -> UserOutputDTO:
+
+    async def _permission_guard(
+        current_user: UserOutputDTO = Depends(get_current_user),
+    ) -> UserOutputDTO:
         user_perms = set(current_user.permissions)
         missing = [p for p in required_permissions if p not in user_perms]
         if missing:
@@ -157,5 +160,3 @@ def require_permissions(*required_permissions: str) -> Callable:
         return current_user
 
     return _permission_guard
-
-

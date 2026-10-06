@@ -6,7 +6,9 @@ from app.features.auth.infrastructure.seed import seed_rbac_catalog
 
 
 @pytest.mark.asyncio
-async def test_rbac_guards_and_admin_staff_provisioning(client: AsyncClient, db_session: AsyncSession):
+async def test_rbac_guards_and_admin_staff_provisioning(
+    client: AsyncClient, db_session: AsyncSession
+):
     """Admin can create staff members and role/permission guards correctly block/allow access."""
     # Seed default RBAC permissions and matrix
     await seed_rbac_catalog(db_session)
@@ -38,9 +40,14 @@ async def test_rbac_guards_and_admin_staff_provisioning(client: AsyncClient, db_
         "role": "VET",
         "full_name": "Dr. Smith",
     }
-    forbidden_resp = await client.post("/api/v1/auth/staff", json=staff_payload, headers=client_headers)
+    forbidden_resp = await client.post(
+        "/api/v1/auth/staff", json=staff_payload, headers=client_headers
+    )
     assert forbidden_resp.status_code == 403
-    assert "permission" in forbidden_resp.json()["error"]["message"].lower() or "forbidden" in forbidden_resp.json()["error"]["message"].lower()
+    assert (
+        "permission" in forbidden_resp.json()["error"]["message"].lower()
+        or "forbidden" in forbidden_resp.json()["error"]["message"].lower()
+    )
 
     # 3. Create initial Admin user directly in DB (or via admin endpoint with ADMIN token)
     from app.features.auth.domain.entities import Role, User
@@ -70,7 +77,9 @@ async def test_rbac_guards_and_admin_staff_provisioning(client: AsyncClient, db_
     assert "users:manage" in admin_login_resp.json()["data"]["user"]["permissions"]
 
     # 4. Admin creates VET staff member
-    create_staff_resp = await client.post("/api/v1/auth/staff", json=staff_payload, headers=admin_headers)
+    create_staff_resp = await client.post(
+        "/api/v1/auth/staff", json=staff_payload, headers=admin_headers
+    )
     assert create_staff_resp.status_code == 201
     staff_data = create_staff_resp.json()["data"]
     assert staff_data["email"] == "dr.smith@clinic.com"

@@ -1,9 +1,11 @@
 from datetime import datetime
+
 from pydantic import BaseModel
 
 
 class UserResponseData(BaseModel):
     """Shape for user profile payload."""
+
     id: int
     email: str
     role: str
@@ -16,6 +18,7 @@ class UserResponseData(BaseModel):
 
 class LoginResponseData(BaseModel):
     """Shape for login response payload containing tokens and user data."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -24,6 +27,7 @@ class LoginResponseData(BaseModel):
 
 class TokenPairResponseData(BaseModel):
     """Shape for rotated token pair response."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"

@@ -152,4 +152,3 @@ async def test_get_current_user_use_case_success():
     result = await use_case.execute(99)
     assert result.id == 99
     assert result.email == "me@test.com"
-

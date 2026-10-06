@@ -1,30 +1,22 @@
 from dataclasses import dataclass
-from datetime import datetime
 
+from app.features.auth.application.common_dtos import UserOutputDTO
 from app.features.auth.domain.entities import Role
 
 
 @dataclass(frozen=True)
-class RegisterClientInputDTO:
+class RegisterClientCommand:
+    """Command to self-register a new pet owner client."""
+
     email: str
     password: str
     full_name: str | None = None
 
 
 @dataclass(frozen=True)
-class UserOutputDTO:
-    id: int
-    email: str
-    role: Role
-    full_name: str | None
-    is_active: bool
-    permissions: list[str]
-    created_at: datetime
-    updated_at: datetime
+class CreateStaffUserCommand:
+    """Command to provision an internal staff account (VET or ADMIN)."""
 
-
-@dataclass(frozen=True)
-class CreateStaffInputDTO:
     email: str
     password: str
     role: Role
@@ -32,13 +24,17 @@ class CreateStaffInputDTO:
 
 
 @dataclass(frozen=True)
-class LoginInputDTO:
+class LoginCommand:
+    """Command to authenticate credentials and issue tokens."""
+
     email: str
     password: str
 
 
 @dataclass(frozen=True)
-class LoginOutputDTO:
+class LoginResultDTO:
+    """Result of executing LoginCommand."""
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -46,12 +42,7 @@ class LoginOutputDTO:
 
 
 @dataclass(frozen=True)
-class RefreshTokenInputDTO:
-    refresh_token: str
+class RotateRefreshTokenCommand:
+    """Command to rotate an active refresh token."""
 
-
-@dataclass(frozen=True)
-class TokenPairOutputDTO:
-    access_token: str
     refresh_token: str
-    token_type: str

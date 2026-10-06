@@ -12,6 +12,7 @@ class Role(str, Enum):
 @dataclass
 class Permission:
     """Pure domain entity representing a granular permission."""
+
     id: int | None
     name: str
     description: str | None = None
@@ -20,6 +21,7 @@ class Permission:
 @dataclass
 class User:
     """Pure domain entity representing a system user."""
+
     id: int | None
     email: str
     hashed_password: str
@@ -30,9 +32,10 @@ class User:
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
-
     @classmethod
-    def create_client(cls, email: str, hashed_password: str, full_name: str | None = None) -> "User":
+    def create_client(
+        cls, email: str, hashed_password: str, full_name: str | None = None
+    ) -> "User":
         """Factory method guaranteeing new clients are created with CLIENT role."""
         now = datetime.now(timezone.utc)
         return cls(
@@ -50,10 +53,10 @@ class User:
 @dataclass
 class RefreshToken:
     """Pure domain entity representing a persisted refresh token."""
+
     id: int | None
     user_id: int
     token_hash: str
     expires_at: datetime
     is_revoked: bool = False
     created_at: datetime | None = None
-
