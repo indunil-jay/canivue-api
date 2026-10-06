@@ -2,10 +2,10 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.auth.domain.enums.role import Role
-from app.features.auth.infrastructure.repositories.rbac_repository import (
+from app.features.auth.infrastructure.persistence.repositories.rbac_repository import (
     SqlAlchemyRbacRepository,
 )
-from app.features.auth.infrastructure.seed import seed_rbac_catalog
+from app.features.auth.infrastructure.persistence.seed import seed_rbac_catalog
 
 
 @pytest.mark.asyncio

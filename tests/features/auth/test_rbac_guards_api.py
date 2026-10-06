@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.features.auth.infrastructure.seed import seed_rbac_catalog
+from app.features.auth.infrastructure.persistence.seed import seed_rbac_catalog
 
 
 @pytest.mark.asyncio
@@ -51,7 +51,7 @@ async def test_rbac_guards_and_admin_staff_provisioning(
     # 3. Create initial Admin user directly in DB (or via admin endpoint with ADMIN token)
     from app.features.auth.domain.entities.user import User
     from app.features.auth.domain.enums.role import Role
-    from app.features.auth.infrastructure.repositories.user_repository import (
+    from app.features.auth.infrastructure.persistence.repositories.user_repository import (
         SqlAlchemyUserRepository,
     )
     from app.features.auth.infrastructure.services.hasher import (

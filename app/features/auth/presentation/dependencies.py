@@ -58,13 +58,13 @@ from app.features.auth.application.queries.get_current_user.get_current_user_que
     GetCurrentUserQueryHandler,
 )
 from app.features.auth.domain.enums.role import Role
-from app.features.auth.infrastructure.repositories.password_reset_token_repository import (
+from app.features.auth.infrastructure.persistence.repositories.password_reset_token_repository import (
     SqlAlchemyPasswordResetTokenRepository,
 )
-from app.features.auth.infrastructure.repositories.refresh_token_repository import (
+from app.features.auth.infrastructure.persistence.repositories.refresh_token_repository import (
     SqlAlchemyRefreshTokenRepository,
 )
-from app.features.auth.infrastructure.repositories.user_repository import (
+from app.features.auth.infrastructure.persistence.repositories.user_repository import (
     SqlAlchemyUserRepository,
 )
 from app.features.auth.infrastructure.services.email_service import (

@@ -17,7 +17,7 @@ from app.features.symptom_nlp.infrastructure.ml.engine import (
     StubNLPSymptomEngine,
     TrainedNLPSymptomEngine,
 )
-from app.features.symptom_nlp.infrastructure.session_repository import (
+from app.features.symptom_nlp.infrastructure.persistence.repositories.session_repository import (
     InMemoryIntakeSessionRepository,
 )
 

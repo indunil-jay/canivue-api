@@ -5,10 +5,10 @@ from app.features.auth.application.interfaces.repositories.rbac_repository impor
     RbacRepository,
 )
 from app.features.auth.domain.enums.role import Role
-from app.features.auth.infrastructure.models.permission_model import (
+from app.features.auth.infrastructure.persistence.models.permission_model import (
     PermissionModel,
 )
-from app.features.auth.infrastructure.models.role_permission_model import (
+from app.features.auth.infrastructure.persistence.models.role_permission_model import (
     RolePermissionModel,
 )
 

@@ -5,7 +5,7 @@ from app.features.auth.application.interfaces.repositories.refresh_token_reposit
     RefreshTokenRepository,
 )
 from app.features.auth.domain.entities.refresh_token import RefreshToken
-from app.features.auth.infrastructure.models.refresh_token_model import (
+from app.features.auth.infrastructure.persistence.models.refresh_token_model import (
     RefreshTokenModel,
 )
 

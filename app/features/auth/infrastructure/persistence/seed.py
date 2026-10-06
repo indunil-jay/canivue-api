@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.auth.domain.enums.role import Role
-from app.features.auth.infrastructure.repositories.rbac_repository import (
+from app.features.auth.infrastructure.persistence.repositories.rbac_repository import (
     SqlAlchemyRbacRepository,
 )
 
