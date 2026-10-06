@@ -19,8 +19,6 @@ class SqlAlchemyUserRepository(
     BaseSqlAlchemyRepository[User, UserModel, int],
     UserRepository,
 ):
-    """SQLAlchemy implementation of the UserRepository interface."""
-
     _model_cls = UserModel
 
     def __init__(self, session: AsyncSession, rbac_repo: SqlAlchemyRbacRepository | None = None):
@@ -66,4 +64,3 @@ class SqlAlchemyUserRepository(
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return await self._to_entity(model) if model else None
-

@@ -26,7 +26,6 @@ _session_repo: IntakeSessionRepositoryProtocol | None = None
 
 
 def get_symptom_engine() -> NLPSymptomEngineProtocol:
-    """Dependency provider for the NLP Symptom engine."""
     global _cached_engine
     if _cached_engine is not None:
         return _cached_engine
@@ -41,13 +40,11 @@ def get_symptom_engine() -> NLPSymptomEngineProtocol:
 
 
 def set_symptom_engine_override(engine: NLPSymptomEngineProtocol | None) -> None:
-    """Set or reset the cached symptom engine (used in tests and lifespan warmup)."""
     global _cached_engine
     _cached_engine = engine
 
 
 def get_intake_session_repository() -> IntakeSessionRepositoryProtocol:
-    """Dependency provider for the IntakeSessionRepository."""
     global _session_repo
     if _session_repo is None:
         _session_repo = InMemoryIntakeSessionRepository()
@@ -57,7 +54,6 @@ def get_intake_session_repository() -> IntakeSessionRepositoryProtocol:
 def get_parse_symptom_use_case(
     engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
 ) -> ParseSymptomTextUseCase:
-    """Dependency provider for ParseSymptomTextUseCase."""
     return ParseSymptomTextUseCase(engine=engine)
 
 
@@ -65,7 +61,6 @@ def get_start_intake_use_case(
     engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
     session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
 ) -> StartIntakeSessionUseCase:
-    """Dependency provider for StartIntakeSessionUseCase."""
     return StartIntakeSessionUseCase(engine=engine, session_repo=session_repo)
 
 
@@ -73,15 +68,10 @@ def get_conduct_intake_turn_use_case(
     engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
     session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
 ) -> ConductIntakeTurnUseCase:
-    """Dependency provider for ConductIntakeTurnUseCase."""
     return ConductIntakeTurnUseCase(engine=engine, session_repo=session_repo)
 
 
 def get_complete_intake_session_use_case(
     session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
 ) -> CompleteIntakeSessionUseCase:
-    """Dependency provider for CompleteIntakeSessionUseCase."""
     return CompleteIntakeSessionUseCase(session_repo=session_repo)
-
-
-

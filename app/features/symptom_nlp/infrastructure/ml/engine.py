@@ -62,7 +62,19 @@ SYMPTOM_LEXICON: dict[str, tuple[str, str]] = {
     "unresponsive": ("unresponsive", "other"),
 }
 
-BODY_PARTS: list[str] = ["ear", "eye", "eyelid", "paw", "back", "abdomen", "skin", "belly", "leg", "tail", "mouth"]
+BODY_PARTS: list[str] = [
+    "ear",
+    "eye",
+    "eyelid",
+    "paw",
+    "back",
+    "abdomen",
+    "skin",
+    "belly",
+    "leg",
+    "tail",
+    "mouth",
+]
 SIDES: list[str] = ["left", "right", "both"]
 
 DURATION_PATTERNS = [
@@ -72,15 +84,29 @@ DURATION_PATTERNS = [
     (r"\b(?:for\s+)?(?:a\s+)?couple(?:\s+of)?\s*(weeks?)\b", "couple_weeks", 2, "weeks"),
     (r"\b(?:for\s+)?(?:a\s+)?week\b", "a_week", 1, "weeks"),
     (r"\b(?:for\s+)?several\s*(days?)\b", "several_days", 3, "days"),
-    (r"\b(?:for\s+)?(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(days?)\b", "num", None, "days"),
+    (
+        r"\b(?:for\s+)?(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(days?)\b",
+        "num",
+        None,
+        "days",
+    ),
     (r"\b(?:for\s+)?(one|two|three|four|five|six|\d+)\s*(weeks?)\b", "num", None, "weeks"),
     (r"\b(?:for\s+)?(one|two|three|four|five|six|\d+)\s*(months?)\b", "num", None, "months"),
-    (r"\b(?:for\s+)?(one|two|three|four|five|six|eight|twelve|twenty-four|\d+)\s*(hours?)\b", "num", None, "hours"),
+    (
+        r"\b(?:for\s+)?(one|two|three|four|five|six|eight|twelve|twenty-four|\d+)\s*(hours?)\b",
+        "num",
+        None,
+        "hours",
+    ),
 ]
 
 FREQUENCY_PATTERNS = [
     (r"\b(constantly|all day|non-stop|continuous(?:ly)?)\b", "constant", "high"),
-    (r"\b(several times a day|multiple times daily|frequently|often)\b", "frequent", "moderate_high"),
+    (
+        r"\b(several times a day|multiple times daily|frequently|often)\b",
+        "frequent",
+        "moderate_high",
+    ),
     (r"\b(once a day|daily|every day)\b", "daily", "regular"),
     (r"\b(occasionally|intermittently|sometimes|now and then)\b", "intermittent", "low"),
 ]
@@ -102,11 +128,6 @@ WORD_TO_NUM = {
 
 
 class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
-    """Deterministic, zero-dependency stub engine for NLP symptom parsing.
-    
-    Used for local testing, development mode, and CI without requiring PyTorch or GPUs.
-    """
-
     def get_version(self) -> str:
         return "stub_nlp_engine_v1"
 
@@ -133,7 +154,9 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
             for match in re.finditer(pattern, normalized_lower):
                 start, end = match.start(), match.end()
                 pre_window = normalized_lower[max(0, start - 20) : start]
-                is_negated = bool(re.search(r"\b(no|not|stopped|no longer|without)\s*$", pre_window.strip()))
+                is_negated = bool(
+                    re.search(r"\b(no|not|stopped|no longer|without)\s*$", pre_window.strip())
+                )
 
                 span = ExtractedSpan(
                     entity="symptom",
@@ -168,14 +191,25 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
                 for match in re.finditer(loc_pattern, normalized_lower):
                     start, end = match.start(), match.end()
                     body_locations.append(BodyLocation(part=part, side=side))
-                    spans.append(ExtractedSpan(entity="body_location", text=text[start:end], start=start, end=end))
-            
+                    spans.append(
+                        ExtractedSpan(
+                            entity="body_location", text=text[start:end], start=start, end=end
+                        )
+                    )
+
             # Isolated part without side
             isolated_pattern = rf"\b(the|its|his|her)?\s*{part}s?\b"
             for match in re.finditer(isolated_pattern, normalized_lower):
                 if not any(loc.part == part for loc in body_locations):
                     body_locations.append(BodyLocation(part=part, side=None))
-                    spans.append(ExtractedSpan(entity="body_location", text=text[match.start():match.end()], start=match.start(), end=match.end()))
+                    spans.append(
+                        ExtractedSpan(
+                            entity="body_location",
+                            text=text[match.start() : match.end()],
+                            start=match.start(),
+                            end=match.end(),
+                        )
+                    )
 
         # 4. Extract Duration
         duration_entity: DurationEntity | None = None
@@ -191,7 +225,7 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
                 spans.append(
                     ExtractedSpan(
                         entity="duration",
-                        text=text[match.start():match.end()],
+                        text=text[match.start() : match.end()],
                         start=match.start(),
                         end=match.end(),
                     )
@@ -210,7 +244,7 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
                 spans.append(
                     ExtractedSpan(
                         entity="frequency",
-                        text=text[match.start():match.end()],
+                        text=text[match.start() : match.end()],
                         start=match.start(),
                         end=match.end(),
                     )
@@ -229,7 +263,7 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
             spans.append(
                 ExtractedSpan(
                     entity="progression",
-                    text=text[prog_match.start():prog_match.end()],
+                    text=text[prog_match.start() : prog_match.end()],
                     start=prog_match.start(),
                     end=prog_match.end(),
                 )
@@ -245,7 +279,7 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
                 spans.append(
                     ExtractedSpan(
                         entity="progression",
-                        text=text[prog_match.start():prog_match.end()],
+                        text=text[prog_match.start() : prog_match.end()],
                         start=prog_match.start(),
                         end=prog_match.end(),
                     )
@@ -260,7 +294,7 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
                     spans.append(
                         ExtractedSpan(
                             entity="progression",
-                            text=text[prog_match.start():prog_match.end()],
+                            text=text[prog_match.start() : prog_match.end()],
                             start=prog_match.start(),
                             end=prog_match.end(),
                         )
@@ -304,7 +338,9 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
         has_dur = duration_entity is not None
         has_sev_prog = bool(severity_cues or progression)
 
-        quality_score = calculate_text_quality_score(text, has_symptom, has_loc, has_dur, has_sev_prog)
+        quality_score = calculate_text_quality_score(
+            text, has_symptom, has_loc, has_dur, has_sev_prog
+        )
         model_confidence = 0.85 if has_symptom else 0.30
         reliability_score = calculate_modality_reliability(quality_score, model_confidence)
 
@@ -337,12 +373,6 @@ class StubNLPSymptomEngine(NLPSymptomEngineProtocol):
 
 
 class TrainedNLPSymptomEngine(NLPSymptomEngineProtocol):
-    """Production Clean Architecture adapter wrapping SymptomParserPipeline.
-
-    Loads model weights from model_registry/nlp/ and executes inference in a
-    worker thread (asyncio.to_thread) to prevent blocking the FastAPI event loop.
-    """
-
     def __init__(
         self,
         checkpoint_path: str | None = None,
@@ -411,4 +441,3 @@ class TrainedNLPSymptomEngine(NLPSymptomEngineProtocol):
             warnings=res.get("warnings", []),
             model_version=self.get_version(),
         )
-

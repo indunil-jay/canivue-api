@@ -4,8 +4,6 @@ from pydantic import BaseModel
 
 
 class UserResponseData(BaseModel):
-    """Shape for user profile payload."""
-
     id: int
     email: str
     role: str

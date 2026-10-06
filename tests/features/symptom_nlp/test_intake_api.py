@@ -52,7 +52,9 @@ async def test_conduct_intake_turn_api(client: AsyncClient):
     turn_payload = {
         "message": "It is the left ear, and it started 3 days ago. It is getting worse."
     }
-    turn_res = await client.post(f"/api/v1/symptoms/intake/sessions/{session_id}/turns", json=turn_payload)
+    turn_res = await client.post(
+        f"/api/v1/symptoms/intake/sessions/{session_id}/turns", json=turn_payload
+    )
     assert turn_res.status_code == 200
     turn_data = turn_res.json()["data"]
 
@@ -90,7 +92,10 @@ async def test_clarifying_prompt_for_missing_symptoms(client: AsyncClient):
     assert response.status_code == 200
     data = response.json()["data"]
     assert "symptoms" in data["missing_slots"]
-    assert "physical signs" in data["agent_message"].lower() or "behavior" in data["agent_message"].lower()
+    assert (
+        "physical signs" in data["agent_message"].lower()
+        or "behavior" in data["agent_message"].lower()
+    )
 
 
 @pytest.mark.asyncio
@@ -123,7 +128,10 @@ async def test_turn_capping_at_max_turns(client: AsyncClient):
     )
     data4 = res4.json()["data"]
     assert data4["turn_count"] == 4
-    assert "consultation limit" in data4["agent_message"].lower() or "summarized" in data4["agent_message"].lower()
+    assert (
+        "consultation limit" in data4["agent_message"].lower()
+        or "summarized" in data4["agent_message"].lower()
+    )
 
 
 @pytest.mark.asyncio
@@ -190,14 +198,12 @@ async def test_complete_intake_session_api(client: AsyncClient):
 
     # Verify that returned evidence is full SymptomParseResponseData ready for Multimodal Fusion
     assert "scratching" in evidence["symptoms"]
-    assert any(loc["part"] == "ear" and loc["side"] == "right" for loc in evidence["body_locations"])
+    assert any(
+        loc["part"] == "ear" and loc["side"] == "right" for loc in evidence["body_locations"]
+    )
     assert evidence["duration"]["value"] == 2
     assert evidence["duration"]["unit"] == "weeks"
     assert "ear_inflammation" in evidence["condition_probabilities"]
     assert evidence["modality_reliability_score"] > 0.0
     assert evidence["text_quality_score"] > 0.0
     assert len(evidence["spans"]) > 0
-
-
-
-

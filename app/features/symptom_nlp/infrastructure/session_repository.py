@@ -5,8 +5,6 @@ from app.features.symptom_nlp.domain.repositories import IntakeSessionRepository
 
 
 class InMemoryIntakeSessionRepository(IntakeSessionRepositoryProtocol):
-    """In-memory thread-safe storage for multi-turn intake sessions."""
-
     def __init__(self) -> None:
         self._sessions: dict[str, IntakeSession] = {}
 

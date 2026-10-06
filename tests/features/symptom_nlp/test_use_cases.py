@@ -11,9 +11,7 @@ async def test_parse_symptom_text_use_case_with_stub():
     engine = StubNLPSymptomEngine()
     use_case = ParseSymptomTextUseCase(engine=engine)
 
-    sample_text = (
-        "My dog has been scratching its left ear for three days and it is becoming red."
-    )
+    sample_text = "My dog has been scratching its left ear for three days and it is becoming red."
     dto = ParseSymptomInputDTO(text=sample_text)
     result = await use_case.execute(dto)
 
@@ -139,7 +137,7 @@ async def test_frequency_mapping_constant_and_spans():
 
     # Verify all span character offsets match raw text
     for span in result.spans:
-        assert text[span.start:span.end] == span.text
+        assert text[span.start : span.end] == span.text
 
 
 @pytest.mark.asyncio
@@ -176,4 +174,3 @@ async def test_trained_nlp_engine_with_use_case():
     assert "ear_inflammation" in result.condition_probabilities
     assert result.model_version is not None
     assert result.model_version != "stub_nlp_engine_v1"
-

@@ -64,7 +64,6 @@ async def test_parse_symptoms_api_negation(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_parse_symptoms_api_swapped_trained_engine(client: AsyncClient):
-    """Verify that swapping from stub to trained engine produces valid API responses matching schema."""
     from app.features.symptom_nlp.infrastructure.ml.engine import TrainedNLPSymptomEngine
     from app.features.symptom_nlp.presentation.dependencies import (
         get_symptom_engine,
@@ -78,9 +77,7 @@ async def test_parse_symptoms_api_swapped_trained_engine(client: AsyncClient):
     set_symptom_engine_override(trained_engine)
 
     try:
-        payload = {
-            "text": "Dog scratching left ear for three days, getting worse."
-        }
+        payload = {"text": "Dog scratching left ear for three days, getting worse."}
         response = await client.post("/api/v1/symptoms/parse", json=payload)
         assert response.status_code == 200
 
@@ -101,4 +98,3 @@ async def test_parse_symptoms_api_swapped_trained_engine(client: AsyncClient):
     finally:
         app.dependency_overrides.pop(get_symptom_engine, None)
         set_symptom_engine_override(None)
-

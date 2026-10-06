@@ -12,7 +12,6 @@ from ml.nlp.seed_data import compute_spans, generate_seed_records
 
 
 def test_seed_records_generation_and_spans():
-    """Verify generated seed records have correct fields and span offsets match raw text."""
     records = generate_seed_records(num_dogs=10, seed=123)
     assert len(records) >= 10
 
@@ -40,7 +39,6 @@ def test_seed_records_generation_and_spans():
 
 
 def test_dog_level_data_splitting_no_leakage():
-    """Verify that records for the same pet_id never appear in multiple splits."""
     records = generate_seed_records(num_dogs=30, seed=42)
     train_recs, val_recs, test_recs = get_dog_level_splits(records)
 
@@ -58,7 +56,6 @@ def test_dog_level_data_splitting_no_leakage():
 
 
 def test_bio_token_alignment():
-    """Verify subword token alignment produces valid BIO labels and -100 for specials."""
     text = "Dog scratching left ear"
     # Entities: scratching (4, 14), left ear (15, 23)
     spans = [
@@ -88,7 +85,6 @@ def test_bio_token_alignment():
 
 
 def test_compute_spans_helper():
-    """Verify compute_spans finds correct character indices."""
     text = "Scratching its ear for 3 days."
     entities = [
         {"entity": "symptom", "text": "Scratching"},
@@ -106,7 +102,6 @@ def test_compute_spans_helper():
 
 
 def test_symptom_parser_pipeline_single_prediction():
-    """Verify SymptomParserPipeline produces valid structured output in fallback/heuristic mode."""
     from ml.nlp.pipeline import SymptomParserPipeline
 
     pipeline = SymptomParserPipeline()
@@ -125,7 +120,6 @@ def test_symptom_parser_pipeline_single_prediction():
 
 
 def test_symptom_parser_pipeline_batch_prediction():
-    """Verify SymptomParserPipeline batch prediction handles multiple inputs."""
     from ml.nlp.pipeline import SymptomParserPipeline
 
     pipeline = SymptomParserPipeline()
@@ -141,10 +135,8 @@ def test_symptom_parser_pipeline_batch_prediction():
 
 
 def test_symptom_parser_pipeline_empty_text_raises():
-    """Verify SymptomParserPipeline raises ValueError on empty text."""
     from ml.nlp.pipeline import SymptomParserPipeline
 
     pipeline = SymptomParserPipeline()
     with pytest.raises(ValueError, match="Input text cannot be empty"):
         pipeline.predict("   ")
-

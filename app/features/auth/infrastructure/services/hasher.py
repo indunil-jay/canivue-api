@@ -6,8 +6,6 @@ from app.features.auth.application.interfaces.services.password_hasher import (
 
 
 class Argon2PasswordHasher(PasswordHasher):
-    """Production password hasher using pwdlib with Argon2 / Bcrypt recommendation."""
-
     def __init__(self):
         # Uses recommended algorithms (argon2 by default)
         self._hasher = PasswordHash.recommended()

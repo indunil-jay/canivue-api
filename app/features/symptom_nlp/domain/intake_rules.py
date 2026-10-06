@@ -4,7 +4,6 @@ from app.features.symptom_nlp.domain.entities import SymptomParseResult
 
 
 def evaluate_missing_slots(parse_result: SymptomParseResult) -> list[str]:
-    """Evaluate which essential clinical slots are missing from the parsed symptom text."""
     missing: list[str] = []
 
     # 1. Symptom presence
@@ -20,7 +19,6 @@ def evaluate_missing_slots(parse_result: SymptomParseResult) -> list[str]:
             and "body_location_side" not in missing
         ):
             missing.append("body_location_side")
-
 
     # 3. Duration / Timeline
     if parse_result.duration is None:
@@ -38,7 +36,6 @@ def generate_clarifying_prompt(
     missing_slots: list[str],
     turn_count: int,
 ) -> str:
-    """Generate empathetic, targeted veterinarian-style clarifying questions."""
     if parse_result.emergency_triage.is_critical:
         reason = parse_result.emergency_triage.reason or "acute life-threatening symptoms"
         recommendation = (
@@ -79,7 +76,9 @@ def generate_clarifying_prompt(
     if "body_location_side" in missing_slots:
         parts = [loc.part for loc in parse_result.body_locations if not loc.side]
         part_name = parts[0] if parts else "affected area"
-        return f"Could you clarify which side of the {part_name} is affected (left, right, or both)?"
+        return (
+            f"Could you clarify which side of the {part_name} is affected (left, right, or both)?"
+        )
 
     if "duration" in missing_slots:
         return "Approximately how long has your dog been showing these signs (e.g. since yesterday, 3 days, 2 weeks)?"

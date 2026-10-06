@@ -4,8 +4,6 @@ from app.features.auth.domain.entities.refresh_token import RefreshToken
 
 
 class RefreshTokenRepository(ABC):
-    """Abstract interface defining persistence operations for RefreshToken entities."""
-
     @abstractmethod
     async def create(self, token: RefreshToken) -> RefreshToken: ...
 

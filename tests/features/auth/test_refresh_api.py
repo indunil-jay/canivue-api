@@ -4,7 +4,6 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_refresh_token_rotation_success(client: AsyncClient):
-    """User can exchange a valid refresh token for a new token pair, and the old token is revoked."""
     # 1. Register & Login
     await client.post(
         "/api/v1/auth/register",
@@ -52,7 +51,6 @@ async def test_refresh_token_rotation_success(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_refresh_token_invalid_or_garbage_token_fails(client: AsyncClient):
-    """Submitting an invalid refresh token returns 401 Unauthorized."""
     resp = await client.post(
         "/api/v1/auth/refresh",
         json={"refresh_token": "garbage.token.here"},

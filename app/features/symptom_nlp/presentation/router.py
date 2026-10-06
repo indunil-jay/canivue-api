@@ -33,7 +33,6 @@ from app.features.symptom_nlp.presentation.schemas import (
 router = APIRouter()
 
 
-
 @router.post(
     "/parse",
     response_model=APIResponse[SymptomParseResponseData],
@@ -238,6 +237,3 @@ async def complete_intake_session(
         message="Intake session finalized successfully",
         data=data,
     )
-
-
-

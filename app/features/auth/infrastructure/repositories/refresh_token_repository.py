@@ -11,8 +11,6 @@ from app.features.auth.infrastructure.models.refresh_token_model import (
 
 
 class SqlAlchemyRefreshTokenRepository(RefreshTokenRepository):
-    """SQLAlchemy implementation of RefreshTokenRepository interface."""
-
     def __init__(self, session: AsyncSession):
         self._session = session
 

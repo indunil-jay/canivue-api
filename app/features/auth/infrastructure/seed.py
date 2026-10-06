@@ -51,7 +51,6 @@ ROLE_PERMISSION_MATRIX: dict[Role, list[str]] = {
 
 
 async def seed_rbac_catalog(session: AsyncSession) -> None:
-    """Idempotently seeds all default permissions and role assignments into the database."""
     rbac_repo = SqlAlchemyRbacRepository(session=session)
 
     # 1. Seed all permissions

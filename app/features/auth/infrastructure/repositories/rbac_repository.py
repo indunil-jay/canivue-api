@@ -14,7 +14,6 @@ from app.features.auth.infrastructure.models.role_permission_model import (
 
 
 class SqlAlchemyRbacRepository(RbacRepository):
-
     def __init__(self, session: AsyncSession):
         self._session = session
 

@@ -32,7 +32,11 @@ class User:
 
     @classmethod
     def create_client(
-        cls, email: str, hashed_password: str | None, full_name: str | None = None, google_id: str | None = None
+        cls,
+        email: str,
+        hashed_password: str | None,
+        full_name: str | None = None,
+        google_id: str | None = None,
     ) -> "User":
         now = datetime.now(timezone.utc)
         user = cls(

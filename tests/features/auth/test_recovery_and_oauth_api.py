@@ -8,7 +8,6 @@ from app.features.auth.presentation.dependencies import (
 
 @pytest.mark.asyncio
 async def test_forgot_and_reset_password_flow(client: AsyncClient):
-    """User can request a password reset, receive token via email service, and reset password."""
     # 1. Register a test user
     reg_payload = {
         "email": "resetme@example.com",
@@ -72,7 +71,6 @@ async def test_forgot_and_reset_password_flow(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_forgot_password_nonexistent_email_returns_success(client: AsyncClient):
-    """Forgot password returns generic success message without leaking user existence."""
     resp = await client.post(
         "/api/v1/auth/forgot-password",
         json={"email": "unknown_user_999@example.com"},
@@ -83,7 +81,6 @@ async def test_forgot_password_nonexistent_email_returns_success(client: AsyncCl
 
 @pytest.mark.asyncio
 async def test_reset_password_with_invalid_token_fails(client: AsyncClient):
-    """Submitting an invalid reset token returns 401 Unauthorized."""
     resp = await client.post(
         "/api/v1/auth/reset-password",
         json={"token": "invalid_fake_token", "new_password": "NewValidPassword123!"},
@@ -93,7 +90,6 @@ async def test_reset_password_with_invalid_token_fails(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_google_oauth_new_user_provisioning(client: AsyncClient):
-    """Google sign-in provisions a new user with CLIENT role and returns token pair."""
     resp = await client.post(
         "/api/v1/auth/oauth/google",
         json={"id_token": "valid_google_token_newclient"},
@@ -108,7 +104,6 @@ async def test_google_oauth_new_user_provisioning(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_google_oauth_existing_user_linking(client: AsyncClient):
-    """Google sign-in links to existing user with matching email address."""
     reg_payload = {
         "email": "linktarget@gmail.com",
         "password": "LocalPassword123!",
@@ -134,7 +129,6 @@ async def test_google_oauth_existing_user_linking(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_google_oauth_invalid_token_fails(client: AsyncClient):
-    """Google sign-in with invalid token returns 401 Unauthorized."""
     resp = await client.post(
         "/api/v1/auth/oauth/google",
         json={"id_token": "invalid_or_garbage_google_token"},

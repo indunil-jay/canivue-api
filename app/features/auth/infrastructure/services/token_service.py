@@ -14,8 +14,6 @@ from app.features.auth.application.interfaces.services.token_service import (
 
 
 class JwtTokenService(TokenService):
-    """Production JWT service using PyJWT."""
-
     def __init__(
         self,
         secret_key: str = settings.SECRET_KEY,

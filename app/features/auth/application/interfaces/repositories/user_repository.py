@@ -5,8 +5,6 @@ from app.shared.repository import BaseRepositoryProtocol
 
 
 class UserRepository(BaseRepositoryProtocol[User, int]):
-    """Abstract interface defining persistence operations for User entities."""
-
     @abstractmethod
     async def get_by_email(self, email: str) -> User | None: ...
 

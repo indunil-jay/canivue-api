@@ -31,12 +31,10 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy ORM models."""
+class Base(DeclarativeBase): ...
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI Dependency for providing an asynchronous database session."""
     async with AsyncSessionLocal() as session:
         try:
             yield session

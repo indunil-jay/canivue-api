@@ -10,7 +10,6 @@ from app.features.auth.infrastructure.seed import seed_rbac_catalog
 
 @pytest.mark.asyncio
 async def test_seed_rbac_catalog_and_query_permissions(db_session: AsyncSession):
-    """Seed utility populates permissions and maps them to ADMIN, VET, and CLIENT roles."""
     await seed_rbac_catalog(db_session)
 
     rbac_repo = SqlAlchemyRbacRepository(session=db_session)
@@ -38,7 +37,6 @@ async def test_seed_rbac_catalog_and_query_permissions(db_session: AsyncSession)
 
 @pytest.mark.asyncio
 async def test_seed_idempotency(db_session: AsyncSession):
-    """Running the seed catalog multiple times should not cause duplicate errors."""
     await seed_rbac_catalog(db_session)
     await seed_rbac_catalog(db_session)
 

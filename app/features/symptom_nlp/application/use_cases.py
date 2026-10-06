@@ -25,8 +25,6 @@ from app.features.symptom_nlp.domain.repositories import (
 
 
 class ParseSymptomTextUseCase:
-    """Use case coordinating symptom text validation and NLP engine parsing."""
-
     def __init__(self, engine: NLPSymptomEngineProtocol):
         self.engine = engine
 
@@ -40,8 +38,6 @@ class ParseSymptomTextUseCase:
 
 
 class StartIntakeSessionUseCase:
-    """Use case to initialize a multi-turn canine symptom intake session."""
-
     def __init__(
         self,
         engine: NLPSymptomEngineProtocol,
@@ -92,8 +88,6 @@ class StartIntakeSessionUseCase:
 
 
 class ConductIntakeTurnUseCase:
-    """Use case to conduct a follow-up consultation turn and accumulate clinical context."""
-
     def __init__(
         self,
         engine: NLPSymptomEngineProtocol,
@@ -155,8 +149,6 @@ class ConductIntakeTurnUseCase:
 
 
 class CompleteIntakeSessionUseCase:
-    """Use case to finalize an intake consultation and export structured clinical evidence."""
-
     def __init__(self, session_repo: IntakeSessionRepositoryProtocol):
         self.session_repo = session_repo
 
@@ -172,6 +164,3 @@ class CompleteIntakeSessionUseCase:
         session.updated_at = datetime.now(timezone.utc).isoformat()
         await self.session_repo.save(session)
         return ParseSymptomOutputDTO.from_entity(session.accumulated_parse)
-
-
-

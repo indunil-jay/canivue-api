@@ -15,7 +15,9 @@ class AccountDisabledError(ForbiddenException):
 
 
 class InsufficientPermissionsError(ForbiddenException):
-    def __init__(self, message: str = "Insufficient permissions to perform this action.", details=None):
+    def __init__(
+        self, message: str = "Insufficient permissions to perform this action.", details=None
+    ):
         super().__init__(message=message, details=details)
 
 
@@ -60,5 +62,7 @@ class ResetTokenExpiredError(UnauthorizedException):
 
 
 class GoogleAuthFailedError(UnauthorizedException):
-    def __init__(self, message: str = "Google authentication failed or token is invalid.", details=None):
+    def __init__(
+        self, message: str = "Google authentication failed or token is invalid.", details=None
+    ):
         super().__init__(message=message, details=details)

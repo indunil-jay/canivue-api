@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 
 
@@ -58,11 +57,15 @@ class SymptomParseResponseData(BaseModel):
 
 class StartIntakeRequest(BaseModel):
     dog_id: str = Field(..., description="Unique canine identifier")
-    initial_text: str = Field(..., min_length=1, description="Initial symptom text reported by dog owner")
+    initial_text: str = Field(
+        ..., min_length=1, description="Initial symptom text reported by dog owner"
+    )
 
 
 class IntakeTurnRequest(BaseModel):
-    message: str = Field(..., min_length=1, description="Follow-up response or clarification from dog owner")
+    message: str = Field(
+        ..., min_length=1, description="Follow-up response or clarification from dog owner"
+    )
 
 
 class IntakeSessionResponseData(BaseModel):
@@ -77,4 +80,3 @@ class IntakeSessionResponseData(BaseModel):
     is_complete: bool
     created_at: str
     updated_at: str
-

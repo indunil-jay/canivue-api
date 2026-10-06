@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class PasswordHasher(ABC):
-    """Abstract interface for password hashing and verification services."""
-
     @abstractmethod
     def hash(self, password: str) -> str: ...
 

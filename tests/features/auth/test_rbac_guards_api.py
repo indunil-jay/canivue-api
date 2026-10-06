@@ -9,7 +9,6 @@ from app.features.auth.infrastructure.seed import seed_rbac_catalog
 async def test_rbac_guards_and_admin_staff_provisioning(
     client: AsyncClient, db_session: AsyncSession
 ):
-    """Admin can create staff members and role/permission guards correctly block/allow access."""
     # Seed default RBAC permissions and matrix
     await seed_rbac_catalog(db_session)
 

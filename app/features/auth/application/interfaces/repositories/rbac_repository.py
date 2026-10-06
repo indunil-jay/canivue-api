@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class RbacRepository(ABC):
-    """Abstract interface defining role and permission persistence operations."""
-
     @abstractmethod
     async def get_permissions_for_role(self, role: str) -> list[str]: ...
 

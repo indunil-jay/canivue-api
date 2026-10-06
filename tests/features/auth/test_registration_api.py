@@ -4,7 +4,6 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_register_client_success(client: AsyncClient):
-    """Registering a new client returns 201 Created and user profile."""
     payload = {
         "email": "testowner@example.com",
         "password": "Password123!",
@@ -24,7 +23,6 @@ async def test_register_client_success(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email_fails(client: AsyncClient):
-    """Attempting to register with an existing email returns 409 Conflict."""
     payload = {
         "email": "duplicate@example.com",
         "password": "Password123!",
@@ -42,7 +40,6 @@ async def test_register_duplicate_email_fails(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_register_invalid_email_fails(client: AsyncClient):
-    """Attempting to register with an invalid email returns 422 Unprocessable Entity."""
     payload = {
         "email": "not-an-email",
         "password": "Password123!",

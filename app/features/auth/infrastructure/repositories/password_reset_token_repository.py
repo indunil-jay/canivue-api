@@ -40,7 +40,9 @@ class SqlAlchemyPasswordResetTokenRepository(PasswordResetTokenRepository):
         return await self._to_entity(model)
 
     async def get_by_hash(self, token_hash: str) -> PasswordResetToken | None:
-        stmt = select(PasswordResetTokenModel).where(PasswordResetTokenModel.token_hash == token_hash)
+        stmt = select(PasswordResetTokenModel).where(
+            PasswordResetTokenModel.token_hash == token_hash
+        )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return await self._to_entity(model) if model else None

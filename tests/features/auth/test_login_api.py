@@ -4,7 +4,6 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_login_success_and_get_me(client: AsyncClient):
-    """User can log in with valid credentials and use the bearer token to query /me."""
     # 1. Register user
     reg_payload = {
         "email": "loginuser@example.com",
@@ -41,7 +40,6 @@ async def test_login_success_and_get_me(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_login_invalid_password_fails(client: AsyncClient):
-    """Logging in with incorrect password returns 401 Unauthorized."""
     reg_payload = {
         "email": "wrongpwd@example.com",
         "password": "ValidPassword123!",
@@ -59,7 +57,6 @@ async def test_login_invalid_password_fails(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_login_nonexistent_user_fails(client: AsyncClient):
-    """Logging in with non-existent email returns 401 Unauthorized."""
     login_payload = {
         "email": "nobody@example.com",
         "password": "SomePassword123!",
@@ -71,14 +68,12 @@ async def test_login_nonexistent_user_fails(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_me_unauthorized_without_token(client: AsyncClient):
-    """Accessing /me without Authorization header returns 401."""
     me_resp = await client.get("/api/v1/auth/me")
     assert me_resp.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_get_me_invalid_token_fails(client: AsyncClient):
-    """Accessing /me with invalid token returns 401."""
     headers = {"Authorization": "Bearer invalid.jwt.token"}
     me_resp = await client.get("/api/v1/auth/me", headers=headers)
     assert me_resp.status_code == 401

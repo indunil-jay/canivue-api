@@ -77,4 +77,3 @@ class IntakeSession:
     created_at: str
     updated_at: str
     is_complete: bool = False
-
