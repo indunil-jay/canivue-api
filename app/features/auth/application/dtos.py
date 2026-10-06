@@ -20,3 +20,18 @@ class UserOutputDTO:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True)
+class LoginInputDTO:
+    email: str
+    password: str
+
+
+@dataclass(frozen=True)
+class LoginOutputDTO:
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user: UserOutputDTO
+

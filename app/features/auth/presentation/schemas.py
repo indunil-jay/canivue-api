@@ -17,3 +17,16 @@ class UserResponseData(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr = Field(..., description="User email address")
+    password: str = Field(..., description="User password")
+
+
+class LoginResponseData(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserResponseData
+

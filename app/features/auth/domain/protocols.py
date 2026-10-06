@@ -27,3 +27,17 @@ class PasswordHasherProtocol(Protocol):
 
     def verify(self, plain_password: str, hashed_password: str) -> bool:
         ...
+
+
+class TokenServiceProtocol(Protocol):
+    """Protocol defining JWT creation and verification seam."""
+
+    def create_access_token(self, subject: str, role: str) -> str:
+        ...
+
+    def create_refresh_token(self, subject: str) -> str:
+        ...
+
+    def decode_token(self, token: str) -> dict:
+        ...
+

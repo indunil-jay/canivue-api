@@ -22,8 +22,9 @@ class FakeUserRepository(UserRepositoryProtocol):
         return None
 
     async def create(self, user: User) -> User:
-        user.id = self._id_counter
-        self._id_counter += 1
+        if user.id is None:
+            user.id = self._id_counter
+            self._id_counter += 1
         self._users[user.id] = user
         return user
 
@@ -82,3 +83,73 @@ async def test_register_client_use_case_invalid_password():
     dto = RegisterClientInputDTO(email="client@example.com", password="short")
     with pytest.raises(ValidationException):
         await use_case.execute(dto)
+
+
+class FakeTokenService:
+    def create_access_token(self, subject: str, role: str) -> str:
+        return f"access_{subject}_{role}"
+
+    def create_refresh_token(self, subject: str) -> str:
+        return f"refresh_{subject}"
+
+    def decode_token(self, token: str) -> dict:
+        parts = token.split("_")
+        return {"sub": parts[1], "role": parts[2] if len(parts) > 2 else "CLIENT", "type": parts[0]}
+
+
+@pytest.mark.asyncio
+async def test_login_use_case_success():
+    from app.features.auth.application.dtos import LoginInputDTO
+    from app.features.auth.application.use_cases import LoginUseCase
+
+    repo = FakeUserRepository()
+    hasher = FakePasswordHasher()
+    token_svc = FakeTokenService()
+
+    # Pre-populate user
+    user = User.create_client(email="user@test.com", hashed_password=hasher.hash("pass123"))
+    user.id = 42
+    await repo.create(user)
+
+    login_use_case = LoginUseCase(user_repo=repo, hasher=hasher, token_service=token_svc)
+    dto = LoginInputDTO(email="user@test.com", password="pass123")
+    result = await login_use_case.execute(dto)
+
+    assert result.access_token == "access_42_CLIENT"
+    assert result.refresh_token == "refresh_42"
+    assert result.user.email == "user@test.com"
+
+
+@pytest.mark.asyncio
+async def test_login_use_case_invalid_credentials():
+    from app.features.auth.application.dtos import LoginInputDTO
+    from app.features.auth.application.use_cases import LoginUseCase
+    from app.features.auth.domain.exceptions import InvalidCredentialsError
+
+    repo = FakeUserRepository()
+    hasher = FakePasswordHasher()
+    token_svc = FakeTokenService()
+
+    user = User.create_client(email="user@test.com", hashed_password=hasher.hash("pass123"))
+    await repo.create(user)
+
+    login_use_case = LoginUseCase(user_repo=repo, hasher=hasher, token_service=token_svc)
+    dto = LoginInputDTO(email="user@test.com", password="wrongpassword")
+    with pytest.raises(InvalidCredentialsError):
+        await login_use_case.execute(dto)
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_use_case_success():
+    from app.features.auth.application.use_cases import GetCurrentUserUseCase
+
+    repo = FakeUserRepository()
+    user = User.create_client(email="me@test.com", hashed_password="hashed")
+    user.id = 99
+    await repo.create(user)
+
+    use_case = GetCurrentUserUseCase(user_repo=repo)
+    result = await use_case.execute(99)
+    assert result.id == 99
+    assert result.email == "me@test.com"
+
