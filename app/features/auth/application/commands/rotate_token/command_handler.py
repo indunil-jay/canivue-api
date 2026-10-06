@@ -1,6 +1,10 @@
 from datetime import datetime, timezone
 
-from app.features.auth.application.commands.dtos import RotateRefreshTokenCommand
+from app.features.auth.application.commands.rotate_token.command import RotateRefreshTokenCommand
+from app.features.auth.application.commands.rotate_token.event_handler import (
+    RefreshTokenRotatedEventHandler,
+)
+from app.features.auth.application.commands.rotate_token.events import RefreshTokenRotatedEvent
 from app.features.auth.application.common_dtos import TokenPairOutputDTO
 from app.features.auth.domain.entities import RefreshToken
 from app.features.auth.domain.exceptions import (
@@ -8,24 +12,26 @@ from app.features.auth.domain.exceptions import (
     TokenExpiredOrRevokedError,
 )
 from app.features.auth.domain.repositories import RefreshTokenRepository, UserRepository
-from app.features.auth.domain.services import TokenService
+from app.features.auth.domain.services.token_service import TokenService
 from app.features.auth.infrastructure.token_service import JwtTokenService
 
 
-class RotateRefreshTokenUseCase:
-    """Command Use Case to rotate an active refresh token and issue a new pair."""
+class RotateRefreshTokenCommandHandler:
+    """Command handler responsible for validating old refresh tokens, revoking them, and issuing a new token pair."""
 
     def __init__(
         self,
         user_repo: UserRepository,
         refresh_token_repo: RefreshTokenRepository,
         token_service: TokenService,
+        event_handler: RefreshTokenRotatedEventHandler | None = None,
     ):
         self._user_repo = user_repo
         self._refresh_token_repo = refresh_token_repo
         self._token_service = token_service
+        self._event_handler = event_handler or RefreshTokenRotatedEventHandler()
 
-    async def execute(self, command: RotateRefreshTokenCommand) -> TokenPairOutputDTO:
+    async def handle(self, command: RotateRefreshTokenCommand) -> TokenPairOutputDTO:
         payload = self._token_service.decode_token(command.refresh_token)
         if payload.get("type") != "refresh":
             raise TokenExpiredOrRevokedError("Invalid token type. Refresh token required.")
@@ -86,6 +92,10 @@ class RotateRefreshTokenUseCase:
                 is_revoked=False,
             )
         )
+
+        # Dispatch event
+        event = RefreshTokenRotatedEvent(user_id=user.id, occurred_at=now)
+        await self._event_handler.handle(event)
 
         return TokenPairOutputDTO(
             access_token=new_access_token,

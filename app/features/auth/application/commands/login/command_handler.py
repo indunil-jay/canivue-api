@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
-from app.features.auth.application.commands.dtos import LoginCommand, LoginResultDTO
+from app.features.auth.application.commands.login.command import LoginResult, LoginUserCommand
+from app.features.auth.application.commands.login.event_handler import UserLoggedInEventHandler
+from app.features.auth.application.commands.login.events import UserLoggedInEvent
 from app.features.auth.application.common_dtos import UserOutputDTO
 from app.features.auth.domain.entities import RefreshToken
 from app.features.auth.domain.exceptions import (
@@ -8,12 +10,13 @@ from app.features.auth.domain.exceptions import (
     InvalidCredentialsError,
 )
 from app.features.auth.domain.repositories import RefreshTokenRepository, UserRepository
-from app.features.auth.domain.services import PasswordHasher, TokenService
+from app.features.auth.domain.services.password_hasher import PasswordHasher
+from app.features.auth.domain.services.token_service import TokenService
 from app.features.auth.infrastructure.token_service import JwtTokenService
 
 
-class LoginUseCase:
-    """Command Use Case to authenticate credentials, persist refresh token, and issue tokens."""
+class LoginUserCommandHandler:
+    """Command handler responsible for authenticating credentials, creating tokens, and emitting events."""
 
     def __init__(
         self,
@@ -21,13 +24,15 @@ class LoginUseCase:
         hasher: PasswordHasher,
         token_service: TokenService,
         refresh_token_repo: RefreshTokenRepository | None = None,
+        event_handler: UserLoggedInEventHandler | None = None,
     ):
         self._user_repo = user_repo
         self._hasher = hasher
         self._token_service = token_service
         self._refresh_token_repo = refresh_token_repo
+        self._event_handler = event_handler or UserLoggedInEventHandler()
 
-    async def execute(self, command: LoginCommand) -> LoginResultDTO:
+    async def handle(self, command: LoginUserCommand) -> LoginResult:
         email = command.email.strip().lower()
         user = await self._user_repo.get_by_email(email)
         if not user:
@@ -72,7 +77,14 @@ class LoginUseCase:
             updated_at=user.updated_at,
         )
 
-        return LoginResultDTO(
+        # Dispatch event
+        event = UserLoggedInEvent(
+            user_id=user.id,
+            email=user.email,
+        )
+        await self._event_handler.handle(event)
+
+        return LoginResult(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",

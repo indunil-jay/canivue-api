@@ -1,16 +1,6 @@
 from abc import ABC, abstractmethod
 
 
-class PasswordHasher(ABC):
-    """Abstract interface for secure password hashing and verification services."""
-
-    @abstractmethod
-    def hash(self, password: str) -> str: ...
-
-    @abstractmethod
-    def verify(self, plain_password: str, hashed_password: str) -> bool: ...
-
-
 class TokenService(ABC):
     """Abstract interface for token encoding, decoding, and life-cycle services."""
 

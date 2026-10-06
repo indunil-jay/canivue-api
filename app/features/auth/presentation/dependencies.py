@@ -4,13 +4,22 @@ from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.features.auth.application.dtos import UserOutputDTO
-from app.features.auth.application.use_cases import (
-    CreateStaffUserUseCase,
-    GetCurrentUserUseCase,
-    LoginUseCase,
-    RefreshTokenUseCase,
-    RegisterClientUseCase,
+from app.features.auth.application.commands.create_client import (
+    CreateClientCommandHandler,
+)
+from app.features.auth.application.commands.create_staff import (
+    CreateStaffUserCommandHandler,
+)
+from app.features.auth.application.commands.login import (
+    LoginUserCommandHandler,
+)
+from app.features.auth.application.commands.rotate_token import (
+    RotateRefreshTokenCommandHandler,
+)
+from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.queries.get_current_user import (
+    GetCurrentUserQuery,
+    GetCurrentUserQueryHandler,
 )
 from app.features.auth.domain.entities import Role
 from app.features.auth.domain.exceptions import (
@@ -54,27 +63,27 @@ def get_refresh_token_repository(
     return SqlAlchemyRefreshTokenRepository(session=session)
 
 
-def get_register_client_use_case(
+def get_create_client_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
-) -> RegisterClientUseCase:
-    return RegisterClientUseCase(user_repo=user_repo, hasher=hasher)
+) -> CreateClientCommandHandler:
+    return CreateClientCommandHandler(user_repo=user_repo, hasher=hasher)
 
 
-def get_create_staff_use_case(
+def get_create_staff_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
-) -> CreateStaffUserUseCase:
-    return CreateStaffUserUseCase(user_repo=user_repo, hasher=hasher)
+) -> CreateStaffUserCommandHandler:
+    return CreateStaffUserCommandHandler(user_repo=user_repo, hasher=hasher)
 
 
-def get_login_use_case(
+def get_login_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
     token_service: TokenService = Depends(get_token_service),
     refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
-) -> LoginUseCase:
-    return LoginUseCase(
+) -> LoginUserCommandHandler:
+    return LoginUserCommandHandler(
         user_repo=user_repo,
         hasher=hasher,
         token_service=token_service,
@@ -82,28 +91,36 @@ def get_login_use_case(
     )
 
 
-def get_refresh_token_use_case(
+def get_rotate_token_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
     token_service: TokenService = Depends(get_token_service),
-) -> RefreshTokenUseCase:
-    return RefreshTokenUseCase(
+) -> RotateRefreshTokenCommandHandler:
+    return RotateRefreshTokenCommandHandler(
         user_repo=user_repo,
         refresh_token_repo=refresh_token_repo,
         token_service=token_service,
     )
 
 
-def get_current_user_use_case(
+def get_current_user_query_handler(
     user_repo: UserRepository = Depends(get_user_repository),
-) -> GetCurrentUserUseCase:
-    return GetCurrentUserUseCase(user_repo=user_repo)
+) -> GetCurrentUserQueryHandler:
+    return GetCurrentUserQueryHandler(user_repo=user_repo)
+
+
+# Backward-compatible factory names
+get_register_client_use_case = get_create_client_command_handler
+get_create_staff_use_case = get_create_staff_command_handler
+get_login_use_case = get_login_command_handler
+get_refresh_token_use_case = get_rotate_token_command_handler
+get_current_user_use_case = get_current_user_query_handler
 
 
 async def get_current_user(
     authorization: str | None = Header(None, alias="Authorization"),
     token_service: TokenService = Depends(get_token_service),
-    use_case: GetCurrentUserUseCase = Depends(get_current_user_use_case),
+    query_handler: GetCurrentUserQueryHandler = Depends(get_current_user_query_handler),
 ) -> UserOutputDTO:
     """Security seam extracting Bearer JWT and resolving active user."""
     if not authorization:
@@ -128,7 +145,8 @@ async def get_current_user(
     except (ValueError, TypeError) as e:
         raise InvalidCredentialsError("Invalid subject claim in token.") from e
 
-    return await use_case.execute(user_id)
+    query = GetCurrentUserQuery(user_id=user_id)
+    return await query_handler.handle(query)
 
 
 def require_roles(*allowed_roles: Role | str) -> Callable:

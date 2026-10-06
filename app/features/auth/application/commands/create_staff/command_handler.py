@@ -1,22 +1,32 @@
 from datetime import datetime, timezone
 
 from app.core.exceptions import ValidationException
-from app.features.auth.application.commands.dtos import CreateStaffUserCommand
+from app.features.auth.application.commands.create_staff.command import CreateStaffUserCommand
+from app.features.auth.application.commands.create_staff.event_handler import (
+    StaffUserCreatedEventHandler,
+)
+from app.features.auth.application.commands.create_staff.events import StaffUserCreatedEvent
 from app.features.auth.application.common_dtos import UserOutputDTO
 from app.features.auth.domain.entities import User
 from app.features.auth.domain.exceptions import UserAlreadyExistsError
 from app.features.auth.domain.repositories import UserRepository
-from app.features.auth.domain.services import PasswordHasher
+from app.features.auth.domain.services.password_hasher import PasswordHasher
 
 
-class CreateStaffUserUseCase:
-    """Command Use Case allowing administrators to onboard staff users (VET or ADMIN)."""
+class CreateStaffUserCommandHandler:
+    """Command handler responsible for validating and provisioning staff accounts."""
 
-    def __init__(self, user_repo: UserRepository, hasher: PasswordHasher):
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        hasher: PasswordHasher,
+        event_handler: StaffUserCreatedEventHandler | None = None,
+    ):
         self._user_repo = user_repo
         self._hasher = hasher
+        self._event_handler = event_handler or StaffUserCreatedEventHandler()
 
-    async def execute(self, command: CreateStaffUserCommand) -> UserOutputDTO:
+    async def handle(self, command: CreateStaffUserCommand) -> UserOutputDTO:
         email = command.email.strip().lower()
         if not email or "@" not in email:
             raise ValidationException("A valid email address is required.")
@@ -42,6 +52,17 @@ class CreateStaffUserUseCase:
         )
 
         saved = await self._user_repo.create(new_staff)
+
+        # Dispatch event
+        event = StaffUserCreatedEvent(
+            user_id=saved.id,
+            email=saved.email,
+            role=saved.role,
+            full_name=saved.full_name,
+            occurred_at=now,
+        )
+        await self._event_handler.handle(event)
+
         return UserOutputDTO(
             id=saved.id,
             email=saved.email,
