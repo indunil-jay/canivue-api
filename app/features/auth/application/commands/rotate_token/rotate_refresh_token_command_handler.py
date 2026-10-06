@@ -11,7 +11,12 @@ from app.features.auth.application.event_handlers.refresh_token_rotated_event_ha
 )
 from app.features.auth.application.exceptions import (
     AccountDisabledError,
+    InvalidTokenClaimsError,
+    InvalidTokenSubjectError,
+    InvalidTokenTypeError,
+    TokenExpiredError,
     TokenExpiredOrRevokedError,
+    UserNotFoundError,
 )
 from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
     RefreshTokenRepository,
@@ -45,23 +50,23 @@ class RotateRefreshTokenCommandHandler:
     async def handle(self, command: RotateRefreshTokenCommand) -> TokenPairOutputDTO:
         payload = self._token_service.decode_token(command.refresh_token)
         if payload.get("type") != "refresh":
-            raise TokenExpiredOrRevokedError("Invalid token type. Refresh token required.")
+            raise InvalidTokenTypeError()
 
         user_id_str = payload.get("sub")
         if not user_id_str:
-            raise TokenExpiredOrRevokedError("Invalid token claims.")
+            raise InvalidTokenClaimsError()
 
         try:
             user_id = int(user_id_str)
         except (ValueError, TypeError) as e:
-            raise TokenExpiredOrRevokedError("Invalid token subject.") from e
+            raise InvalidTokenSubjectError() from e
 
         token_hash = JwtTokenService.hash_token(command.refresh_token)
         persisted_token = await self._refresh_token_repo.get_by_hash(token_hash)
         if not persisted_token or persisted_token.is_revoked:
             if persisted_token and persisted_token.is_revoked:
                 await self._refresh_token_repo.revoke_all_for_user(user_id)
-            raise TokenExpiredOrRevokedError("Refresh token is expired or revoked.")
+            raise TokenExpiredOrRevokedError()
 
         now = datetime.now(timezone.utc)
         if persisted_token.expires_at.tzinfo is None:
@@ -71,13 +76,13 @@ class RotateRefreshTokenCommandHandler:
 
         if expires_at < now:
             await self._refresh_token_repo.revoke(token_hash)
-            raise TokenExpiredOrRevokedError("Refresh token has expired.")
+            raise TokenExpiredError()
 
         await self._refresh_token_repo.revoke(token_hash)
 
         user = await self._user_repo.get_by_id(user_id)
         if not user:
-            raise TokenExpiredOrRevokedError("User not found.")
+            raise UserNotFoundError()
         if not user.is_active:
             raise AccountDisabledError()
 

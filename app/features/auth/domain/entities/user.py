@@ -2,7 +2,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from app.features.auth.domain.enums.role import Role
-from app.features.auth.domain.exceptions import ValidationException
+from app.features.auth.domain.exceptions import (
+    EmptyPasswordHashError,
+    InvalidEmailError,
+)
 
 
 @dataclass
@@ -20,11 +23,11 @@ class User:
     def validate_email(self) -> None:
         email = self.email.strip().lower()
         if not email or "@" not in email:
-            raise ValidationException("A valid email address is required.")
+            raise InvalidEmailError()
 
     def validate_password_hash(self) -> None:
         if not self.hashed_password:
-            raise ValidationException("Hashed password must not be empty.")
+            raise EmptyPasswordHashError()
 
     @classmethod
     def create_client(

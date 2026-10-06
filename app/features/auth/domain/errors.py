@@ -20,6 +20,24 @@ class ValidationErrorDomainError(DomainError):
 
 
 @dataclass(frozen=True)
+class InvalidEmailDomainError(ValidationErrorDomainError):
+    message: str = "A valid email address is required."
+    code: str = "INVALID_EMAIL"
+
+
+@dataclass(frozen=True)
+class WeakPasswordDomainError(ValidationErrorDomainError):
+    message: str = "Password must be at least 8 characters long."
+    code: str = "WEAK_PASSWORD"
+
+
+@dataclass(frozen=True)
+class EmptyPasswordHashDomainError(ValidationErrorDomainError):
+    message: str = "Hashed password must not be empty."
+    code: str = "EMPTY_PASSWORD_HASH"
+
+
+@dataclass(frozen=True)
 class UserAlreadyExistsDomainError(DomainError):
     message: str = "User already exists."
     code: str = "USER_ALREADY_EXISTS"

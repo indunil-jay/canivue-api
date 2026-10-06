@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from app.core.exceptions import ValidationException
 from app.features.auth.application.commands.create_staff.create_staff_command import (
     CreateStaffCommand,
 )
@@ -19,7 +18,11 @@ from app.features.auth.domain.entities.user import User
 from app.features.auth.domain.events.staff_user_created import (
     StaffUserCreatedDomainEvent,
 )
-from app.features.auth.domain.exceptions import UserAlreadyExistsError
+from app.features.auth.domain.exceptions import (
+    InvalidEmailError,
+    UserAlreadyExistsError,
+    WeakPasswordError,
+)
 
 
 class CreateStaffCommandHandler:
@@ -36,10 +39,10 @@ class CreateStaffCommandHandler:
     async def handle(self, command: CreateStaffCommand) -> UserOutputDTO:
         email = command.email.strip().lower()
         if not email or "@" not in email:
-            raise ValidationException("A valid email address is required.")
+            raise InvalidEmailError()
 
         if len(command.password) < 8:
-            raise ValidationException("Password must be at least 8 characters long.")
+            raise WeakPasswordError()
 
         existing = await self._user_repo.get_by_email(email)
         if existing:

@@ -1,8 +1,11 @@
 from app.core.exceptions import AppException, ConflictException, ValidationException
 from app.features.auth.domain.errors import (
+    EmptyPasswordHashDomainError,
+    InvalidEmailDomainError,
     UserAlreadyExistsDomainError,
     UserNotFoundDomainError,
     ValidationErrorDomainError,
+    WeakPasswordDomainError,
 )
 
 
@@ -21,4 +24,22 @@ class UserNotFoundError(AppException):
 class DomainValidationException(ValidationException):
     def __init__(self, message: str = ValidationErrorDomainError.message):
         err = ValidationErrorDomainError(message=message)
+        super().__init__(message=err.message)
+
+
+class InvalidEmailError(ValidationException):
+    def __init__(self, message: str = InvalidEmailDomainError.message):
+        err = InvalidEmailDomainError(message=message)
+        super().__init__(message=err.message)
+
+
+class WeakPasswordError(ValidationException):
+    def __init__(self, message: str = WeakPasswordDomainError.message):
+        err = WeakPasswordDomainError(message=message)
+        super().__init__(message=err.message)
+
+
+class EmptyPasswordHashError(ValidationException):
+    def __init__(self, message: str = EmptyPasswordHashDomainError.message):
+        err = EmptyPasswordHashDomainError(message=message)
         super().__init__(message=err.message)

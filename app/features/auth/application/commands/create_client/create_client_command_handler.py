@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from app.core.exceptions import ValidationException
 from app.features.auth.application.commands.create_client.create_client_command import (
     CreateClientCommand,
 )
@@ -20,7 +19,11 @@ from app.features.auth.domain.enums.role import Role
 from app.features.auth.domain.events.user_registered import (
     UserRegisteredDomainEvent,
 )
-from app.features.auth.domain.exceptions import UserAlreadyExistsError
+from app.features.auth.domain.exceptions import (
+    InvalidEmailError,
+    UserAlreadyExistsError,
+    WeakPasswordError,
+)
 
 
 class CreateClientCommandHandler:
@@ -37,10 +40,10 @@ class CreateClientCommandHandler:
     async def handle(self, command: CreateClientCommand) -> UserOutputDTO:
         email = command.email.strip().lower()
         if not email or "@" not in email:
-            raise ValidationException("A valid email address is required.")
+            raise InvalidEmailError()
 
         if len(command.password) < 8:
-            raise ValidationException("Password must be at least 8 characters long.")
+            raise WeakPasswordError()
 
         existing = await self._user_repo.get_by_email(email)
         if existing:

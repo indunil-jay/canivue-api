@@ -38,3 +38,33 @@ class TokenExpiredOrRevokedApplicationError(ApplicationError):
     message: str = "Token is expired or revoked."
     code: str = "TOKEN_EXPIRED_OR_REVOKED"
     status_code: int = status.HTTP_401_UNAUTHORIZED
+
+
+@dataclass(frozen=True)
+class InvalidTokenTypeApplicationError(TokenExpiredOrRevokedApplicationError):
+    message: str = "Invalid token type. Refresh token required."
+    code: str = "INVALID_TOKEN_TYPE"
+
+
+@dataclass(frozen=True)
+class InvalidTokenClaimsApplicationError(TokenExpiredOrRevokedApplicationError):
+    message: str = "Invalid token claims."
+    code: str = "INVALID_TOKEN_CLAIMS"
+
+
+@dataclass(frozen=True)
+class InvalidTokenSubjectApplicationError(TokenExpiredOrRevokedApplicationError):
+    message: str = "Invalid token subject."
+    code: str = "INVALID_TOKEN_SUBJECT"
+
+
+@dataclass(frozen=True)
+class TokenExpiredApplicationError(TokenExpiredOrRevokedApplicationError):
+    message: str = "Refresh token has expired."
+    code: str = "TOKEN_EXPIRED"
+
+
+@dataclass(frozen=True)
+class UserNotFoundApplicationError(TokenExpiredOrRevokedApplicationError):
+    message: str = "User account not found."
+    code: str = "USER_NOT_FOUND"
