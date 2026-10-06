@@ -1,52 +1,24 @@
-from datetime import datetime
+from app.features.auth.presentation.requests import (
+    CreateStaffRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    RegisterClientRequest,
+)
+from app.features.auth.presentation.responses import (
+    LoginResponseData,
+    TokenPairResponseData,
+    UserResponseData,
+)
 
-from pydantic import BaseModel, EmailStr, Field
+__all__ = [
+    "RegisterClientRequest",
+    "CreateStaffRequest",
+    "LoginRequest",
+    "RefreshTokenRequest",
+    "UserResponseData",
+    "LoginResponseData",
+    "TokenPairResponseData",
+]
 
-
-class RegisterClientRequest(BaseModel):
-    email: EmailStr = Field(..., description="Unique user email address")
-    password: str = Field(..., min_length=8, description="Password with minimum 8 characters")
-    full_name: str | None = Field(None, max_length=255, description="Full name of the user")
-
-
-class UserResponseData(BaseModel):
-    id: int
-    email: str
-    role: str
-    full_name: str | None = None
-    is_active: bool
-    permissions: list[str] = []
-    created_at: datetime
-    updated_at: datetime
-
-
-class CreateStaffRequest(BaseModel):
-    email: EmailStr = Field(..., description="Staff member email address")
-    password: str = Field(..., min_length=8, description="Password with minimum 8 characters")
-    role: str = Field(..., description="Staff role: VET or ADMIN")
-    full_name: str | None = Field(None, max_length=255, description="Full name of staff member")
-
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr = Field(..., description="User email address")
-    password: str = Field(..., description="User password")
-
-
-class LoginResponseData(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    user: UserResponseData
-
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str = Field(..., description="Valid refresh token")
-
-
-class TokenPairResponseData(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
 
 

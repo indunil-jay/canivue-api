@@ -23,12 +23,15 @@ from app.features.auth.presentation.dependencies import (
     get_register_client_use_case,
     require_permissions,
 )
-from app.features.auth.presentation.schemas import (
+from app.features.auth.presentation.mappers import AuthPresentationMapper
+from app.features.auth.presentation.requests import (
     CreateStaffRequest,
     LoginRequest,
-    LoginResponseData,
     RefreshTokenRequest,
     RegisterClientRequest,
+)
+from app.features.auth.presentation.responses import (
+    LoginResponseData,
     TokenPairResponseData,
     UserResponseData,
 )
@@ -54,20 +57,10 @@ async def register_client(
     )
     result = await use_case.execute(dto)
 
-    data = UserResponseData(
-        id=result.id,
-        email=result.email,
-        role=result.role.value,
-        full_name=result.full_name,
-        is_active=result.is_active,
-        created_at=result.created_at,
-        updated_at=result.updated_at,
-    )
-
     return APIResponse(
         success=True,
         message="Client account registered successfully",
-        data=data,
+        data=AuthPresentationMapper.to_user_response(result),
     )
 
 
@@ -85,26 +78,10 @@ async def login(
     dto = LoginInputDTO(email=payload.email, password=payload.password)
     result = await use_case.execute(dto)
 
-    data = LoginResponseData(
-        access_token=result.access_token,
-        refresh_token=result.refresh_token,
-        token_type=result.token_type,
-        user=UserResponseData(
-            id=result.user.id,
-            email=result.user.email,
-            role=result.user.role.value,
-            full_name=result.user.full_name,
-            is_active=result.user.is_active,
-            permissions=result.user.permissions,
-            created_at=result.user.created_at,
-            updated_at=result.user.updated_at,
-        ),
-    )
-
     return APIResponse(
         success=True,
         message="Authentication successful",
-        data=data,
+        data=AuthPresentationMapper.to_login_response(result),
     )
 
 
@@ -122,16 +99,10 @@ async def refresh_token(
     dto = RefreshTokenInputDTO(refresh_token=payload.refresh_token)
     result = await use_case.execute(dto)
 
-    data = TokenPairResponseData(
-        access_token=result.access_token,
-        refresh_token=result.refresh_token,
-        token_type=result.token_type,
-    )
-
     return APIResponse(
         success=True,
         message="Tokens refreshed successfully",
-        data=data,
+        data=AuthPresentationMapper.to_token_pair_response(result),
     )
 
 
@@ -145,21 +116,10 @@ async def refresh_token(
 async def get_me(
     current_user: UserOutputDTO = Depends(get_current_user),
 ) -> APIResponse[UserResponseData]:
-    data = UserResponseData(
-        id=current_user.id,
-        email=current_user.email,
-        role=current_user.role.value,
-        full_name=current_user.full_name,
-        is_active=current_user.is_active,
-        permissions=current_user.permissions,
-        created_at=current_user.created_at,
-        updated_at=current_user.updated_at,
-    )
-
     return APIResponse(
         success=True,
         message="User profile retrieved successfully",
-        data=data,
+        data=AuthPresentationMapper.to_user_response(current_user),
     )
 
 
@@ -183,21 +143,11 @@ async def create_staff(
     )
     result = await use_case.execute(dto)
 
-    data = UserResponseData(
-        id=result.id,
-        email=result.email,
-        role=result.role.value,
-        full_name=result.full_name,
-        is_active=result.is_active,
-        permissions=result.permissions,
-        created_at=result.created_at,
-        updated_at=result.updated_at,
-    )
-
     return APIResponse(
         success=True,
         message="Staff member created successfully",
-        data=data,
+        data=AuthPresentationMapper.to_user_response(result),
     )
+
 
 
