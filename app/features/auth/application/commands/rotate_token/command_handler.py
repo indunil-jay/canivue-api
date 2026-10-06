@@ -6,18 +6,20 @@ from app.features.auth.application.commands.rotate_token.event_handler import (
 )
 from app.features.auth.application.commands.rotate_token.events import RefreshTokenRotatedEvent
 from app.features.auth.application.common_dtos import TokenPairOutputDTO
-from app.features.auth.application.interfaces.repositories import (
+from app.features.auth.application.exceptions import (
+    AccountDisabledError,
+    TokenExpiredOrRevokedError,
+)
+from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
     RefreshTokenRepository,
+)
+from app.features.auth.application.interfaces.repositories.user_repository import (
     UserRepository,
 )
 from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
-from app.features.auth.domain.entities import RefreshToken
-from app.features.auth.domain.exceptions import (
-    AccountDisabledError,
-    TokenExpiredOrRevokedError,
-)
+from app.features.auth.domain.entities.refresh_token import RefreshToken
 from app.features.auth.infrastructure.services.token_service import JwtTokenService
 
 

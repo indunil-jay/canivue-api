@@ -1,26 +1,35 @@
 import pytest
 
 from app.core.exceptions import ConflictException, ValidationException
-from app.features.auth.application.commands.create_client import (
+from app.features.auth.application.commands.create_client.command import (
     CreateClientCommand,
+)
+from app.features.auth.application.commands.create_client.command_handler import (
     CreateClientCommandHandler,
 )
-from app.features.auth.application.commands.login import (
+from app.features.auth.application.commands.login.command import (
     LoginUserCommand,
+)
+from app.features.auth.application.commands.login.command_handler import (
     LoginUserCommandHandler,
 )
-from app.features.auth.application.interfaces.repositories import (
+from app.features.auth.application.interfaces.repositories.user_repository import (
     UserRepository,
 )
-from app.features.auth.application.interfaces.services import (
+from app.features.auth.application.interfaces.services.password_hasher import (
     PasswordHasher,
+)
+from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
-from app.features.auth.application.queries.get_current_user import (
+from app.features.auth.application.queries.get_current_user.query import (
     GetCurrentUserQuery,
+)
+from app.features.auth.application.queries.get_current_user.query_handler import (
     GetCurrentUserQueryHandler,
 )
-from app.features.auth.domain.entities import Role, User
+from app.features.auth.domain.entities.user import User
+from app.features.auth.domain.enums.role import Role
 
 
 class FakeUserRepository(UserRepository):
@@ -134,7 +143,9 @@ async def test_login_handler_success():
 
 @pytest.mark.asyncio
 async def test_login_handler_invalid_credentials():
-    from app.features.auth.domain.exceptions import InvalidCredentialsError
+    from app.features.auth.application.exceptions import (
+        InvalidCredentialsError,
+    )
 
     repo = FakeUserRepository()
     hasher = FakePasswordHasher()

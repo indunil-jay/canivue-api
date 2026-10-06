@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.features.auth.domain.entities import RefreshToken
+from app.features.auth.domain.entities.refresh_token import RefreshToken
 
 
 class RefreshTokenRepository(ABC):

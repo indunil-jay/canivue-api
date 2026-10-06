@@ -1,27 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum
 
-
-class Role(str, Enum):
-    ADMIN = "ADMIN"
-    VET = "VET"
-    CLIENT = "CLIENT"
-
-
-@dataclass
-class Permission:
-    """Pure domain entity representing a granular permission."""
-
-    id: int | None
-    name: str
-    description: str | None = None
+from app.features.auth.domain.enums.role import Role
+from app.features.auth.domain.exceptions import ValidationException
 
 
 @dataclass
 class User:
-    """Pure domain entity representing a system user."""
-
     id: int | None
     email: str
     hashed_password: str
@@ -32,13 +17,21 @@ class User:
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
+    def validate_email(self) -> None:
+        email = self.email.strip().lower()
+        if not email or "@" not in email:
+            raise ValidationException("A valid email address is required.")
+
+    def validate_password_hash(self) -> None:
+        if not self.hashed_password:
+            raise ValidationException("Hashed password must not be empty.")
+
     @classmethod
     def create_client(
         cls, email: str, hashed_password: str, full_name: str | None = None
     ) -> "User":
-        """Factory method guaranteeing new clients are created with CLIENT role."""
         now = datetime.now(timezone.utc)
-        return cls(
+        user = cls(
             id=None,
             email=email.strip().lower(),
             hashed_password=hashed_password,
@@ -48,15 +41,6 @@ class User:
             created_at=now,
             updated_at=now,
         )
-
-
-@dataclass
-class RefreshToken:
-    """Pure domain entity representing a persisted refresh token."""
-
-    id: int | None
-    user_id: int
-    token_hash: str
-    expires_at: datetime
-    is_revoked: bool = False
-    created_at: datetime | None = None
+        user.validate_email()
+        user.validate_password_hash()
+        return user

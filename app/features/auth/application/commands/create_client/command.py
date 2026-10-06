@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.features.auth.domain.entities import Role
+from app.features.auth.domain.enums.role import Role
 
 
 @dataclass(frozen=True)

@@ -6,8 +6,6 @@ from fastapi import status
 
 @dataclass(frozen=True)
 class ApplicationError:
-    """Base application layer error."""
-
     message: str
     code: str = "APPLICATION_ERROR"
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -15,7 +13,28 @@ class ApplicationError:
 
 
 @dataclass(frozen=True)
-class InvalidInputApplicationError(ApplicationError):
-    message: str = "Invalid input provided."
-    code: str = "INVALID_INPUT"
-    status_code: int = status.HTTP_422_UNPROCESSABLE_ENTITY
+class InvalidCredentialsApplicationError(ApplicationError):
+    message: str = "Invalid email or password."
+    code: str = "INVALID_CREDENTIALS"
+    status_code: int = status.HTTP_401_UNAUTHORIZED
+
+
+@dataclass(frozen=True)
+class AccountDisabledApplicationError(ApplicationError):
+    message: str = "Account is disabled."
+    code: str = "ACCOUNT_DISABLED"
+    status_code: int = status.HTTP_403_FORBIDDEN
+
+
+@dataclass(frozen=True)
+class InsufficientPermissionsApplicationError(ApplicationError):
+    message: str = "Insufficient permissions to perform this action."
+    code: str = "INSUFFICIENT_PERMISSIONS"
+    status_code: int = status.HTTP_403_FORBIDDEN
+
+
+@dataclass(frozen=True)
+class TokenExpiredOrRevokedApplicationError(ApplicationError):
+    message: str = "Token is expired or revoked."
+    code: str = "TOKEN_EXPIRED_OR_REVOKED"
+    status_code: int = status.HTTP_401_UNAUTHORIZED

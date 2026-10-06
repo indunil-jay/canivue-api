@@ -1,14 +1,20 @@
-from app.features.auth.application.dtos import LoginOutputDTO, TokenPairOutputDTO, UserOutputDTO
-from app.features.auth.presentation.responses import (
+from app.features.auth.application.commands.login.command import LoginResult
+from app.features.auth.application.common_dtos import (
+    TokenPairOutputDTO,
+    UserOutputDTO,
+)
+from app.features.auth.presentation.responses.login_response import (
     LoginResponseData,
+)
+from app.features.auth.presentation.responses.token_pair_response import (
     TokenPairResponseData,
+)
+from app.features.auth.presentation.responses.user_response import (
     UserResponseData,
 )
 
 
 class AuthPresentationMapper:
-    """Explicit mapper transforming Application DTOs to Presentation Response shapes."""
-
     @staticmethod
     def to_user_response(dto: UserOutputDTO) -> UserResponseData:
         return UserResponseData(
@@ -23,7 +29,7 @@ class AuthPresentationMapper:
         )
 
     @staticmethod
-    def to_login_response(dto: LoginOutputDTO) -> LoginResponseData:
+    def to_login_response(dto: LoginResult) -> LoginResponseData:
         return LoginResponseData(
             access_token=dto.access_token,
             refresh_token=dto.refresh_token,

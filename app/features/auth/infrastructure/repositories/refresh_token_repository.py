@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
-from app.features.auth.domain.entities import RefreshToken
+from app.features.auth.domain.entities.refresh_token import RefreshToken
 from app.features.auth.infrastructure.models import RefreshTokenModel
 
 

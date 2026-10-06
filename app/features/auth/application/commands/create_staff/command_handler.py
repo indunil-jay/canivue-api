@@ -13,7 +13,7 @@ from app.features.auth.application.interfaces.repositories.user_repository impor
 from app.features.auth.application.interfaces.services.password_hasher import (
     PasswordHasher,
 )
-from app.features.auth.domain.entities import User
+from app.features.auth.domain.entities.user import User
 from app.features.auth.domain.exceptions import UserAlreadyExistsError
 
 

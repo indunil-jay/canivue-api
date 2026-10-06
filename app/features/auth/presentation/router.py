@@ -1,24 +1,32 @@
 from fastapi import APIRouter, Depends, status
 
 from app.core.response import APIResponse
-from app.features.auth.application.commands.create_client import (
+from app.features.auth.application.commands.create_client.command import (
     CreateClientCommand,
+)
+from app.features.auth.application.commands.create_client.command_handler import (
     CreateClientCommandHandler,
 )
-from app.features.auth.application.commands.create_staff import (
+from app.features.auth.application.commands.create_staff.command import (
     CreateStaffUserCommand,
+)
+from app.features.auth.application.commands.create_staff.command_handler import (
     CreateStaffUserCommandHandler,
 )
-from app.features.auth.application.commands.login import (
+from app.features.auth.application.commands.login.command import (
     LoginUserCommand,
+)
+from app.features.auth.application.commands.login.command_handler import (
     LoginUserCommandHandler,
 )
-from app.features.auth.application.commands.rotate_token import (
+from app.features.auth.application.commands.rotate_token.command import (
     RotateRefreshTokenCommand,
+)
+from app.features.auth.application.commands.rotate_token.command_handler import (
     RotateRefreshTokenCommandHandler,
 )
 from app.features.auth.application.common_dtos import UserOutputDTO
-from app.features.auth.domain.entities import Role
+from app.features.auth.domain.enums.role import Role
 from app.features.auth.presentation.dependencies import (
     get_create_client_command_handler,
     get_create_staff_command_handler,
@@ -28,15 +36,23 @@ from app.features.auth.presentation.dependencies import (
     require_permissions,
 )
 from app.features.auth.presentation.mappers import AuthPresentationMapper
-from app.features.auth.presentation.requests import (
+from app.features.auth.presentation.requests.create_staff_request import (
     CreateStaffRequest,
-    LoginRequest,
+)
+from app.features.auth.presentation.requests.login_request import LoginRequest
+from app.features.auth.presentation.requests.refresh_token_request import (
     RefreshTokenRequest,
+)
+from app.features.auth.presentation.requests.register_client_request import (
     RegisterClientRequest,
 )
-from app.features.auth.presentation.responses import (
+from app.features.auth.presentation.responses.login_response import (
     LoginResponseData,
+)
+from app.features.auth.presentation.responses.token_pair_response import (
     TokenPairResponseData,
+)
+from app.features.auth.presentation.responses.user_response import (
     UserResponseData,
 )
 

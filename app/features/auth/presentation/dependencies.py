@@ -4,44 +4,50 @@ from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.features.auth.application.commands.create_client import (
+from app.features.auth.application.commands.create_client.command_handler import (
     CreateClientCommandHandler,
 )
-from app.features.auth.application.commands.create_staff import (
+from app.features.auth.application.commands.create_staff.command_handler import (
     CreateStaffUserCommandHandler,
 )
-from app.features.auth.application.commands.login import (
+from app.features.auth.application.commands.login.command_handler import (
     LoginUserCommandHandler,
 )
-from app.features.auth.application.commands.rotate_token import (
+from app.features.auth.application.commands.rotate_token.command_handler import (
     RotateRefreshTokenCommandHandler,
 )
 from app.features.auth.application.common_dtos import UserOutputDTO
-from app.features.auth.application.interfaces.repositories import (
-    RefreshTokenRepository,
-    UserRepository,
-)
-from app.features.auth.application.interfaces.services import (
-    PasswordHasher,
-    TokenService,
-)
-from app.features.auth.application.queries.get_current_user import (
-    GetCurrentUserQuery,
-    GetCurrentUserQueryHandler,
-)
-from app.features.auth.domain.entities import Role
-from app.features.auth.domain.exceptions import (
+from app.features.auth.application.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
 )
-from app.features.auth.infrastructure.repositories import (
+from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
+    RefreshTokenRepository,
+)
+from app.features.auth.application.interfaces.repositories.user_repository import (
+    UserRepository,
+)
+from app.features.auth.application.interfaces.services.password_hasher import (
+    PasswordHasher,
+)
+from app.features.auth.application.interfaces.services.token_service import (
+    TokenService,
+)
+from app.features.auth.application.queries.get_current_user.query import (
+    GetCurrentUserQuery,
+)
+from app.features.auth.application.queries.get_current_user.query_handler import (
+    GetCurrentUserQueryHandler,
+)
+from app.features.auth.domain.enums.role import Role
+from app.features.auth.infrastructure.repositories.refresh_token_repository import (
     SqlAlchemyRefreshTokenRepository,
+)
+from app.features.auth.infrastructure.repositories.user_repository import (
     SqlAlchemyUserRepository,
 )
-from app.features.auth.infrastructure.services import (
-    Argon2PasswordHasher,
-    JwtTokenService,
-)
+from app.features.auth.infrastructure.services.hasher import Argon2PasswordHasher
+from app.features.auth.infrastructure.services.token_service import JwtTokenService
 
 _hasher_instance = Argon2PasswordHasher()
 _token_service_instance = JwtTokenService()
@@ -109,14 +115,6 @@ def get_current_user_query_handler(
     user_repo: UserRepository = Depends(get_user_repository),
 ) -> GetCurrentUserQueryHandler:
     return GetCurrentUserQueryHandler(user_repo=user_repo)
-
-
-# Backward-compatible factory names
-get_register_client_use_case = get_create_client_command_handler
-get_create_staff_use_case = get_create_staff_command_handler
-get_login_use_case = get_login_command_handler
-get_refresh_token_use_case = get_rotate_token_command_handler
-get_current_user_use_case = get_current_user_query_handler
 
 
 async def get_current_user(

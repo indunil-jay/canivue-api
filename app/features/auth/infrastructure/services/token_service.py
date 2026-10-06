@@ -5,10 +5,12 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from app.config import settings
+from app.features.auth.application.exceptions import (
+    TokenExpiredOrRevokedError,
+)
 from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
-from app.features.auth.domain.exceptions import TokenExpiredOrRevokedError
 
 
 class JwtTokenService(TokenService):

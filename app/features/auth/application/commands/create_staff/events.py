@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from app.features.auth.domain.entities import Role
+from app.features.auth.domain.enums.role import Role
 
 
 def _utc_now() -> datetime:

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.features.auth.domain.entities import User
+from app.features.auth.domain.entities.user import User
 
 
 class UserRepository(ABC):

@@ -1,10 +1,8 @@
-from app.core.exceptions import AppException, ConflictException
+from app.core.exceptions import AppException, ConflictException, ValidationException
 from app.features.auth.domain.errors import (
-    AccountDisabledDomainError,
-    InsufficientPermissionsDomainError,
-    InvalidCredentialsDomainError,
-    TokenExpiredOrRevokedDomainError,
     UserAlreadyExistsDomainError,
+    UserNotFoundDomainError,
+    ValidationErrorDomainError,
 )
 
 
@@ -14,25 +12,13 @@ class UserAlreadyExistsError(ConflictException):
         super().__init__(message=err.message)
 
 
-class InvalidCredentialsError(AppException):
-    def __init__(self, message: str = InvalidCredentialsDomainError.message):
-        err = InvalidCredentialsDomainError(message=message)
+class UserNotFoundError(AppException):
+    def __init__(self, message: str = UserNotFoundDomainError.message):
+        err = UserNotFoundDomainError(message=message)
         super().__init__(message=err.message, status_code=err.status_code)
 
 
-class AccountDisabledError(AppException):
-    def __init__(self, message: str = AccountDisabledDomainError.message):
-        err = AccountDisabledDomainError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
-
-
-class InsufficientPermissionsError(AppException):
-    def __init__(self, message: str = InsufficientPermissionsDomainError.message):
-        err = InsufficientPermissionsDomainError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
-
-
-class TokenExpiredOrRevokedError(AppException):
-    def __init__(self, message: str = TokenExpiredOrRevokedDomainError.message):
-        err = TokenExpiredOrRevokedDomainError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
+class DomainValidationException(ValidationException):
+    def __init__(self, message: str = ValidationErrorDomainError.message):
+        err = ValidationErrorDomainError(message=message)
+        super().__init__(message=err.message)
