@@ -4,10 +4,10 @@ import jwt
 
 from app.config import settings
 from app.features.auth.domain.exceptions import TokenExpiredOrRevokedError
-from app.features.auth.domain.protocols import TokenServiceProtocol
+from app.features.auth.domain.services import TokenService
 
 
-class JwtTokenService(TokenServiceProtocol):
+class JwtTokenService(TokenService):
     """Production JWT service using PyJWT."""
 
     def __init__(

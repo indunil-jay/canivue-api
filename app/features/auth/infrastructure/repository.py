@@ -3,16 +3,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.auth.domain.entities import RefreshToken, Role, User
-from app.features.auth.domain.protocols import (
-    RefreshTokenRepositoryProtocol,
-    UserRepositoryProtocol,
+from app.features.auth.domain.repositories import (
+    RefreshTokenRepository,
+    UserRepository,
 )
 from app.features.auth.infrastructure.models import RefreshTokenModel, UserModel
 from app.features.auth.infrastructure.rbac_repository import SqlAlchemyRbacRepository
 
 
-class SqlAlchemyUserRepository(UserRepositoryProtocol):
-    """SQLAlchemy implementation of the UserRepositoryProtocol."""
+class SqlAlchemyUserRepository(UserRepository):
+    """SQLAlchemy implementation of the UserRepository interface."""
+
 
     def __init__(self, session: AsyncSession, rbac_repo: SqlAlchemyRbacRepository | None = None):
         self._session = session
@@ -80,8 +81,8 @@ class SqlAlchemyUserRepository(UserRepositoryProtocol):
 
 
 
-class SqlAlchemyRefreshTokenRepository(RefreshTokenRepositoryProtocol):
-    """SQLAlchemy implementation of RefreshTokenRepositoryProtocol."""
+class SqlAlchemyRefreshTokenRepository(RefreshTokenRepository):
+    """SQLAlchemy implementation of RefreshTokenRepository interface."""
 
     def __init__(self, session: AsyncSession):
         self._session = session

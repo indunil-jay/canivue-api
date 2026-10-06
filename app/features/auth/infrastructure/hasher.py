@@ -1,9 +1,9 @@
 from pwdlib import PasswordHash
 
-from app.features.auth.domain.protocols import PasswordHasherProtocol
+from app.features.auth.domain.services import PasswordHasher
 
 
-class Argon2PasswordHasher(PasswordHasherProtocol):
+class Argon2PasswordHasher(PasswordHasher):
     """Production password hasher using pwdlib with Argon2 / Bcrypt recommendation."""
 
     def __init__(self):
