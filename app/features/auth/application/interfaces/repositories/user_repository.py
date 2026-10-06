@@ -1,22 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from app.features.auth.domain.entities.user import User
+from app.shared.repository import BaseRepositoryProtocol
 
 
-class UserRepository(ABC):
+class UserRepository(BaseRepositoryProtocol[User, int]):
     """Abstract interface defining persistence operations for User entities."""
-
-    @abstractmethod
-    async def get_by_id(self, user_id: int) -> User | None: ...
 
     @abstractmethod
     async def get_by_email(self, email: str) -> User | None: ...
 
     @abstractmethod
     async def get_by_google_id(self, google_id: str) -> User | None: ...
-
-    @abstractmethod
-    async def create(self, user: User) -> User: ...
-
-    @abstractmethod
-    async def update(self, user: User) -> User: ...

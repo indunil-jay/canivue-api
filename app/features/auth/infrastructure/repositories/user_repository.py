@@ -1,6 +1,9 @@
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.repository import BaseSqlAlchemyRepository
 from app.features.auth.application.interfaces.repositories.user_repository import (
     UserRepository,
 )
@@ -12,11 +15,16 @@ from app.features.auth.infrastructure.repositories.rbac_repository import (
 )
 
 
-class SqlAlchemyUserRepository(UserRepository):
+class SqlAlchemyUserRepository(
+    BaseSqlAlchemyRepository[User, UserModel, int],
+    UserRepository,
+):
     """SQLAlchemy implementation of the UserRepository interface."""
 
+    _model_cls = UserModel
+
     def __init__(self, session: AsyncSession, rbac_repo: SqlAlchemyRbacRepository | None = None):
-        self._session = session
+        super().__init__(session=session)
         self._rbac_repo = rbac_repo or SqlAlchemyRbacRepository(session=session)
 
     async def _to_entity(self, model: UserModel) -> User:
@@ -35,11 +43,17 @@ class SqlAlchemyUserRepository(UserRepository):
             updated_at=model.updated_at,
         )
 
-    async def get_by_id(self, user_id: int) -> User | None:
-        stmt = select(UserModel).where(UserModel.id == user_id)
-        result = await self._session.execute(stmt)
-        model = result.scalar_one_or_none()
-        return await self._to_entity(model) if model else None
+    def _to_model_dict(self, entity: User) -> dict[str, Any]:
+        return {
+            "email": entity.email.lower(),
+            "hashed_password": entity.hashed_password,
+            "role": entity.role.value if isinstance(entity.role, Role) else entity.role,
+            "full_name": entity.full_name,
+            "google_id": entity.google_id,
+            "is_active": entity.is_active,
+            "created_at": entity.created_at,
+            "updated_at": entity.updated_at,
+        }
 
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(UserModel).where(UserModel.email == email.lower())
@@ -53,35 +67,3 @@ class SqlAlchemyUserRepository(UserRepository):
         model = result.scalar_one_or_none()
         return await self._to_entity(model) if model else None
 
-    async def create(self, user: User) -> User:
-        model = UserModel(
-            email=user.email.lower(),
-            hashed_password=user.hashed_password,
-            role=user.role.value,
-            full_name=user.full_name,
-            google_id=user.google_id,
-            is_active=user.is_active,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
-        self._session.add(model)
-        await self._session.flush()
-        await self._session.refresh(model)
-
-        return await self._to_entity(model)
-
-    async def update(self, user: User) -> User:
-        stmt = select(UserModel).where(UserModel.id == user.id)
-        result = await self._session.execute(stmt)
-        model = result.scalar_one()
-
-        model.email = user.email.lower()
-        model.hashed_password = user.hashed_password
-        model.role = user.role.value
-        model.full_name = user.full_name
-        model.google_id = user.google_id
-        model.is_active = user.is_active
-        model.updated_at = user.updated_at
-
-        await self._session.flush()
-        return await self._to_entity(model)

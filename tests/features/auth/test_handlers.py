@@ -52,6 +52,10 @@ class FakeUserRepository(UserRepository):
                 return user
         return None
 
+    async def list_all(self, skip: int = 0, limit: int = 100):
+        users = list(self._users.values())
+        return users[skip : skip + limit]
+
     async def create(self, user: User) -> User:
         if user.id is None:
             user.id = self._id_counter
@@ -62,6 +66,9 @@ class FakeUserRepository(UserRepository):
     async def update(self, user: User) -> User:
         self._users[user.id] = user
         return user
+
+    async def delete(self, entity_id: int) -> bool:
+        return self._users.pop(entity_id, None) is not None
 
 
 class FakePasswordHasher(PasswordHasher):
