@@ -1,64 +1,99 @@
-from typing import Any, Optional
+from typing import Any
+
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
+from app.core.error_type import ERROR_TYPE_HTTP_STATUS_MAP, ErrorType
+
 
 class AppException(Exception):
-    """Base application domain exception."""
-
     def __init__(
         self,
         message: str,
-        status_code: int = status.HTTP_400_BAD_REQUEST,
-        details: Optional[Any] = None,
+        error_type: ErrorType = ErrorType.FAILURE,
+        status_code: int | None = None,
+        details: Any | None = None,
     ):
         self.message = message
-        self.status_code = status_code
+        self.error_type = error_type
+        self.status_code = status_code or ERROR_TYPE_HTTP_STATUS_MAP.get(
+            error_type, status.HTTP_400_BAD_REQUEST
+        )
         self.details = details
         super().__init__(self.message)
 
 
 class NotFoundException(AppException):
-    """Raised when a requested resource is not found."""
-
-    def __init__(self, message: str = "Resource not found", details: Optional[Any] = None):
+    def __init__(self, message: str = "Resource not found", details: Any | None = None):
         super().__init__(
             message=message,
-            status_code=status.HTTP_404_NOT_FOUND,
+            error_type=ErrorType.NOT_FOUND,
             details=details,
         )
 
 
 class ConflictException(AppException):
-    """Raised when a resource state conflict occurs (e.g. duplicate key)."""
-
-    def __init__(self, message: str = "Resource conflict occurred", details: Optional[Any] = None):
+    def __init__(self, message: str = "Resource conflict occurred", details: Any | None = None):
         super().__init__(
             message=message,
-            status_code=status.HTTP_409_CONFLICT,
+            error_type=ErrorType.CONFLICT,
             details=details,
         )
 
 
 class ValidationException(AppException):
-    """Raised when domain validation fails."""
-
-    def __init__(self, message: str = "Validation failed", details: Optional[Any] = None):
+    def __init__(self, message: str = "Validation failed", details: Any | None = None):
         super().__init__(
             message=message,
-            status_code=getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422),
+            error_type=ErrorType.VALIDATION,
+            details=details,
+        )
+
+
+class UnauthorizedException(AppException):
+    def __init__(self, message: str = "Unauthorized", details: Any | None = None):
+        super().__init__(
+            message=message,
+            error_type=ErrorType.UNAUTHORIZED,
+            details=details,
+        )
+
+
+class ForbiddenException(AppException):
+    def __init__(self, message: str = "Forbidden", details: Any | None = None):
+        super().__init__(
+            message=message,
+            error_type=ErrorType.FORBIDDEN,
+            details=details,
+        )
+
+
+class ConcurrencyException(AppException):
+    def __init__(self, message: str = "Concurrency conflict occurred", details: Any | None = None):
+        super().__init__(
+            message=message,
+            error_type=ErrorType.CONCURRENCY,
+            details=details,
+        )
+
+
+class ProblemException(AppException):
+    def __init__(self, message: str = "An unexpected problem occurred", details: Any | None = None):
+        super().__init__(
+            message=message,
+            error_type=ErrorType.PROBLEM,
             details=details,
         )
 
 
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
-    """Global handler for all domain/app exceptions."""
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "success": False,
             "error": {
                 "message": exc.message,
+                "type": exc.error_type.value,
                 "details": exc.details,
             },
         },

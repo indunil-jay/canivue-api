@@ -1,24 +1,27 @@
-from app.core.exceptions import AppException
+from app.core.exceptions import (
+    ForbiddenException,
+    UnauthorizedException,
+)
 
 
-class InvalidCredentialsError(AppException):
+class InvalidCredentialsError(UnauthorizedException):
     def __init__(self, message: str = "Invalid email or password.", details=None):
-        super().__init__(message=message, status_code=401, details=details)
+        super().__init__(message=message, details=details)
 
 
-class AccountDisabledError(AppException):
+class AccountDisabledError(ForbiddenException):
     def __init__(self, message: str = "Account is disabled.", details=None):
-        super().__init__(message=message, status_code=403, details=details)
+        super().__init__(message=message, details=details)
 
 
-class InsufficientPermissionsError(AppException):
+class InsufficientPermissionsError(ForbiddenException):
     def __init__(self, message: str = "Insufficient permissions to perform this action.", details=None):
-        super().__init__(message=message, status_code=403, details=details)
+        super().__init__(message=message, details=details)
 
 
-class TokenExpiredOrRevokedError(AppException):
+class TokenExpiredOrRevokedError(UnauthorizedException):
     def __init__(self, message: str = "Token is expired or revoked.", details=None):
-        super().__init__(message=message, status_code=401, details=details)
+        super().__init__(message=message, details=details)
 
 
 class InvalidTokenTypeError(TokenExpiredOrRevokedError):

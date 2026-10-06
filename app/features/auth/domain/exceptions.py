@@ -1,4 +1,8 @@
-from app.core.exceptions import AppException, ConflictException, ValidationException
+from app.core.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 
 
 class DomainValidationException(ValidationException):
@@ -26,6 +30,6 @@ class UserAlreadyExistsError(ConflictException):
         super().__init__(message=f"User with email '{email}' already exists.")
 
 
-class UserNotFoundError(AppException):
+class UserNotFoundError(NotFoundException):
     def __init__(self, message: str = "User account not found.", details=None):
-        super().__init__(message=message, status_code=404, details=details)
+        super().__init__(message=message, details=details)
