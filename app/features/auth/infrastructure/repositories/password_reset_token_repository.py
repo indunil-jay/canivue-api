@@ -7,7 +7,9 @@ from app.features.auth.application.interfaces.repositories.password_reset_token_
 from app.features.auth.domain.entities.password_reset_token import (
     PasswordResetToken,
 )
-from app.features.auth.infrastructure.models import PasswordResetTokenModel
+from app.features.auth.infrastructure.models.password_reset_token_model import (
+    PasswordResetTokenModel,
+)
 
 
 class SqlAlchemyPasswordResetTokenRepository(PasswordResetTokenRepository):

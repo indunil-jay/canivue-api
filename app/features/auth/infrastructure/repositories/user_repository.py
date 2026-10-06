@@ -6,7 +6,7 @@ from app.features.auth.application.interfaces.repositories.user_repository impor
 )
 from app.features.auth.domain.entities.user import User
 from app.features.auth.domain.enums.role import Role
-from app.features.auth.infrastructure.models import UserModel
+from app.features.auth.infrastructure.models.user_model import UserModel
 from app.features.auth.infrastructure.repositories.rbac_repository import (
     SqlAlchemyRbacRepository,
 )

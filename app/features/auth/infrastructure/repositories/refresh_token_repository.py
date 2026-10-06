@@ -5,7 +5,9 @@ from app.features.auth.application.interfaces.repositories.refresh_token_reposit
     RefreshTokenRepository,
 )
 from app.features.auth.domain.entities.refresh_token import RefreshToken
-from app.features.auth.infrastructure.models import RefreshTokenModel
+from app.features.auth.infrastructure.models.refresh_token_model import (
+    RefreshTokenModel,
+)
 
 
 class SqlAlchemyRefreshTokenRepository(RefreshTokenRepository):
