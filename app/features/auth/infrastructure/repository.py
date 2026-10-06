@@ -8,22 +8,27 @@ from app.features.auth.domain.protocols import (
     UserRepositoryProtocol,
 )
 from app.features.auth.infrastructure.models import RefreshTokenModel, UserModel
+from app.features.auth.infrastructure.rbac_repository import SqlAlchemyRbacRepository
 
 
 class SqlAlchemyUserRepository(UserRepositoryProtocol):
     """SQLAlchemy implementation of the UserRepositoryProtocol."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, rbac_repo: SqlAlchemyRbacRepository | None = None):
         self._session = session
+        self._rbac_repo = rbac_repo or SqlAlchemyRbacRepository(session=session)
 
-    def _to_entity(self, model: UserModel) -> User:
+    async def _to_entity(self, model: UserModel) -> User:
+        role = Role(model.role)
+        perms = await self._rbac_repo.get_permissions_for_role(role)
         return User(
             id=model.id,
             email=model.email,
             hashed_password=model.hashed_password,
-            role=Role(model.role),
+            role=role,
             full_name=model.full_name,
             is_active=model.is_active,
+            permissions=perms,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
@@ -32,13 +37,13 @@ class SqlAlchemyUserRepository(UserRepositoryProtocol):
         stmt = select(UserModel).where(UserModel.id == user_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return self._to_entity(model) if model else None
+        return await self._to_entity(model) if model else None
 
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(UserModel).where(UserModel.email == email.strip().lower())
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return self._to_entity(model) if model else None
+        return await self._to_entity(model) if model else None
 
     async def create(self, user: User) -> User:
         model = UserModel(
@@ -53,7 +58,7 @@ class SqlAlchemyUserRepository(UserRepositoryProtocol):
         self._session.add(model)
         await self._session.flush()
         await self._session.refresh(model)
-        return self._to_entity(model)
+        return await self._to_entity(model)
 
     async def update(self, user: User) -> User:
         stmt = select(UserModel).where(UserModel.id == user.id)
@@ -71,7 +76,8 @@ class SqlAlchemyUserRepository(UserRepositoryProtocol):
 
         await self._session.flush()
         await self._session.refresh(model)
-        return self._to_entity(model)
+        return await self._to_entity(model)
+
 
 
 class SqlAlchemyRefreshTokenRepository(RefreshTokenRepositoryProtocol):

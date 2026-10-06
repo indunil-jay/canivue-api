@@ -2,23 +2,29 @@ from fastapi import APIRouter, Depends, status
 
 from app.core.response import APIResponse
 from app.features.auth.application.dtos import (
+    CreateStaffInputDTO,
     LoginInputDTO,
     RefreshTokenInputDTO,
     RegisterClientInputDTO,
     UserOutputDTO,
 )
 from app.features.auth.application.use_cases import (
+    CreateStaffUserUseCase,
     LoginUseCase,
     RefreshTokenUseCase,
     RegisterClientUseCase,
 )
+from app.features.auth.domain.entities import Role
 from app.features.auth.presentation.dependencies import (
+    get_create_staff_use_case,
     get_current_user,
     get_login_use_case,
     get_refresh_token_use_case,
     get_register_client_use_case,
+    require_permissions,
 )
 from app.features.auth.presentation.schemas import (
+    CreateStaffRequest,
     LoginRequest,
     LoginResponseData,
     RefreshTokenRequest,
@@ -89,6 +95,7 @@ async def login(
             role=result.user.role.value,
             full_name=result.user.full_name,
             is_active=result.user.is_active,
+            permissions=result.user.permissions,
             created_at=result.user.created_at,
             updated_at=result.user.updated_at,
         ),
@@ -144,6 +151,7 @@ async def get_me(
         role=current_user.role.value,
         full_name=current_user.full_name,
         is_active=current_user.is_active,
+        permissions=current_user.permissions,
         created_at=current_user.created_at,
         updated_at=current_user.updated_at,
     )
@@ -153,4 +161,43 @@ async def get_me(
         message="User profile retrieved successfully",
         data=data,
     )
+
+
+@router.post(
+    "/staff",
+    response_model=APIResponse[UserResponseData],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a staff user account (VET or ADMIN)",
+    description="Onboards a veterinary or administrative staff account. Requires 'users:manage' permission.",
+)
+async def create_staff(
+    payload: CreateStaffRequest,
+    current_user: UserOutputDTO = Depends(require_permissions("users:manage")),
+    use_case: CreateStaffUserUseCase = Depends(get_create_staff_use_case),
+) -> APIResponse[UserResponseData]:
+    dto = CreateStaffInputDTO(
+        email=payload.email,
+        password=payload.password,
+        role=Role(payload.role),
+        full_name=payload.full_name,
+    )
+    result = await use_case.execute(dto)
+
+    data = UserResponseData(
+        id=result.id,
+        email=result.email,
+        role=result.role.value,
+        full_name=result.full_name,
+        is_active=result.is_active,
+        permissions=result.permissions,
+        created_at=result.created_at,
+        updated_at=result.updated_at,
+    )
+
+    return APIResponse(
+        success=True,
+        message="Staff member created successfully",
+        data=data,
+    )
+
 

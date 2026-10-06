@@ -18,8 +18,18 @@ class UserOutputDTO:
     role: Role
     full_name: str | None
     is_active: bool
+    permissions: list[str]
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True)
+class CreateStaffInputDTO:
+    email: str
+    password: str
+    role: Role
+    full_name: str | None = None
+
 
 
 @dataclass(frozen=True)

@@ -1,15 +1,22 @@
+from collections.abc import Callable
+
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
 from app.features.auth.application.dtos import UserOutputDTO
 from app.features.auth.application.use_cases import (
+    CreateStaffUserUseCase,
     GetCurrentUserUseCase,
     LoginUseCase,
     RefreshTokenUseCase,
     RegisterClientUseCase,
 )
-from app.features.auth.domain.exceptions import InvalidCredentialsError
+from app.features.auth.domain.entities import Role
+from app.features.auth.domain.exceptions import (
+    InsufficientPermissionsError,
+    InvalidCredentialsError,
+)
 from app.features.auth.domain.protocols import (
     PasswordHasherProtocol,
     RefreshTokenRepositoryProtocol,
@@ -50,6 +57,14 @@ def get_register_client_use_case(
     hasher: PasswordHasherProtocol = Depends(get_password_hasher),
 ) -> RegisterClientUseCase:
     return RegisterClientUseCase(user_repo=user_repo, hasher=hasher)
+
+
+def get_create_staff_use_case(
+    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
+    hasher: PasswordHasherProtocol = Depends(get_password_hasher),
+) -> CreateStaffUserUseCase:
+    return CreateStaffUserUseCase(user_repo=user_repo, hasher=hasher)
+
 
 
 def get_login_use_case(
@@ -114,4 +129,33 @@ async def get_current_user(
         raise InvalidCredentialsError("Invalid subject claim in token.") from e
 
     return await use_case.execute(user_id)
+
+
+def require_roles(*allowed_roles: Role | str) -> Callable:
+    """Dependency factory checking that caller has one of the allowed roles."""
+    roles = {r.value if isinstance(r, Role) else str(r) for r in allowed_roles}
+
+    async def _role_guard(current_user: UserOutputDTO = Depends(get_current_user)) -> UserOutputDTO:
+        if current_user.role.value not in roles:
+            raise InsufficientPermissionsError(
+                f"Action requires one of the following roles: {', '.join(sorted(roles))}."
+            )
+        return current_user
+
+    return _role_guard
+
+
+def require_permissions(*required_permissions: str) -> Callable:
+    """Dependency factory checking that caller possesses all required permissions."""
+    async def _permission_guard(current_user: UserOutputDTO = Depends(get_current_user)) -> UserOutputDTO:
+        user_perms = set(current_user.permissions)
+        missing = [p for p in required_permissions if p not in user_perms]
+        if missing:
+            raise InsufficientPermissionsError(
+                f"Missing required permission(s): {', '.join(missing)}."
+            )
+        return current_user
+
+    return _permission_guard
+
 
