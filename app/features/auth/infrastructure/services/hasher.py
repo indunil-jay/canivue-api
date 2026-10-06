@@ -1,6 +1,8 @@
 from pwdlib import PasswordHash
 
-from app.features.auth.domain.services import PasswordHasher
+from app.features.auth.application.interfaces.services.password_hasher import (
+    PasswordHasher,
+)
 
 
 class Argon2PasswordHasher(PasswordHasher):

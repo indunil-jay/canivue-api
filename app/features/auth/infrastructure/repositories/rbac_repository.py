@@ -1,9 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.features.auth.application.interfaces.repositories.rbac_repository import (
+    RbacRepository,
+)
 from app.features.auth.domain.entities import Role
-from app.features.auth.domain.repositories import RbacRepository
-from app.features.auth.infrastructure.models import PermissionModel, RolePermissionModel
+from app.features.auth.infrastructure.models import (
+    PermissionModel,
+    RolePermissionModel,
+)
 
 
 class SqlAlchemyRbacRepository(RbacRepository):
@@ -45,7 +50,8 @@ class SqlAlchemyRbacRepository(RbacRepository):
             RolePermissionModel.permission_id == perm_id,
         )
         result = await self._session.execute(stmt)
-        if not result.scalar_one_or_none():
-            assoc = RolePermissionModel(role=role_str, permission_id=perm_id)
-            self._session.add(assoc)
+        exists = result.scalar_one_or_none()
+        if not exists:
+            link = RolePermissionModel(role=role_str, permission_id=perm_id)
+            self._session.add(link)
             await self._session.flush()

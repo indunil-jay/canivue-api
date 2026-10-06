@@ -51,8 +51,10 @@ async def test_rbac_guards_and_admin_staff_provisioning(
 
     # 3. Create initial Admin user directly in DB (or via admin endpoint with ADMIN token)
     from app.features.auth.domain.entities import Role, User
-    from app.features.auth.infrastructure.hasher import Argon2PasswordHasher
-    from app.features.auth.infrastructure.repository import SqlAlchemyUserRepository
+    from app.features.auth.infrastructure.repositories import (
+        SqlAlchemyUserRepository,
+    )
+    from app.features.auth.infrastructure.services import Argon2PasswordHasher
 
     hasher = Argon2PasswordHasher()
     admin_user = User(

@@ -1,10 +1,14 @@
+import hashlib
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import jwt
 
 from app.config import settings
+from app.features.auth.application.interfaces.services.token_service import (
+    TokenService,
+)
 from app.features.auth.domain.exceptions import TokenExpiredOrRevokedError
-from app.features.auth.domain.services import TokenService
 
 
 class JwtTokenService(TokenService):
@@ -34,8 +38,6 @@ class JwtTokenService(TokenService):
         return jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
 
     def create_refresh_token(self, subject: str) -> str:
-        import uuid
-
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(subject),
@@ -57,6 +59,4 @@ class JwtTokenService(TokenService):
 
     @staticmethod
     def hash_token(token: str) -> str:
-        import hashlib
-
         return hashlib.sha256(token.encode("utf-8")).hexdigest()

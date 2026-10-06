@@ -17,6 +17,14 @@ from app.features.auth.application.commands.rotate_token import (
     RotateRefreshTokenCommandHandler,
 )
 from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.interfaces.repositories import (
+    RefreshTokenRepository,
+    UserRepository,
+)
+from app.features.auth.application.interfaces.services import (
+    PasswordHasher,
+    TokenService,
+)
 from app.features.auth.application.queries.get_current_user import (
     GetCurrentUserQuery,
     GetCurrentUserQueryHandler,
@@ -26,20 +34,14 @@ from app.features.auth.domain.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
 )
-from app.features.auth.domain.repositories import (
-    RefreshTokenRepository,
-    UserRepository,
-)
-from app.features.auth.domain.services import (
-    PasswordHasher,
-    TokenService,
-)
-from app.features.auth.infrastructure.hasher import Argon2PasswordHasher
-from app.features.auth.infrastructure.repository import (
+from app.features.auth.infrastructure.repositories import (
     SqlAlchemyRefreshTokenRepository,
     SqlAlchemyUserRepository,
 )
-from app.features.auth.infrastructure.token_service import JwtTokenService
+from app.features.auth.infrastructure.services import (
+    Argon2PasswordHasher,
+    JwtTokenService,
+)
 
 _hasher_instance = Argon2PasswordHasher()
 _token_service_instance = JwtTokenService()

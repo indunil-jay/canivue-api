@@ -7,10 +7,14 @@ from app.features.auth.application.commands.create_staff.event_handler import (
 )
 from app.features.auth.application.commands.create_staff.events import StaffUserCreatedEvent
 from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.interfaces.repositories.user_repository import (
+    UserRepository,
+)
+from app.features.auth.application.interfaces.services.password_hasher import (
+    PasswordHasher,
+)
 from app.features.auth.domain.entities import User
 from app.features.auth.domain.exceptions import UserAlreadyExistsError
-from app.features.auth.domain.repositories import UserRepository
-from app.features.auth.domain.services.password_hasher import PasswordHasher
 
 
 class CreateStaffUserCommandHandler:

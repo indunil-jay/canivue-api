@@ -4,15 +4,20 @@ from app.features.auth.application.commands.login.command import LoginResult, Lo
 from app.features.auth.application.commands.login.event_handler import UserLoggedInEventHandler
 from app.features.auth.application.commands.login.events import UserLoggedInEvent
 from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.interfaces.repositories import (
+    RefreshTokenRepository,
+    UserRepository,
+)
+from app.features.auth.application.interfaces.services import (
+    PasswordHasher,
+    TokenService,
+)
 from app.features.auth.domain.entities import RefreshToken
 from app.features.auth.domain.exceptions import (
     AccountDisabledError,
     InvalidCredentialsError,
 )
-from app.features.auth.domain.repositories import RefreshTokenRepository, UserRepository
-from app.features.auth.domain.services.password_hasher import PasswordHasher
-from app.features.auth.domain.services.token_service import TokenService
-from app.features.auth.infrastructure.token_service import JwtTokenService
+from app.features.auth.infrastructure.services.token_service import JwtTokenService
 
 
 class LoginUserCommandHandler:

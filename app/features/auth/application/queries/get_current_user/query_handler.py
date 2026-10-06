@@ -1,10 +1,12 @@
 from app.features.auth.application.common_dtos import UserOutputDTO
+from app.features.auth.application.interfaces.repositories.user_repository import (
+    UserRepository,
+)
 from app.features.auth.application.queries.get_current_user.query import GetCurrentUserQuery
 from app.features.auth.domain.exceptions import (
     AccountDisabledError,
     InvalidCredentialsError,
 )
-from app.features.auth.domain.repositories import UserRepository
 
 
 class GetCurrentUserQueryHandler:

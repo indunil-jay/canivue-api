@@ -9,13 +9,18 @@ from app.features.auth.application.commands.login import (
     LoginUserCommand,
     LoginUserCommandHandler,
 )
+from app.features.auth.application.interfaces.repositories import (
+    UserRepository,
+)
+from app.features.auth.application.interfaces.services import (
+    PasswordHasher,
+    TokenService,
+)
 from app.features.auth.application.queries.get_current_user import (
     GetCurrentUserQuery,
     GetCurrentUserQueryHandler,
 )
 from app.features.auth.domain.entities import Role, User
-from app.features.auth.domain.repositories import UserRepository
-from app.features.auth.domain.services import PasswordHasher, TokenService
 
 
 class FakeUserRepository(UserRepository):

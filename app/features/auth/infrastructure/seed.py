@@ -1,7 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.auth.domain.entities import Role
-from app.features.auth.infrastructure.rbac_repository import SqlAlchemyRbacRepository
+from app.features.auth.infrastructure.repositories import (
+    SqlAlchemyRbacRepository,
+)
 
 DEFAULT_PERMISSIONS: dict[str, str] = {
     # Dogs
