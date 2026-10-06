@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from app.features.sample.application.dtos import (
     CreateSampleDTO,
@@ -95,7 +95,7 @@ class UpdateSampleUseCase:
             else:
                 entity.deactivate()
 
-        entity.updated_at = datetime.utcnow()
+        entity.updated_at = datetime.now(timezone.utc)
         updated = await self.repository.update(entity)
         return _to_output_dto(updated)
 

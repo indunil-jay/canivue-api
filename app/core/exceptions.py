@@ -101,7 +101,6 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Global fallback handler for unhandled internal exceptions."""
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={

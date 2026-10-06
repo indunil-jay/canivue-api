@@ -1,13 +1,15 @@
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @dataclass
-class BaseEntity:
-    """Base Domain Entity containing standard identity and timestamp fields."""
+class BaseEntity:   
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: Optional[datetime] = None
+    created_at: datetime = field(default_factory=_utc_now)
+    updated_at: datetime | None = None

@@ -1,11 +1,13 @@
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+
 from app.config import settings
 
 # Ensure data directory exists if using local sqlite database
@@ -31,7 +33,6 @@ AsyncSessionLocal = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy ORM models."""
-    pass
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:

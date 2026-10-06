@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar, Union
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 E = TypeVar("E")
@@ -19,7 +19,7 @@ class Failure(Generic[E]):
     is_failure: bool = True
 
 
-Result = Union[Success[T], Failure[E]]
+Result = Success[T] | Failure[E]
 
 
 def Ok(value: T) -> Success[T]:
