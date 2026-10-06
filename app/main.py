@@ -12,6 +12,7 @@ from app.core.exception_handlers.generic_exception_handler import (
     generic_exception_handler,
 )
 from app.core.exceptions import AppException
+from app.core.middlewares.logging_middleware import LoggingMiddleware
 from app.core.response import APIResponse
 
 
@@ -43,6 +44,9 @@ def create_app() -> FastAPI:
         debug=settings.DEBUG,
         lifespan=lifespan,
     )
+
+    # Request / Response Lifecycle Logging Middleware
+    app.add_middleware(LoggingMiddleware)
 
     # CORS Middleware
     app.add_middleware(
