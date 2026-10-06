@@ -12,9 +12,10 @@ from app.features.auth.domain.exceptions import (
 class User:
     id: int | None
     email: str
-    hashed_password: str
+    hashed_password: str | None
     role: Role
     full_name: str | None = None
+    google_id: str | None = None
     is_active: bool = True
     permissions: list[str] = field(default_factory=list)
     created_at: datetime | None = None
@@ -26,12 +27,12 @@ class User:
             raise InvalidEmailError()
 
     def validate_password_hash(self) -> None:
-        if not self.hashed_password:
+        if self.hashed_password is not None and not self.hashed_password:
             raise EmptyPasswordHashError()
 
     @classmethod
     def create_client(
-        cls, email: str, hashed_password: str, full_name: str | None = None
+        cls, email: str, hashed_password: str | None, full_name: str | None = None, google_id: str | None = None
     ) -> "User":
         now = datetime.now(timezone.utc)
         user = cls(
@@ -40,6 +41,7 @@ class User:
             hashed_password=hashed_password,
             role=Role.CLIENT,
             full_name=full_name,
+            google_id=google_id,
             is_active=True,
             created_at=now,
             updated_at=now,

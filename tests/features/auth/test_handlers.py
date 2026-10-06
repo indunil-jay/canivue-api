@@ -46,6 +46,12 @@ class FakeUserRepository(UserRepository):
                 return user
         return None
 
+    async def get_by_google_id(self, google_id: str):
+        for user in self._users.values():
+            if user.google_id == google_id:
+                return user
+        return None
+
     async def create(self, user: User) -> User:
         if user.id is None:
             user.id = self._id_counter

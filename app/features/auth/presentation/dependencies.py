@@ -10,8 +10,17 @@ from app.features.auth.application.commands.create_client.create_client_command_
 from app.features.auth.application.commands.create_staff.create_staff_command_handler import (
     CreateStaffCommandHandler,
 )
+from app.features.auth.application.commands.forgot_password.forgot_password_command_handler import (
+    ForgotPasswordCommandHandler,
+)
 from app.features.auth.application.commands.login.login_user_command_handler import (
     LoginUserCommandHandler,
+)
+from app.features.auth.application.commands.oauth_google.google_login_command_handler import (
+    GoogleLoginCommandHandler,
+)
+from app.features.auth.application.commands.reset_password.reset_password_command_handler import (
+    ResetPasswordCommandHandler,
 )
 from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
@@ -21,11 +30,20 @@ from app.features.auth.application.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
 )
+from app.features.auth.application.interfaces.repositories.password_reset_token_repository import (
+    PasswordResetTokenRepository,
+)
 from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
 from app.features.auth.application.interfaces.repositories.user_repository import (
     UserRepository,
+)
+from app.features.auth.application.interfaces.services.email_service import (
+    EmailService,
+)
+from app.features.auth.application.interfaces.services.google_auth_service import (
+    GoogleAuthService,
 )
 from app.features.auth.application.interfaces.services.password_hasher import (
     PasswordHasher,
@@ -40,17 +58,28 @@ from app.features.auth.application.queries.get_current_user.get_current_user_que
     GetCurrentUserQueryHandler,
 )
 from app.features.auth.domain.enums.role import Role
+from app.features.auth.infrastructure.repositories.password_reset_token_repository import (
+    SqlAlchemyPasswordResetTokenRepository,
+)
 from app.features.auth.infrastructure.repositories.refresh_token_repository import (
     SqlAlchemyRefreshTokenRepository,
 )
 from app.features.auth.infrastructure.repositories.user_repository import (
     SqlAlchemyUserRepository,
 )
+from app.features.auth.infrastructure.services.email_service import (
+    LoggingEmailService,
+)
+from app.features.auth.infrastructure.services.google_auth_service import (
+    StubGoogleAuthService,
+)
 from app.features.auth.infrastructure.services.hasher import Argon2PasswordHasher
 from app.features.auth.infrastructure.services.token_service import JwtTokenService
 
 _hasher_instance = Argon2PasswordHasher()
 _token_service_instance = JwtTokenService()
+_email_service_instance = LoggingEmailService()
+_google_auth_service_instance = StubGoogleAuthService()
 
 
 def get_password_hasher() -> PasswordHasher:
@@ -61,6 +90,14 @@ def get_token_service() -> TokenService:
     return _token_service_instance
 
 
+def get_email_service() -> EmailService:
+    return _email_service_instance
+
+
+def get_google_auth_service() -> GoogleAuthService:
+    return _google_auth_service_instance
+
+
 def get_user_repository(session: AsyncSession = Depends(get_db_session)) -> UserRepository:
     return SqlAlchemyUserRepository(session=session)
 
@@ -69,6 +106,12 @@ def get_refresh_token_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> RefreshTokenRepository:
     return SqlAlchemyRefreshTokenRepository(session=session)
+
+
+def get_password_reset_token_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> PasswordResetTokenRepository:
+    return SqlAlchemyPasswordResetTokenRepository(session=session)
 
 
 def get_create_client_command_handler(
@@ -111,6 +154,46 @@ def get_rotate_token_command_handler(
     )
 
 
+def get_forgot_password_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_repo: PasswordResetTokenRepository = Depends(get_password_reset_token_repository),
+    email_service: EmailService = Depends(get_email_service),
+) -> ForgotPasswordCommandHandler:
+    return ForgotPasswordCommandHandler(
+        user_repo=user_repo,
+        token_repo=token_repo,
+        email_service=email_service,
+    )
+
+
+def get_reset_password_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_repo: PasswordResetTokenRepository = Depends(get_password_reset_token_repository),
+    refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
+    hasher: PasswordHasher = Depends(get_password_hasher),
+) -> ResetPasswordCommandHandler:
+    return ResetPasswordCommandHandler(
+        user_repo=user_repo,
+        token_repo=token_repo,
+        refresh_token_repo=refresh_token_repo,
+        hasher=hasher,
+    )
+
+
+def get_google_login_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    google_service: GoogleAuthService = Depends(get_google_auth_service),
+    token_service: TokenService = Depends(get_token_service),
+    refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
+) -> GoogleLoginCommandHandler:
+    return GoogleLoginCommandHandler(
+        user_repo=user_repo,
+        google_service=google_service,
+        token_service=token_service,
+        refresh_token_repo=refresh_token_repo,
+    )
+
+
 def get_current_user_query_handler(
     user_repo: UserRepository = Depends(get_user_repository),
 ) -> GetCurrentUserQueryHandler:
@@ -122,7 +205,6 @@ async def get_current_user(
     token_service: TokenService = Depends(get_token_service),
     query_handler: GetCurrentUserQueryHandler = Depends(get_current_user_query_handler),
 ) -> UserOutputDTO:
-    """Security seam extracting Bearer JWT and resolving active user."""
     if not authorization:
         raise InvalidCredentialsError("Missing authorization header.")
 
@@ -150,7 +232,6 @@ async def get_current_user(
 
 
 def require_roles(*allowed_roles: Role | str) -> Callable:
-    """Dependency factory checking that caller has one of the allowed roles."""
     roles = {r.value if isinstance(r, Role) else str(r) for r in allowed_roles}
 
     async def _role_guard(current_user: UserOutputDTO = Depends(get_current_user)) -> UserOutputDTO:
@@ -164,7 +245,6 @@ def require_roles(*allowed_roles: Role | str) -> Callable:
 
 
 def require_permissions(*required_permissions: str) -> Callable:
-    """Dependency factory checking that caller possesses all required permissions."""
 
     async def _permission_guard(
         current_user: UserOutputDTO = Depends(get_current_user),

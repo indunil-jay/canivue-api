@@ -47,3 +47,18 @@ class TokenExpiredError(TokenExpiredOrRevokedError):
 class UserSessionNotFoundError(TokenExpiredOrRevokedError):
     def __init__(self, message: str = "User session or account not found.", details=None):
         super().__init__(message=message, details=details)
+
+
+class InvalidResetTokenError(UnauthorizedException):
+    def __init__(self, message: str = "Invalid or expired password reset token.", details=None):
+        super().__init__(message=message, details=details)
+
+
+class ResetTokenExpiredError(UnauthorizedException):
+    def __init__(self, message: str = "Password reset token has expired.", details=None):
+        super().__init__(message=message, details=details)
+
+
+class GoogleAuthFailedError(UnauthorizedException):
+    def __init__(self, message: str = "Google authentication failed or token is invalid.", details=None):
+        super().__init__(message=message, details=details)

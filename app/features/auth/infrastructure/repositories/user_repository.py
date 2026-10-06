@@ -28,6 +28,7 @@ class SqlAlchemyUserRepository(UserRepository):
             hashed_password=model.hashed_password,
             role=role,
             full_name=model.full_name,
+            google_id=model.google_id,
             is_active=model.is_active,
             permissions=perms,
             created_at=model.created_at,
@@ -46,12 +47,19 @@ class SqlAlchemyUserRepository(UserRepository):
         model = result.scalar_one_or_none()
         return await self._to_entity(model) if model else None
 
+    async def get_by_google_id(self, google_id: str) -> User | None:
+        stmt = select(UserModel).where(UserModel.google_id == google_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return await self._to_entity(model) if model else None
+
     async def create(self, user: User) -> User:
         model = UserModel(
             email=user.email.lower(),
             hashed_password=user.hashed_password,
             role=user.role.value,
             full_name=user.full_name,
+            google_id=user.google_id,
             is_active=user.is_active,
             created_at=user.created_at,
             updated_at=user.updated_at,
@@ -71,6 +79,7 @@ class SqlAlchemyUserRepository(UserRepository):
         model.hashed_password = user.hashed_password
         model.role = user.role.value
         model.full_name = user.full_name
+        model.google_id = user.google_id
         model.is_active = user.is_active
         model.updated_at = user.updated_at
 
