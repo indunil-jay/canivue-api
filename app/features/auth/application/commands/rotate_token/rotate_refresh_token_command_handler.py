@@ -16,7 +16,7 @@ from app.features.auth.application.exceptions import (
     InvalidTokenTypeError,
     TokenExpiredError,
     TokenExpiredOrRevokedError,
-    UserNotFoundError,
+    UserSessionNotFoundError,
 )
 from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
     RefreshTokenRepository,
@@ -82,7 +82,7 @@ class RotateRefreshTokenCommandHandler:
 
         user = await self._user_repo.get_by_id(user_id)
         if not user:
-            raise UserNotFoundError()
+            raise UserSessionNotFoundError()
         if not user.is_active:
             raise AccountDisabledError()
 

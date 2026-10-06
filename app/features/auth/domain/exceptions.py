@@ -1,45 +1,31 @@
 from app.core.exceptions import AppException, ConflictException, ValidationException
-from app.features.auth.domain.errors import (
-    EmptyPasswordHashDomainError,
-    InvalidEmailDomainError,
-    UserAlreadyExistsDomainError,
-    UserNotFoundDomainError,
-    ValidationErrorDomainError,
-    WeakPasswordDomainError,
-)
+
+
+class DomainValidationException(ValidationException):
+    def __init__(self, message: str = "Domain validation failed.", details=None):
+        super().__init__(message=message, details=details)
+
+
+class InvalidEmailError(DomainValidationException):
+    def __init__(self, message: str = "A valid email address is required.", details=None):
+        super().__init__(message=message, details=details)
+
+
+class WeakPasswordError(DomainValidationException):
+    def __init__(self, message: str = "Password must be at least 8 characters long.", details=None):
+        super().__init__(message=message, details=details)
+
+
+class EmptyPasswordHashError(DomainValidationException):
+    def __init__(self, message: str = "Hashed password must not be empty.", details=None):
+        super().__init__(message=message, details=details)
 
 
 class UserAlreadyExistsError(ConflictException):
     def __init__(self, email: str):
-        err = UserAlreadyExistsDomainError(message=f"User with email '{email}' already exists.")
-        super().__init__(message=err.message)
+        super().__init__(message=f"User with email '{email}' already exists.")
 
 
 class UserNotFoundError(AppException):
-    def __init__(self, message: str = UserNotFoundDomainError.message):
-        err = UserNotFoundDomainError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
-
-
-class DomainValidationException(ValidationException):
-    def __init__(self, message: str = ValidationErrorDomainError.message):
-        err = ValidationErrorDomainError(message=message)
-        super().__init__(message=err.message)
-
-
-class InvalidEmailError(ValidationException):
-    def __init__(self, message: str = InvalidEmailDomainError.message):
-        err = InvalidEmailDomainError(message=message)
-        super().__init__(message=err.message)
-
-
-class WeakPasswordError(ValidationException):
-    def __init__(self, message: str = WeakPasswordDomainError.message):
-        err = WeakPasswordDomainError(message=message)
-        super().__init__(message=err.message)
-
-
-class EmptyPasswordHashError(ValidationException):
-    def __init__(self, message: str = EmptyPasswordHashDomainError.message):
-        err = EmptyPasswordHashDomainError(message=message)
-        super().__init__(message=err.message)
+    def __init__(self, message: str = "User account not found.", details=None):
+        super().__init__(message=message, status_code=404, details=details)

@@ -1,66 +1,46 @@
 from app.core.exceptions import AppException
-from app.features.auth.application.errors import (
-    AccountDisabledApplicationError,
-    InsufficientPermissionsApplicationError,
-    InvalidCredentialsApplicationError,
-    InvalidTokenClaimsApplicationError,
-    InvalidTokenSubjectApplicationError,
-    InvalidTokenTypeApplicationError,
-    TokenExpiredApplicationError,
-    TokenExpiredOrRevokedApplicationError,
-    UserNotFoundApplicationError,
-)
 
 
 class InvalidCredentialsError(AppException):
-    def __init__(self, message: str = InvalidCredentialsApplicationError.message):
-        err = InvalidCredentialsApplicationError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
+    def __init__(self, message: str = "Invalid email or password.", details=None):
+        super().__init__(message=message, status_code=401, details=details)
 
 
 class AccountDisabledError(AppException):
-    def __init__(self, message: str = AccountDisabledApplicationError.message):
-        err = AccountDisabledApplicationError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
+    def __init__(self, message: str = "Account is disabled.", details=None):
+        super().__init__(message=message, status_code=403, details=details)
 
 
 class InsufficientPermissionsError(AppException):
-    def __init__(self, message: str = InsufficientPermissionsApplicationError.message):
-        err = InsufficientPermissionsApplicationError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
+    def __init__(self, message: str = "Insufficient permissions to perform this action.", details=None):
+        super().__init__(message=message, status_code=403, details=details)
 
 
 class TokenExpiredOrRevokedError(AppException):
-    def __init__(self, message: str = TokenExpiredOrRevokedApplicationError.message):
-        err = TokenExpiredOrRevokedApplicationError(message=message)
-        super().__init__(message=err.message, status_code=err.status_code)
+    def __init__(self, message: str = "Token is expired or revoked.", details=None):
+        super().__init__(message=message, status_code=401, details=details)
 
 
 class InvalidTokenTypeError(TokenExpiredOrRevokedError):
-    def __init__(self, message: str = InvalidTokenTypeApplicationError.message):
-        err = InvalidTokenTypeApplicationError(message=message)
-        super().__init__(message=err.message)
+    def __init__(self, message: str = "Invalid token type. Refresh token required.", details=None):
+        super().__init__(message=message, details=details)
 
 
 class InvalidTokenClaimsError(TokenExpiredOrRevokedError):
-    def __init__(self, message: str = InvalidTokenClaimsApplicationError.message):
-        err = InvalidTokenClaimsApplicationError(message=message)
-        super().__init__(message=err.message)
+    def __init__(self, message: str = "Invalid token claims.", details=None):
+        super().__init__(message=message, details=details)
 
 
 class InvalidTokenSubjectError(TokenExpiredOrRevokedError):
-    def __init__(self, message: str = InvalidTokenSubjectApplicationError.message):
-        err = InvalidTokenSubjectApplicationError(message=message)
-        super().__init__(message=err.message)
+    def __init__(self, message: str = "Invalid token subject.", details=None):
+        super().__init__(message=message, details=details)
 
 
 class TokenExpiredError(TokenExpiredOrRevokedError):
-    def __init__(self, message: str = TokenExpiredApplicationError.message):
-        err = TokenExpiredApplicationError(message=message)
-        super().__init__(message=err.message)
+    def __init__(self, message: str = "Refresh token has expired.", details=None):
+        super().__init__(message=message, details=details)
 
 
-class UserNotFoundError(TokenExpiredOrRevokedError):
-    def __init__(self, message: str = UserNotFoundApplicationError.message):
-        err = UserNotFoundApplicationError(message=message)
-        super().__init__(message=err.message)
+class UserSessionNotFoundError(TokenExpiredOrRevokedError):
+    def __init__(self, message: str = "User session or account not found.", details=None):
+        super().__init__(message=message, details=details)
