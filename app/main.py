@@ -1,14 +1,17 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.core.database import Base, engine
-from app.core.exceptions import (
-    AppException,
+from app.core.exception_handlers.app_exception_handler import (
     app_exception_handler,
+)
+from app.core.exception_handlers.generic_exception_handler import (
     generic_exception_handler,
 )
+from app.core.exceptions import AppException
 from app.core.response import APIResponse
 
 
