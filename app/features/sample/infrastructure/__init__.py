@@ -1,1 +1,0 @@
-"""Sample infrastructure layer package."""
