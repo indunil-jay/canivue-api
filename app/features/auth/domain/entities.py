@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 
@@ -10,6 +10,14 @@ class Role(str, Enum):
 
 
 @dataclass
+class Permission:
+    """Pure domain entity representing a granular permission."""
+    id: int | None
+    name: str
+    description: str | None = None
+
+
+@dataclass
 class User:
     """Pure domain entity representing a system user."""
     id: int | None
@@ -18,8 +26,10 @@ class User:
     role: Role
     full_name: str | None = None
     is_active: bool = True
+    permissions: list[str] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
 
     @classmethod
     def create_client(cls, email: str, hashed_password: str, full_name: str | None = None) -> "User":

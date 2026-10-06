@@ -46,3 +46,24 @@ class RefreshTokenModel(Base):
         nullable=False,
     )
 
+
+class PermissionModel(Base):
+    """SQLAlchemy model for granular permissions."""
+
+    __tablename__ = "permissions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=True)
+
+
+class RolePermissionModel(Base):
+    """SQLAlchemy association model mapping role names to permissions."""
+
+    __tablename__ = "role_permissions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, index=True)
+    role: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    permission_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+
+

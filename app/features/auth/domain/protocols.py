@@ -35,6 +35,20 @@ class RefreshTokenRepositoryProtocol(Protocol):
         ...
 
 
+class RbacRepositoryProtocol(Protocol):
+    """Protocol defining persistence and querying of roles and permissions."""
+
+    async def get_permissions_for_role(self, role: str) -> list[str]:
+        ...
+
+    async def assign_permission_to_role(self, role: str, permission_name: str) -> None:
+        ...
+
+    async def create_permission_if_not_exists(self, name: str, description: str | None = None) -> int:
+        ...
+
+
+
 
 class PasswordHasherProtocol(Protocol):
     """Protocol defining secure password hashing seam."""
