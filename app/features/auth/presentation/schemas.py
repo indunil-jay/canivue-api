@@ -30,3 +30,14 @@ class LoginResponseData(BaseModel):
     token_type: str = "bearer"
     user: UserResponseData
 
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., description="Valid refresh token")
+
+
+class TokenPairResponseData(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+

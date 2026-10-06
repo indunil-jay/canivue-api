@@ -34,14 +34,17 @@ class JwtTokenService(TokenServiceProtocol):
         return jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
 
     def create_refresh_token(self, subject: str) -> str:
+        import uuid
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(subject),
+            "jti": str(uuid.uuid4()),
             "type": "refresh",
             "iat": int(now.timestamp()),
             "exp": int((now + timedelta(days=self._refresh_token_expire_days)).timestamp()),
         }
         return jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
+
 
     def decode_token(self, token: str) -> dict:
         try:
@@ -51,3 +54,9 @@ class JwtTokenService(TokenServiceProtocol):
             raise TokenExpiredOrRevokedError("Token has expired.") from e
         except jwt.PyJWTError as e:
             raise TokenExpiredOrRevokedError("Invalid token.") from e
+
+    @staticmethod
+    def hash_token(token: str) -> str:
+        import hashlib
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+

@@ -35,3 +35,15 @@ class User:
             created_at=now,
             updated_at=now,
         )
+
+
+@dataclass
+class RefreshToken:
+    """Pure domain entity representing a persisted refresh token."""
+    id: int | None
+    user_id: int
+    token_hash: str
+    expires_at: datetime
+    is_revoked: bool = False
+    created_at: datetime | None = None
+

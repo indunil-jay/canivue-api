@@ -3,19 +3,27 @@ from fastapi import APIRouter, Depends, status
 from app.core.response import APIResponse
 from app.features.auth.application.dtos import (
     LoginInputDTO,
+    RefreshTokenInputDTO,
     RegisterClientInputDTO,
     UserOutputDTO,
 )
-from app.features.auth.application.use_cases import LoginUseCase, RegisterClientUseCase
+from app.features.auth.application.use_cases import (
+    LoginUseCase,
+    RefreshTokenUseCase,
+    RegisterClientUseCase,
+)
 from app.features.auth.presentation.dependencies import (
     get_current_user,
     get_login_use_case,
+    get_refresh_token_use_case,
     get_register_client_use_case,
 )
 from app.features.auth.presentation.schemas import (
     LoginRequest,
     LoginResponseData,
+    RefreshTokenRequest,
     RegisterClientRequest,
+    TokenPairResponseData,
     UserResponseData,
 )
 
@@ -89,6 +97,33 @@ async def login(
     return APIResponse(
         success=True,
         message="Authentication successful",
+        data=data,
+    )
+
+
+@router.post(
+    "/refresh",
+    response_model=APIResponse[TokenPairResponseData],
+    status_code=status.HTTP_200_OK,
+    summary="Refresh access token with refresh token rotation",
+    description="Validates the refresh token, revokes it, and issues a new access/refresh token pair.",
+)
+async def refresh_token(
+    payload: RefreshTokenRequest,
+    use_case: RefreshTokenUseCase = Depends(get_refresh_token_use_case),
+) -> APIResponse[TokenPairResponseData]:
+    dto = RefreshTokenInputDTO(refresh_token=payload.refresh_token)
+    result = await use_case.execute(dto)
+
+    data = TokenPairResponseData(
+        access_token=result.access_token,
+        refresh_token=result.refresh_token,
+        token_type=result.token_type,
+    )
+
+    return APIResponse(
+        success=True,
+        message="Tokens refreshed successfully",
         data=data,
     )
 

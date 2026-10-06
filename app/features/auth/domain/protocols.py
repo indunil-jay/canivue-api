@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.features.auth.domain.entities import User
+from app.features.auth.domain.entities import RefreshToken, User
 
 
 class UserRepositoryProtocol(Protocol):
@@ -17,6 +17,23 @@ class UserRepositoryProtocol(Protocol):
 
     async def update(self, user: User) -> User:
         ...
+
+
+class RefreshTokenRepositoryProtocol(Protocol):
+    """Protocol defining persistence seam for RefreshToken entities."""
+
+    async def create(self, token: RefreshToken) -> RefreshToken:
+        ...
+
+    async def get_by_hash(self, token_hash: str) -> RefreshToken | None:
+        ...
+
+    async def revoke(self, token_hash: str) -> None:
+        ...
+
+    async def revoke_all_for_user(self, user_id: int) -> None:
+        ...
+
 
 
 class PasswordHasherProtocol(Protocol):
