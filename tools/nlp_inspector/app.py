@@ -167,9 +167,7 @@ async def parse_symptom_text(req: ParseRequest) -> dict[str, Any]:
 
     if result["duration"]:
         dur = result["duration"]
-        reasoning.append(
-            f"⏱️ Temporal Metric: Duration normalized to {dur['value']} {dur['unit']}."
-        )
+        reasoning.append(f"⏱️ Temporal Metric: Duration normalized to {dur['value']} {dur['unit']}.")
 
     if result["progression"]:
         reasoning.append(
@@ -278,15 +276,17 @@ def evaluate_dataset() -> dict[str, Any]:
             correct += 1
             by_cond[gt]["correct"] += 1
         else:
-            misclassified.append({
-                "record_id": r.get("record_id", "seed"),
-                "text": r["text"],
-                "ground_truth": gt,
-                "predicted": pred,
-                "confidence": probs.get(pred, 0.0),
-                "probabilities": probs,
-                "emergency": pred_res.get("emergency_triage", {}).get("is_critical", False),
-            })
+            misclassified.append(
+                {
+                    "record_id": r.get("record_id", "seed"),
+                    "text": r["text"],
+                    "ground_truth": gt,
+                    "predicted": pred,
+                    "confidence": probs.get(pred, 0.0),
+                    "probabilities": probs,
+                    "emergency": pred_res.get("emergency_triage", {}).get("is_critical", False),
+                }
+            )
 
     for v in by_cond.values():
         v["accuracy"] = round(v["correct"] / v["total"], 4) if v["total"] > 0 else 0.0
@@ -319,12 +319,14 @@ def train_model() -> dict[str, Any]:
     try:
         import torch  # noqa: F401
         import transformers  # noqa: F401
+
         torch_available = True
     except ImportError:
         torch_available = False
 
     if torch_available:
         from ml.nlp.train import train_multitask_nlp
+
         history = train_multitask_nlp(
             data_path=str(FEEDBACK_FILE) if feedback_count >= 10 else "data/seed_symptoms.jsonl",
             epochs=2,

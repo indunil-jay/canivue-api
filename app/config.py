@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 14
 
+    # File uploads (Dog photos, medical documents)
+    UPLOAD_DIR: str = "./data/uploads"
+    MAX_UPLOAD_BYTES: int = 10 * 1024 * 1024
+
     # AI / ML
     # Root directory for versioned trained-model artifacts (see model_registry/README.md).
     # Per-model settings (e.g. <X>_MODEL_BACKEND, <X>_MODEL_WEIGHTS_PATH) belong here too,

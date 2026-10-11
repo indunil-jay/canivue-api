@@ -101,14 +101,20 @@ def _detect_user_challenge_or_argument(text: str) -> list[str]:
     challenges = []
     t = text.lower()
 
-    if re.search(r"\b(actually|not really|i don't think|no[,.]|wrong|disagree|instead|not that)\b", t):
-        challenges.append("User is directly challenging or refining previous diagnostic hypothesis.")
+    if re.search(
+        r"\b(actually|not really|i don't think|no[,.]|wrong|disagree|instead|not that)\b", t
+    ):
+        challenges.append(
+            "User is directly challenging or refining previous diagnostic hypothesis."
+        )
 
     if re.search(r"\b(what if|could it be|maybe it is|possible that|is it not)\b", t):
         challenges.append("User is exploring alternative differential diagnoses.")
 
     if re.search(r"\b(also|in addition|furthermore|plus|he also|she also)\b", t):
-        challenges.append("User is introducing supplementary clinical findings to the existing case narrative.")
+        challenges.append(
+            "User is introducing supplementary clinical findings to the existing case narrative."
+        )
 
     if re.search(r"\b(worse|better|since|started|changed|spreading)\b", t):
         challenges.append("User is refining temporal progression or lesion severity dynamics.")
@@ -293,14 +299,14 @@ def _generate_conversational_reply(
             "I hear you and appreciate you clarifying that. Taking your points into consideration, I've adjusted my clinical assessment."
         )
     else:
-        lines.append(
-            "Thank you for sharing these clinical details about your dog."
-        )
+        lines.append("Thank you for sharing these clinical details about your dog.")
 
     # 3. Clinical Synthesis
     symptoms = current_parse.get("symptoms", [])
     locations = current_parse.get("body_locations", [])
-    loc_str = ", ".join([f"{l.get('side') or ''} {l.get('part') or ''}".strip() for l in locations if l])
+    loc_str = ", ".join(
+        [f"{l.get('side') or ''} {l.get('part') or ''}".strip() for l in locations if l]
+    )
 
     if symptoms:
         sym_str = ", ".join([s.replace("_", " ") for s in symptoms])
@@ -379,9 +385,7 @@ def process_user_chat_message(
     # 3. Build cumulative context
     # If user is continuing/arguing, include previous clinical details
     combined_clinical_text = user_text
-    prior_user_texts = [
-        m["content"] for m in session["messages"][:-1] if m["role"] == "user"
-    ]
+    prior_user_texts = [m["content"] for m in session["messages"][:-1] if m["role"] == "user"]
     if prior_user_texts:
         combined_clinical_text = f"{' '.join(prior_user_texts[-2:])} Now: {user_text}"
 
@@ -426,7 +430,9 @@ def process_user_chat_message(
         "intake_state": {
             "missing_slots": missing_slots,
             "turn_count": user_turn_count,
-            "is_complete": len(missing_slots) == 0 or user_turn_count >= 4 or parse_entity.emergency_triage.is_critical,
+            "is_complete": len(missing_slots) == 0
+            or user_turn_count >= 4
+            or parse_entity.emergency_triage.is_critical,
             "clarifying_prompt": clarifying_prompt,
         },
     }
@@ -437,7 +443,9 @@ def process_user_chat_message(
     probs = parse_result.get("condition_probabilities", {})
     top_c = max(probs, key=probs.get) if probs else "other"
     session["accumulated_context"]["last_condition"] = top_c
-    session["accumulated_context"]["emergency"] = parse_result.get("emergency_triage", {}).get("is_critical", False)
+    session["accumulated_context"]["emergency"] = parse_result.get("emergency_triage", {}).get(
+        "is_critical", False
+    )
     session["accumulated_context"]["symptoms"] = parse_result.get("symptoms", [])
 
     # Save to disk

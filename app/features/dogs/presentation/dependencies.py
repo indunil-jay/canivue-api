@@ -2,12 +2,16 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
+from app.core.file_storage import get_file_storage
 from app.features.dogs.application.access import DogAccess
 from app.features.dogs.application.use_cases import (
+    GetDogPhotoUseCase,
     GetDogUseCase,
     ListMyDogsUseCase,
     RegisterDogUseCase,
+    RemoveDogPhotoUseCase,
     RemoveDogUseCase,
+    SetDogPhotoUseCase,
     UpdateDogUseCase,
 )
 from app.features.dogs.domain.repositories import DogRepositoryProtocol, PatientRegistryProtocol
@@ -15,6 +19,7 @@ from app.features.dogs.infrastructure.persistence.repositories import (
     NoPatientsRegistry,
     SqlAlchemyDogRepository,
 )
+from app.shared.files import FileStorageProtocol
 
 
 def get_dog_repository(session: AsyncSession = Depends(get_db_session)) -> DogRepositoryProtocol:
@@ -62,3 +67,26 @@ def get_remove_dog_use_case(
     access: DogAccess = Depends(get_dog_access),
 ) -> RemoveDogUseCase:
     return RemoveDogUseCase(dogs, access)
+
+
+def get_set_dog_photo_use_case(
+    dogs: DogRepositoryProtocol = Depends(get_dog_repository),
+    access: DogAccess = Depends(get_dog_access),
+    storage: FileStorageProtocol = Depends(get_file_storage),
+) -> SetDogPhotoUseCase:
+    return SetDogPhotoUseCase(dogs, access, storage)
+
+
+def get_get_dog_photo_use_case(
+    access: DogAccess = Depends(get_dog_access),
+    storage: FileStorageProtocol = Depends(get_file_storage),
+) -> GetDogPhotoUseCase:
+    return GetDogPhotoUseCase(access, storage)
+
+
+def get_remove_dog_photo_use_case(
+    dogs: DogRepositoryProtocol = Depends(get_dog_repository),
+    access: DogAccess = Depends(get_dog_access),
+    storage: FileStorageProtocol = Depends(get_file_storage),
+) -> RemoveDogPhotoUseCase:
+    return RemoveDogPhotoUseCase(dogs, access, storage)

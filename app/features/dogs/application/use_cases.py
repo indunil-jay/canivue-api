@@ -8,6 +8,13 @@ from app.features.dogs.domain.exceptions import InvalidDogError
 from app.features.dogs.domain.repositories import DogRepositoryProtocol
 from app.shared.actor import Actor
 from app.shared.entity import _utc_now
+from app.shared.files import (
+    IMAGE_TYPES,
+    FileContent,
+    FileStorageProtocol,
+    StoredFileNotFoundError,
+    validate_upload,
+)
 
 
 def _validate(dog: Dog) -> None:
@@ -68,3 +75,53 @@ class RemoveDogUseCase:
         dog = await self._access.owned(actor, dog_id)
         dog.is_archived = True
         await self._dogs.update(dog)
+
+
+class SetDogPhotoUseCase:
+    def __init__(
+        self, dogs: DogRepositoryProtocol, access: DogAccess, storage: FileStorageProtocol
+    ):
+        self._dogs = dogs
+        self._access = access
+        self._storage = storage
+
+    async def execute(
+        self, actor: Actor, dog_id: str, content: bytes, content_type: str | None, max_bytes: int
+    ) -> Dog:
+        dog = await self._access.owned(actor, dog_id)
+        accepted_type = validate_upload(content, content_type, IMAGE_TYPES, max_bytes)
+        previous = dog.photo_file_id
+        dog.photo_file_id = await self._storage.save(content, accepted_type)
+        dog = await self._dogs.update(dog)
+        if previous:
+            await self._storage.delete(previous)
+        return dog
+
+
+class GetDogPhotoUseCase:
+    def __init__(self, access: DogAccess, storage: FileStorageProtocol):
+        self._access = access
+        self._storage = storage
+
+    async def execute(self, actor: Actor, dog_id: str) -> FileContent:
+        dog = await self._access.readable(actor, dog_id)
+        if not dog.photo_file_id:
+            raise StoredFileNotFoundError()
+        return await self._storage.load(dog.photo_file_id)
+
+
+class RemoveDogPhotoUseCase:
+    def __init__(
+        self, dogs: DogRepositoryProtocol, access: DogAccess, storage: FileStorageProtocol
+    ):
+        self._dogs = dogs
+        self._access = access
+        self._storage = storage
+
+    async def execute(self, actor: Actor, dog_id: str) -> Dog:
+        dog = await self._access.owned(actor, dog_id)
+        if dog.photo_file_id:
+            await self._storage.delete(dog.photo_file_id)
+            dog.photo_file_id = None
+            dog = await self._dogs.update(dog)
+        return dog

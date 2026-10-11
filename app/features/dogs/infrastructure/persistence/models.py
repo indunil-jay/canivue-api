@@ -28,5 +28,5 @@ class DogModel(UuidTimestampMixin, Base):
     vaccinations: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     medications: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     insurance: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    photo_file_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    photo_file_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
