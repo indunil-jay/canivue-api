@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,3 +88,41 @@ async def verified_vet(
     verify = await client.post(f"/api/v1/veterinarians/{vet_id}/verify", headers=admin)
     assert verify.status_code == 200, verify.text
     return headers, vet_id
+
+
+async def create_dog(client: AsyncClient, headers: dict, **overrides) -> dict:
+    payload = {
+        "name": "Buddy",
+        "breed": "Golden Retriever",
+        "birth_date": "2023-06-12",
+        "gender": "Male",
+        "weight_kg": 28.5,
+        **overrides,
+    }
+    resp = await client.post("/api/v1/dogs", headers=headers, json=payload)
+    assert resp.status_code == 201, resp.text
+    return resp.json()["data"]
+
+
+def next_weekday(weekday: int, hour: int = 10) -> datetime:
+    """The next date falling on `weekday` (Monday is 0), at least a day away, in UTC."""
+    now = datetime.now(timezone.utc)
+    days_ahead = (weekday - now.weekday() - 1) % 7 + 1
+    return (now + timedelta(days=days_ahead)).replace(hour=hour, minute=0, second=0, microsecond=0)
+
+
+async def book_appointment(
+    client: AsyncClient, scene: dict, when: datetime | None = None, **overrides
+) -> dict:
+    """Books for scene['dog'] with scene['vet_id'] as scene['owner']; defaults to next Monday."""
+    payload = {
+        "vet_id": scene["vet_id"],
+        "date_time": (when or next_weekday(0)).isoformat(),
+        "consultation_type": "video",
+        **overrides,
+    }
+    resp = await client.post(
+        f"/api/v1/dogs/{scene['dog']['id']}/appointments", headers=scene["owner"], json=payload
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()["data"]

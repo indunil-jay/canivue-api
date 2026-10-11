@@ -4,7 +4,7 @@ from typing import Any
 
 from app.core.dataclass_repository import DataclassRepository
 from app.features.dogs.domain.entities import Dog, Insurance, Medication, Vaccination
-from app.features.dogs.domain.repositories import DogRepositoryProtocol, PatientRegistryProtocol
+from app.features.dogs.domain.repositories import DogRepositoryProtocol
 from app.features.dogs.infrastructure.persistence.models import DogModel
 
 
@@ -77,8 +77,3 @@ class SqlAlchemyDogRepository(DataclassRepository[Dog, DogModel], DogRepositoryP
 
     async def count_for_owner(self, owner_id: int) -> int:
         return await self.count(DogModel.owner_id == owner_id, DogModel.is_archived.is_(False))
-
-
-class NoPatientsRegistry(PatientRegistryProtocol):
-    async def is_patient(self, vet_user_id: int, dog: Dog) -> bool:
-        return False
