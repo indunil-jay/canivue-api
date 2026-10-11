@@ -1,5 +1,5 @@
-from app.features.community.domain.value_objects.community_view import CommunityView
-from app.features.community.domain.value_objects.post_view import PostView
+from app.features.community.application.dtos.community_view import CommunityView
+from app.features.community.application.dtos.post_view import PostView
 from app.features.community.presentation.responses.community_post_response import (
     CommunityPostResponse,
 )

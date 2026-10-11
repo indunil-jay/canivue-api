@@ -5,6 +5,7 @@ from app.features.messaging.application.interfaces.repositories.conversation_rep
 from app.features.messaging.application.interfaces.repositories.message_repository import (
     MessageRepositoryProtocol,
 )
+from app.features.messaging.application.mappers.conversation_dto_mapper import ConversationDTOMapper
 from app.features.messaging.application.queries.list_conversations.list_conversations_query import (
     ListConversationsQuery,
 )
@@ -29,5 +30,7 @@ class ListConversationsQueryHandler:
                 [conversation.id], incoming, MessageStatus.DELIVERED
             )
             unread = await self._messages.count_unread_from(conversation.id, incoming)
-            views.append(ConversationView(conversation, unread))
+            views.append(
+                ConversationView(ConversationDTOMapper.to_output_dto(conversation), unread)
+            )
         return views

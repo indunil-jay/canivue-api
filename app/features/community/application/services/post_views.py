@@ -1,12 +1,15 @@
 from collections.abc import Sequence
 
+from app.features.community.application.dtos.post_view import PostView
 from app.features.community.application.interfaces.repositories.community_repository import (
     CommunityRepositoryProtocol,
+)
+from app.features.community.application.mappers.community_post_dto_mapper import (
+    CommunityPostDTOMapper,
 )
 from app.features.community.domain.entities.community_post import CommunityPost
 from app.features.community.domain.enums.reaction_kind import ReactionKind
 from app.features.community.domain.exceptions import PostNotFoundError
-from app.features.community.domain.value_objects.post_view import PostView
 from app.shared.actor import Actor
 
 
@@ -20,7 +23,7 @@ class PostViews:
         mine = await self._repo.reactions_of(actor.id, ids)
         return [
             PostView(
-                post=p,
+                post=CommunityPostDTOMapper.to_output_dto(p),
                 like_count=likes.get(p.id, 0),
                 liked_by_me=(p.id, ReactionKind.LIKE.value) in mine,
                 saved_by_me=(p.id, ReactionKind.SAVE.value) in mine,

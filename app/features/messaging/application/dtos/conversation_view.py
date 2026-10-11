@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from app.features.messaging.domain.entities.conversation import Conversation
+from app.features.messaging.application.dtos.conversation_output_dto import ConversationOutputDTO
 
 
 @dataclass(frozen=True)
 class ConversationView:
-    conversation: Conversation
+    conversation: ConversationOutputDTO
     unread_count: int

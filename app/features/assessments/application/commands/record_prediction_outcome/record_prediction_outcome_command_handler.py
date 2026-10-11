@@ -1,10 +1,11 @@
 from app.features.assessments.application.commands.record_prediction_outcome.record_prediction_outcome_command import (
     RecordPredictionOutcomeCommand,
 )
+from app.features.assessments.application.dtos.prediction_output_dto import PredictionOutputDTO
 from app.features.assessments.application.interfaces.repositories.prediction_repository import (
     PredictionRepositoryProtocol,
 )
-from app.features.assessments.domain.entities.prediction import Prediction
+from app.features.assessments.application.mappers.prediction_dto_mapper import PredictionDTOMapper
 from app.features.assessments.domain.enums.prediction_status import PredictionStatus
 from app.features.assessments.domain.exceptions import PredictionNotFoundError
 from app.features.dogs.application.services.dog_access import DogAccess
@@ -16,7 +17,7 @@ class RecordPredictionOutcomeCommandHandler:
         self._predictions = predictions
         self._access = access
 
-    async def handle(self, command: RecordPredictionOutcomeCommand) -> Prediction:
+    async def handle(self, command: RecordPredictionOutcomeCommand) -> PredictionOutputDTO:
         dog = await self._access.treatable(command.actor, command.dog_id)
         prediction = await self._predictions.get_by_id(command.prediction_id)
         if prediction is None or prediction.dog_id != dog.id:
@@ -25,4 +26,4 @@ class RecordPredictionOutcomeCommandHandler:
         if command.resolved:
             prediction.status = PredictionStatus.RESOLVED
         prediction.updated_at = _utc_now()
-        return await self._predictions.update(prediction)
+        return PredictionDTOMapper.to_output_dto(await self._predictions.update(prediction))

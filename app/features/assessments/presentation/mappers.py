@@ -1,5 +1,5 @@
 from app.features.assessments.application.dtos.health_check_outcome import HealthCheckOutcome
-from app.features.assessments.domain.entities.prediction import Prediction
+from app.features.assessments.application.dtos.prediction_output_dto import PredictionOutputDTO
 from app.features.assessments.presentation.responses.health_check_response import (
     HealthCheckResponse,
 )
@@ -7,7 +7,7 @@ from app.features.assessments.presentation.responses.health_check_response impor
 
 class AssessmentsPresentationMapper:
     @staticmethod
-    def to_health_check_response(prediction: Prediction) -> HealthCheckResponse:
+    def to_health_check_response(prediction: PredictionOutputDTO) -> HealthCheckResponse:
         return HealthCheckResponse(
             prediction_id=prediction.id,
             generated_at=prediction.prediction_date,

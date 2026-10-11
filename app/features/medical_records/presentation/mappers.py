@@ -1,4 +1,6 @@
-from app.features.medical_records.domain.entities.medical_record import MedicalRecord
+from app.features.medical_records.application.dtos.medical_record_output_dto import (
+    MedicalRecordOutputDTO,
+)
 from app.features.medical_records.presentation.responses.medical_record_response import (
     MedicalRecordResponse,
 )
@@ -6,7 +8,7 @@ from app.features.medical_records.presentation.responses.medical_record_response
 
 class MedicalRecordsPresentationMapper:
     @staticmethod
-    def to_medical_record_response(record: MedicalRecord) -> MedicalRecordResponse:
+    def to_medical_record_response(record: MedicalRecordOutputDTO) -> MedicalRecordResponse:
         return MedicalRecordResponse(
             id=record.id,
             dog_id=record.dog_id,

@@ -1,9 +1,9 @@
+from app.features.community.application.dtos.post_view import PostView
 from app.features.community.application.interfaces.repositories.community_repository import (
     CommunityRepositoryProtocol,
 )
 from app.features.community.application.queries.get_feed.get_feed_query import GetFeedQuery
 from app.features.community.application.services.post_views import PostViews
-from app.features.community.domain.value_objects.post_view import PostView
 
 
 class GetFeedQueryHandler:

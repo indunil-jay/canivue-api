@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from app.features.billing.application.commands.change_plan.change_plan_command import (
     ChangePlanCommand,
 )
+from app.features.billing.application.dtos.current_subscription import CurrentSubscription
 from app.features.billing.application.interfaces.repositories.billing_repository import (
     BillingRepositoryProtocol,
 )
@@ -14,7 +15,6 @@ from app.features.billing.domain.constants import PLANS
 from app.features.billing.domain.entities.invoice import Invoice
 from app.features.billing.domain.enums.invoice_status import InvoiceStatus
 from app.features.billing.domain.exceptions import PaymentFailedError, PlanNotFoundError
-from app.features.billing.domain.value_objects.current_subscription import CurrentSubscription
 from app.shared.notifier import NotificationType, NotifierProtocol
 
 

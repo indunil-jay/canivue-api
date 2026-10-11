@@ -14,6 +14,7 @@ from app.features.assessments.application.interfaces.services.fusion_engine impo
 from app.features.assessments.application.interfaces.services.symptom_parser import (
     SymptomParserPort,
 )
+from app.features.assessments.application.mappers.prediction_dto_mapper import PredictionDTOMapper
 from app.features.assessments.domain.entities.prediction import Prediction
 from app.features.assessments.domain.enums.prediction_status import PredictionStatus
 from app.features.assessments.domain.enums.risk_level import RiskLevel
@@ -118,7 +119,11 @@ class RunHealthCheckCommandHandler:
                 dog_name=dog.name,
                 action_label="View Prediction",
             )
-        return HealthCheckOutcome(prediction=prediction, result=result, dog_name=dog.name)
+        return HealthCheckOutcome(
+            prediction=PredictionDTOMapper.to_output_dto(prediction),
+            result=result,
+            dog_name=dog.name,
+        )
 
     async def _sensor_evidence(self, dog_id: str) -> SensorEvidence | None:
         now = datetime.now(timezone.utc)

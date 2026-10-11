@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 
+from app.features.billing.application.dtos.current_subscription import CurrentSubscription
 from app.features.billing.application.interfaces.repositories.billing_repository import (
     BillingRepositoryProtocol,
 )
 from app.features.billing.application.interfaces.services.usage_meter import UsageMeterProtocol
+from app.features.billing.application.mappers.invoice_dto_mapper import InvoiceDTOMapper
 from app.features.billing.domain.entities.subscription import Subscription
-from app.features.billing.domain.value_objects.current_subscription import CurrentSubscription
 from app.features.billing.domain.value_objects.usage_limit import UsageLimit
 
 
@@ -39,5 +40,8 @@ class CurrentSubscriptions:
                     "Vet Consultations", used.vet_consultations, plan.vet_consultations_per_month
                 ),
             ],
-            invoices=await self._billing.list_invoices(user_id),
+            invoices=[
+                InvoiceDTOMapper.to_output_dto(i)
+                for i in await self._billing.list_invoices(user_id)
+            ],
         )

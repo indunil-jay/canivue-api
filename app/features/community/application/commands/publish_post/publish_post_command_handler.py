@@ -1,13 +1,13 @@
 from app.features.community.application.commands.publish_post.publish_post_command import (
     PublishPostCommand,
 )
+from app.features.community.application.dtos.post_view import PostView
 from app.features.community.application.interfaces.repositories.community_repository import (
     CommunityRepositoryProtocol,
 )
 from app.features.community.application.services.post_views import PostViews
 from app.features.community.domain.entities.community_post import CommunityPost
 from app.features.community.domain.exceptions import CommunityNotFoundError
-from app.features.community.domain.value_objects.post_view import PostView
 
 
 class PublishPostCommandHandler:

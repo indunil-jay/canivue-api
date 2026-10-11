@@ -1,12 +1,14 @@
 from app.features.messaging.application.commands.send_message.send_message_command import (
     SendMessageCommand,
 )
+from app.features.messaging.application.dtos.message_output_dto import MessageOutputDTO
 from app.features.messaging.application.interfaces.repositories.conversation_repository import (
     ConversationRepositoryProtocol,
 )
 from app.features.messaging.application.interfaces.repositories.message_repository import (
     MessageRepositoryProtocol,
 )
+from app.features.messaging.application.mappers.message_dto_mapper import MessageDTOMapper
 from app.features.messaging.application.services.conversation_participation import (
     ConversationParticipation,
 )
@@ -33,7 +35,7 @@ class SendMessageCommandHandler:
         self._messages = messages
         self._notifier = notifier
 
-    async def handle(self, command: SendMessageCommand) -> Message:
+    async def handle(self, command: SendMessageCommand) -> MessageOutputDTO:
         conversation, side = await self._participation.load(command.actor, command.conversation_id)
         if command.kind == MessageKind.CONSULTATION_SUMMARY and side != MessageSender.VET:
             raise SummaryNotAllowedError()
@@ -61,4 +63,4 @@ class SendMessageCommandHandler:
             message.text[:PREVIEW_LENGTH],
             action_label="Open Chat",
         )
-        return message
+        return MessageDTOMapper.to_output_dto(message)

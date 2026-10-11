@@ -1,10 +1,11 @@
-from collections.abc import Sequence
 from dataclasses import dataclass
 
-from app.features.notifications.domain.entities.notification import Notification
+from app.features.notifications.application.dtos.notification_output_dto import (
+    NotificationOutputDTO,
+)
 
 
 @dataclass(frozen=True)
 class NotificationInbox:
-    items: Sequence[Notification]
+    items: list[NotificationOutputDTO]
     unread_count: int

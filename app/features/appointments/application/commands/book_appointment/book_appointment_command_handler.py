@@ -3,8 +3,12 @@ from datetime import datetime, timezone
 from app.features.appointments.application.commands.book_appointment.book_appointment_command import (
     BookAppointmentCommand,
 )
+from app.features.appointments.application.dtos.appointment_output_dto import AppointmentOutputDTO
 from app.features.appointments.application.interfaces.repositories.appointment_repository import (
     AppointmentRepositoryProtocol,
+)
+from app.features.appointments.application.mappers.appointment_dto_mapper import (
+    AppointmentDTOMapper,
 )
 from app.features.appointments.application.services.describe_time import describe_time
 from app.features.appointments.domain.entities.appointment import Appointment
@@ -36,7 +40,7 @@ class BookAppointmentCommandHandler:
         self._access = access
         self._notifier = notifier
 
-    async def handle(self, command: BookAppointmentCommand) -> Appointment:
+    async def handle(self, command: BookAppointmentCommand) -> AppointmentOutputDTO:
         dog = await self._access.owned(command.actor, command.data.dog_id)
         vet = await self._vets.get_by_id(command.data.vet_id)
         if vet is None or not vet.verified:
@@ -77,4 +81,4 @@ class BookAppointmentCommandHandler:
             dog_name=dog.name,
             action_label="View Details",
         )
-        return appointment
+        return AppointmentDTOMapper.to_output_dto(appointment)

@@ -1,11 +1,12 @@
 from app.features.dogs.application.commands.set_dog_photo.set_dog_photo_command import (
     SetDogPhotoCommand,
 )
+from app.features.dogs.application.dtos.dog_output_dto import DogOutputDTO
 from app.features.dogs.application.interfaces.repositories.dog_repository import (
     DogRepositoryProtocol,
 )
+from app.features.dogs.application.mappers.dog_dto_mapper import DogDTOMapper
 from app.features.dogs.application.services.dog_access import DogAccess
-from app.features.dogs.domain.entities.dog import Dog
 from app.shared.files import (
     IMAGE_TYPES,
     FileStorageProtocol,
@@ -21,7 +22,7 @@ class SetDogPhotoCommandHandler:
         self._access = access
         self._storage = storage
 
-    async def handle(self, command: SetDogPhotoCommand) -> Dog:
+    async def handle(self, command: SetDogPhotoCommand) -> DogOutputDTO:
         dog = await self._access.owned(command.actor, command.dog_id)
         accepted_type = validate_upload(
             command.content, command.content_type, IMAGE_TYPES, command.max_bytes
@@ -31,4 +32,4 @@ class SetDogPhotoCommandHandler:
         dog = await self._dogs.update(dog)
         if previous:
             await self._storage.delete(previous)
-        return dog
+        return DogDTOMapper.to_output_dto(dog)

@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from app.features.community.domain.entities.community_post import CommunityPost
+from app.features.community.application.dtos.community_post_output_dto import CommunityPostOutputDTO
 
 
 @dataclass(frozen=True)
 class PostView:
-    post: CommunityPost
+    post: CommunityPostOutputDTO
     like_count: int
     liked_by_me: bool
     saved_by_me: bool

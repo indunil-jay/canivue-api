@@ -1,14 +1,17 @@
 from app.features.appointments.application.commands.change_appointment_status.change_appointment_status_command import (
     ChangeAppointmentStatusCommand,
 )
+from app.features.appointments.application.dtos.appointment_output_dto import AppointmentOutputDTO
 from app.features.appointments.application.interfaces.repositories.appointment_repository import (
     AppointmentRepositoryProtocol,
+)
+from app.features.appointments.application.mappers.appointment_dto_mapper import (
+    AppointmentDTOMapper,
 )
 from app.features.appointments.application.services.appointment_participation import (
     AppointmentParticipation,
 )
 from app.features.appointments.application.services.describe_time import describe_time
-from app.features.appointments.domain.entities.appointment import Appointment
 from app.features.appointments.domain.enums.appointment_status import AppointmentStatus
 from app.shared.notifier import NotificationType, NotifierProtocol
 
@@ -29,7 +32,7 @@ class ChangeAppointmentStatusCommandHandler:
         self._participation = participation
         self._notifier = notifier
 
-    async def handle(self, command: ChangeAppointmentStatusCommand) -> Appointment:
+    async def handle(self, command: ChangeAppointmentStatusCommand) -> AppointmentOutputDTO:
         appointment = await self._participation.load(command.actor, command.appointment_id)
         by_vet = command.actor.id == appointment.vet_user_id or command.actor.is_admin
         appointment.move_to(command.target, by_veterinarian=by_vet)
@@ -48,4 +51,4 @@ class ChangeAppointmentStatusCommandHandler:
                 dog_name=appointment.dog_name,
                 action_label="View Details",
             )
-        return appointment
+        return AppointmentDTOMapper.to_output_dto(appointment)

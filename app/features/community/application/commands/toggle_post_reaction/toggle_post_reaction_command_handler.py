@@ -1,12 +1,12 @@
 from app.features.community.application.commands.toggle_post_reaction.toggle_post_reaction_command import (
     TogglePostReactionCommand,
 )
+from app.features.community.application.dtos.post_view import PostView
 from app.features.community.application.interfaces.repositories.community_repository import (
     CommunityRepositoryProtocol,
 )
 from app.features.community.application.services.post_views import PostViews
 from app.features.community.domain.exceptions import PostNotFoundError
-from app.features.community.domain.value_objects.post_view import PostView
 
 
 class TogglePostReactionCommandHandler:

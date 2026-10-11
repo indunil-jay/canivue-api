@@ -1,10 +1,11 @@
+from app.features.reviews.application.dtos.vet_reputation import VetReputation
 from app.features.reviews.application.interfaces.repositories.review_repository import (
     ReviewRepositoryProtocol,
 )
+from app.features.reviews.application.mappers.review_dto_mapper import ReviewDTOMapper
 from app.features.reviews.application.queries.get_my_reputation.get_my_reputation_query import (
     GetMyReputationQuery,
 )
-from app.features.reviews.domain.value_objects.vet_reputation import VetReputation
 from app.features.veterinarians.application.interfaces.repositories.vet_profile_repository import (
     VetProfileRepositoryProtocol,
 )
@@ -35,5 +36,7 @@ class GetMyReputationQueryHandler:
             total_consultations=stats.consultation_count,
             recommendations_accepted_percent=stats.recommendations_accepted_percent,
             repeat_consultation_percent=stats.follow_up_rate_percent,
-            reviews=await self._reviews.list_for_vet(vet.id),
+            reviews=[
+                ReviewDTOMapper.to_output_dto(r) for r in await self._reviews.list_for_vet(vet.id)
+            ],
         )

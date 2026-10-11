@@ -5,6 +5,7 @@ from app.features.messaging.application.dtos.conversation_view import Conversati
 from app.features.messaging.application.interfaces.repositories.conversation_repository import (
     ConversationRepositoryProtocol,
 )
+from app.features.messaging.application.mappers.conversation_dto_mapper import ConversationDTOMapper
 from app.features.messaging.domain.entities.conversation import Conversation
 from app.features.veterinarians.application.interfaces.repositories.vet_profile_repository import (
     VetProfileRepositoryProtocol,
@@ -33,4 +34,4 @@ class StartConversationCommandHandler:
                 vet_name=vet.name,
             )
         )
-        return ConversationView(conversation, unread_count=0)
+        return ConversationView(ConversationDTOMapper.to_output_dto(conversation), unread_count=0)
