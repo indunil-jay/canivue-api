@@ -39,8 +39,12 @@ from app.features.health_metrics.application.interfaces.repositories.metric_read
 )
 from app.features.health_metrics.presentation.dependencies import get_metric_reading_repository
 from app.features.notifications.presentation.dependencies import get_notifier
-from app.features.symptom_nlp.application.use_cases import ParseSymptomTextUseCase
-from app.features.symptom_nlp.presentation.dependencies import get_parse_symptom_use_case
+from app.features.symptom_nlp.application.commands.parse_symptom_text.parse_symptom_text_command_handler import (
+    ParseSymptomTextCommandHandler,
+)
+from app.features.symptom_nlp.presentation.dependencies import (
+    get_parse_symptom_text_command_handler,
+)
 from app.shared.files import FileStorageProtocol
 from app.shared.notifier import NotifierProtocol
 
@@ -53,9 +57,9 @@ def get_fusion_engine() -> FusionEngineProtocol:
 
 
 def get_symptom_parser(
-    parse_use_case: ParseSymptomTextUseCase = Depends(get_parse_symptom_use_case),
+    parse_handler: ParseSymptomTextCommandHandler = Depends(get_parse_symptom_text_command_handler),
 ) -> SymptomParserPort:
-    return SymptomNlpParser(parse_use_case)
+    return SymptomNlpParser(parse_handler)
 
 
 def get_prediction_repository(

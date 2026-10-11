@@ -1,12 +1,6 @@
 from typing import Protocol
 
-from app.features.symptom_nlp.domain.entities import IntakeSession, SymptomParseResult
-
-
-class NLPSymptomEngineProtocol(Protocol):
-    async def parse(self, text: str) -> SymptomParseResult: ...
-
-    def get_version(self) -> str: ...
+from app.features.symptom_nlp.domain.entities.intake_session import IntakeSession
 
 
 class IntakeSessionRepositoryProtocol(Protocol):

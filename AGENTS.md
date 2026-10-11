@@ -32,7 +32,9 @@ app/features/<feature>/
     queries/<verb_noun>/<verb_noun>_query_handler.py      handle(query)
     interfaces/repositories/<x>_repository.py             Protocols the handlers depend on
     interfaces/services/<x>.py                            engines, gateways, ports
-    dtos/<dto>.py
+    dtos/<entity>_output_dto.py     what handlers return; entities never leave this layer
+    dtos/<dto>.py                   composite inputs and results
+    mappers/<entity>_dto_mapper.py  <Entity>DTOMapper.to_output_dto(entity)
     services/<service>.py           logic shared by several handlers
   infrastructure/
     persistence/models/<x>_model.py
@@ -49,6 +51,7 @@ app/features/<feature>/
     router.py                       routes only
 ```
 
+- Handlers return output DTOs (or value objects and primitives), never domain entities.
 - Reads are queries (`Get…`, `List…`, `Search…`); everything that changes state is a command.
 - Domain files import nothing from `application`, `infrastructure` or `presentation`;
   application files import nothing from `infrastructure`, `presentation`, FastAPI or SQLAlchemy.

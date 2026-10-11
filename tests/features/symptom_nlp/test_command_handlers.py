@@ -1,19 +1,23 @@
 import pytest
 
-from app.features.symptom_nlp.application.dtos import ParseSymptomInputDTO
-from app.features.symptom_nlp.application.use_cases import ParseSymptomTextUseCase
+from app.features.symptom_nlp.application.commands.parse_symptom_text.parse_symptom_text_command import (
+    ParseSymptomTextCommand,
+)
+from app.features.symptom_nlp.application.commands.parse_symptom_text.parse_symptom_text_command_handler import (
+    ParseSymptomTextCommandHandler,
+)
 from app.features.symptom_nlp.domain.exceptions import EmptySymptomTextException
 from app.features.symptom_nlp.infrastructure.ml.engine import StubNLPSymptomEngine
 
 
 @pytest.mark.asyncio
-async def test_parse_symptom_text_use_case_with_stub():
+async def test_parse_symptom_text_handler_with_stub():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     sample_text = "My dog has been scratching its left ear for three days and it is becoming red."
-    dto = ParseSymptomInputDTO(text=sample_text)
-    result = await use_case.execute(dto)
+    dto = ParseSymptomTextCommand(text=sample_text)
+    result = await handler.handle(dto)
 
     assert result.raw_text == sample_text
     assert "scratching" in result.symptoms
@@ -33,19 +37,19 @@ async def test_parse_symptom_text_use_case_with_stub():
 @pytest.mark.asyncio
 async def test_empty_symptom_text_raises_exception():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     with pytest.raises(EmptySymptomTextException):
-        await use_case.execute(ParseSymptomInputDTO(text="   "))
+        await handler.handle(ParseSymptomTextCommand(text="   "))
 
 
 @pytest.mark.asyncio
 async def test_emergency_triage_respiratory_and_collapse():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "My dog collapsed and is struggling to breathe after walking outside."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.emergency_triage.is_critical is True
     assert result.emergency_triage.reason is not None
@@ -55,10 +59,10 @@ async def test_emergency_triage_respiratory_and_collapse():
 @pytest.mark.asyncio
 async def test_emergency_triage_toxic_ingestion():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "He ate chocolate and rat poison an hour ago."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.emergency_triage.is_critical is True
     assert "toxic" in (result.emergency_triage.reason or "").lower()
@@ -67,10 +71,10 @@ async def test_emergency_triage_toxic_ingestion():
 @pytest.mark.asyncio
 async def test_emergency_triage_neurological_seizure():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "She had a sudden seizure and was convulsing."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.emergency_triage.is_critical is True
     assert "seizure" in (result.emergency_triage.reason or "").lower()
@@ -79,10 +83,10 @@ async def test_emergency_triage_neurological_seizure():
 @pytest.mark.asyncio
 async def test_safe_non_emergency_text():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "Dog has mild itching on back for 2 days."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.emergency_triage.is_critical is False
     assert result.emergency_triage.reason is None
@@ -92,10 +96,10 @@ async def test_safe_non_emergency_text():
 @pytest.mark.asyncio
 async def test_negation_scoping_mixed_symptoms():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "Dog has redness and scratching on his ear, but no vomiting and no coughing."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert "scratching" in result.symptoms
     assert "redness" in result.symptoms
@@ -113,10 +117,10 @@ async def test_negation_scoping_mixed_symptoms():
 @pytest.mark.asyncio
 async def test_temporal_duration_relative_and_units():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "Discharge from left eye since this morning, getting worse."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.duration is not None
     assert result.duration.value == 6
@@ -127,10 +131,10 @@ async def test_temporal_duration_relative_and_units():
 @pytest.mark.asyncio
 async def test_frequency_mapping_constant_and_spans():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "He is scratching ears constantly for 4 days."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.frequency is not None
     assert result.frequency.get("descriptor") == "constant"
@@ -143,26 +147,26 @@ async def test_frequency_mapping_constant_and_spans():
 @pytest.mark.asyncio
 async def test_missing_duration_returns_none_without_fabrication():
     engine = StubNLPSymptomEngine()
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "Redness and swelling on paw."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.duration is None
     assert "DURATION_NOT_PROVIDED" in result.warnings
 
 
 @pytest.mark.asyncio
-async def test_trained_nlp_engine_with_use_case():
+async def test_trained_nlp_engine_with_handler():
     from app.features.symptom_nlp.infrastructure.ml.engine import TrainedNLPSymptomEngine
     from ml.nlp.pipeline import SymptomParserPipeline
 
     pipeline = SymptomParserPipeline()
     engine = TrainedNLPSymptomEngine(pipeline=pipeline)
-    use_case = ParseSymptomTextUseCase(engine=engine)
+    handler = ParseSymptomTextCommandHandler(engine=engine)
 
     text = "My dog has been scratching left ear for three days and getting worse."
-    result = await use_case.execute(ParseSymptomInputDTO(text=text))
+    result = await handler.handle(ParseSymptomTextCommand(text=text))
 
     assert result.raw_text == text
     assert "scratching" in result.symptoms

@@ -1,38 +1,11 @@
 from dataclasses import dataclass, field
 
-
-@dataclass
-class BodyLocation:
-    part: str
-    side: str | None = None
-
-
-@dataclass
-class DurationEntity:
-    value: int
-    unit: str
-
-
-@dataclass
-class ExtractedSpan:
-    entity: str
-    text: str
-    start: int
-    end: int
-    negated: bool = False
-
-
-@dataclass
-class EmergencyTriageAlert:
-    is_critical: bool = False
-    reason: str | None = None
-    recommendation: str | None = None
-
-
-@dataclass
-class ConditionProbability:
-    condition: str
-    probability: float
+from app.features.symptom_nlp.domain.value_objects.body_location import BodyLocation
+from app.features.symptom_nlp.domain.value_objects.duration_entity import DurationEntity
+from app.features.symptom_nlp.domain.value_objects.emergency_triage_alert import (
+    EmergencyTriageAlert,
+)
+from app.features.symptom_nlp.domain.value_objects.extracted_span import ExtractedSpan
 
 
 @dataclass
@@ -55,25 +28,3 @@ class SymptomParseResult:
     emergency_triage: EmergencyTriageAlert = field(default_factory=EmergencyTriageAlert)
     warnings: list[str] = field(default_factory=list)
     model_version: str = "stub_nlp_engine_v1"
-
-
-@dataclass
-class IntakeMessage:
-    role: str
-    content: str
-    created_at: str
-
-
-@dataclass
-class IntakeSession:
-    session_id: str
-    dog_id: str
-    status: str
-    turn_count: int
-    messages: list[IntakeMessage]
-    accumulated_parse: SymptomParseResult
-    missing_slots: list[str]
-    agent_message: str
-    created_at: str
-    updated_at: str
-    is_complete: bool = False

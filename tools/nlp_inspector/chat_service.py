@@ -13,17 +13,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.features.symptom_nlp.domain.entities import (
-    BodyLocation,
-    DurationEntity,
-    EmergencyTriageAlert,
-    ExtractedSpan,
-    SymptomParseResult,
-)
-from app.features.symptom_nlp.domain.intake_rules import (
-    evaluate_missing_slots,
+from app.features.symptom_nlp.domain.services.evaluate_missing_slots import evaluate_missing_slots
+from app.features.symptom_nlp.domain.services.generate_clarifying_prompt import (
     generate_clarifying_prompt,
 )
+from app.features.symptom_nlp.domain.value_objects.body_location import BodyLocation
+from app.features.symptom_nlp.domain.value_objects.duration_entity import DurationEntity
+from app.features.symptom_nlp.domain.value_objects.emergency_triage_alert import (
+    EmergencyTriageAlert,
+)
+from app.features.symptom_nlp.domain.value_objects.extracted_span import ExtractedSpan
+from app.features.symptom_nlp.domain.value_objects.symptom_parse_result import SymptomParseResult
 from ml.nlp.pipeline import SymptomParserPipeline
 
 SESSIONS_FILE = Path("data/chat_sessions.json")

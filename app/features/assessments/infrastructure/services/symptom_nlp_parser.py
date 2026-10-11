@@ -2,18 +2,22 @@ from app.features.assessments.application.interfaces.services.symptom_parser imp
     SymptomParserPort,
 )
 from app.features.assessments.domain.value_objects.symptom_evidence import SymptomEvidence
-from app.features.symptom_nlp.application.dtos import ParseSymptomInputDTO
-from app.features.symptom_nlp.application.use_cases import ParseSymptomTextUseCase
+from app.features.symptom_nlp.application.commands.parse_symptom_text.parse_symptom_text_command import (
+    ParseSymptomTextCommand,
+)
+from app.features.symptom_nlp.application.commands.parse_symptom_text.parse_symptom_text_command_handler import (
+    ParseSymptomTextCommandHandler,
+)
 
 
 class SymptomNlpParser(SymptomParserPort):
     """Adapts the Symptom Parsing feature module to what an Assessment needs."""
 
-    def __init__(self, parse_use_case: ParseSymptomTextUseCase):
-        self._parse = parse_use_case
+    def __init__(self, parse_handler: ParseSymptomTextCommandHandler):
+        self._parse = parse_handler
 
     async def parse(self, text: str) -> SymptomEvidence:
-        parsed = await self._parse.execute(ParseSymptomInputDTO(text=text))
+        parsed = await self._parse.handle(ParseSymptomTextCommand(text=text))
         triage = parsed.emergency_triage
         return SymptomEvidence(
             text=text,

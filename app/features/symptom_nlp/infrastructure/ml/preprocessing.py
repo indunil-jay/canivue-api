@@ -1,6 +1,8 @@
 import re
 
-from app.features.symptom_nlp.domain.entities import EmergencyTriageAlert
+from app.features.symptom_nlp.domain.value_objects.emergency_triage_alert import (
+    EmergencyTriageAlert,
+)
 
 # Critical red-flag emergency keywords & patterns
 EMERGENCY_RED_FLAGS: list[tuple[str, str]] = [
