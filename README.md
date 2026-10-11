@@ -195,6 +195,54 @@ uvicorn app.main:app --reload --port 8000
 
 ---
 
+## 🗺️ API Overview
+
+Every route below sits under `/api/v1`, needs `Authorization: Bearer <access token>` (except
+registration, verification, login, refresh and password recovery) and answers with the
+`{success, message, data}` envelope. Interactive docs are at `/docs`.
+
+| Area | Routes |
+|---|---|
+| Account | `auth/register` (role `CLIENT` or `VET`), `auth/verify-email`, `auth/resend-verification`, `auth/login`, `auth/refresh`, `auth/me` (GET, PATCH), `auth/me/privacy` (GET, PATCH) |
+| Dogs | `dogs` (POST, GET), `dogs/{id}` (GET, PATCH, DELETE), `dogs/{id}/photo` (PUT, GET, DELETE) |
+| Veterinarians | `veterinarians` (search), `veterinarians/{id}`, `veterinarians/me`, `veterinarians/me/availability[/{day}]`, `veterinarians/pending`, `veterinarians/{id}/verify`, `veterinarians/{id}/reviews`, `veterinarians/me/reputation` |
+| Appointments | `dogs/{id}/appointments` (POST, GET), `appointments` (mine), `appointments/{id}`, `appointments/{id}/{confirm\|start\|complete\|no-show\|cancel}`, `reviews` |
+| Messaging | `conversations` (POST, GET), `conversations/{id}/messages` (GET `?after=`, POST) |
+| Medical records | `dogs/{id}/records` (GET, POST), `dogs/{id}/records/documents`, `dogs/{id}/records/{rid}/attachment`, `dogs/{id}/records/{rid}` (DELETE) |
+| Preventive care | `dogs/{id}/care-tasks` (GET, POST), `.../{tid}/complete`, `.../{tid}` (DELETE) |
+| Devices | `dogs/{id}/device` (GET, PATCH), `dogs/{id}/device/{pair\|disconnect\|sync}` |
+| Health metrics | `dogs/{id}/metrics/{metric}/readings` (POST), `dogs/{id}/metrics/{metric}?range=daily\|weekly\|monthly` |
+| Assessments | `dogs/{id}/health-checks` (multipart POST), `dogs/{id}/predictions`, `.../latest`, `.../{pid}`, `.../{pid}/outcome` |
+| Read models | `dogs/{id}/dashboard`, `dogs/{id}/timeline`, `dogs/{id}/insights`, `dogs/{id}/nutrition` (GET, PATCH) |
+| Community | `community/feed`, `community/posts`, `community/posts/{id}/{like\|save\|share}`, `community/communities`, `community/communities/{id}/join` |
+| Notifications | `notifications`, `notifications/{id}/read`, `notifications/read-all` |
+| Billing | `billing/plans`, `billing/subscription` (GET, PUT) |
+| Vet portal | `vet-portal/dashboard`, `vet-portal/patients` |
+
+Things to know when integrating:
+
+- A new account must verify its email with the six-digit code before it can log in. In
+  development the code is written to the server log instead of being emailed.
+- Enum values match the mobile app's Dart enum names (`inPerson`, `labResult`, `fleaTick`, ...).
+- A Dog the caller may not reach is reported as `404`, never `403`.
+- Fusion, progression risk and insights come from deterministic Stub Engines; payments from a
+  stub gateway that always succeeds. Chat is polled, and there is no push delivery.
+- `distance_km`, `online`, `comment_count` and `recommendations_accepted_percent` have no data
+  source yet and are returned as `null`, `false`, `0` and `0`.
+
+### Demo data
+
+```bash
+python -m tools.seed_demo
+```
+
+Creates a demo owner with three Dogs, three verified veterinarians and an administrator. The
+shared password is `DEMO_PASSWORD` in `tools/seed_demo.py`. It refuses to run when
+`APP_ENV=production`.
+
+> The schema is still created with `create_all` in debug mode. After pulling changes that alter
+> existing tables, delete `data/app.db` once.
+
 ## 🧪 Running Tests
 
 ```bash

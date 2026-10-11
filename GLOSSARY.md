@@ -56,4 +56,34 @@ _Avoid_: Urgent symptom, severe warning
 The composite reliability weight (0.0 to 1.0) calculated from text quality and prediction confidence, consumed by the Adaptive Multimodal Fusion Mechanism to balance the NLP evidence stream.
 _Avoid_: Text weight, NLP confidence
 
+**Owner**:
+The user who registered a Dog and controls its data (account role `CLIENT`).
+_Avoid_: Client, customer, pet parent
 
+**Veterinarian**:
+A user with the `VET` role and a professional profile; hidden from discovery until an administrator verifies them.
+_Avoid_: Doctor, staff member, provider
+
+**Patient**:
+A Dog as seen by one Veterinarian: it has a live appointment with them, or its Owner has a conversation with them, and the Owner still shares data with veterinarians.
+_Avoid_: Client dog, case
+
+**Prediction**:
+The stored outcome of one Assessment: a suspected condition, a combined progression risk and a confidence, kept as decision support and never as a diagnosis.
+_Avoid_: Diagnosis, result, alert
+
+**Progression Risk**:
+The 0-100 estimate of a Dog's condition worsening over the next seven days, banded low (0-29), moderate (30-59), high (60-84) and critical (85-100).
+_Avoid_: Severity, health score
+
+**Baseline**:
+A Dog's own average for a health metric over the 90 days before the period being shown; readings are judged abnormal against it, not against a breed norm.
+_Avoid_: Normal range, reference value
+
+**Reading**:
+One measured value of a health metric for a Dog at a moment in time.
+_Avoid_: Data point, sample, measurement
+
+**Care Task**:
+A dated preventive-care item for a Dog (vaccination, deworming, grooming and so on) that its Owner marks done.
+_Avoid_: Reminder (a reminder is a Care Task shown on the dashboard), to-do

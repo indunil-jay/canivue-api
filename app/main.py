@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -50,6 +51,13 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """Application factory initializing FastAPI, middlewares, and routes."""
+    # Without this the app's own INFO logs (request lifecycle, the development email
+    # service that prints verification codes and reset tokens) are silently dropped.
+    logging.basicConfig(
+        level=logging.INFO if settings.DEBUG else logging.WARNING,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
     app = FastAPI(
         title=settings.APP_NAME,
         version="0.1.0",
