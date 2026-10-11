@@ -93,6 +93,7 @@ from app.features.auth.infrastructure.services.google_auth_service import (
 )
 from app.features.auth.infrastructure.services.hasher import Argon2PasswordHasher
 from app.features.auth.infrastructure.services.token_service import JwtTokenService
+from app.shared.actor import Actor
 
 _hasher_instance = Argon2PasswordHasher()
 _token_service_instance = JwtTokenService()
@@ -285,6 +286,28 @@ async def get_current_user(
 
     query = GetCurrentUserQuery(user_id=user_id)
     return await query_handler.handle(query)
+
+
+async def get_actor(current_user: UserOutputDTO = Depends(get_current_user)) -> Actor:
+    return Actor(
+        id=current_user.id,
+        role=current_user.role.value,
+        name=current_user.full_name,
+        email=current_user.email,
+    )
+
+
+def require_actor(*allowed_roles: Role) -> Callable:
+    roles = {r.value for r in allowed_roles}
+
+    async def _guard(actor: Actor = Depends(get_actor)) -> Actor:
+        if actor.role not in roles:
+            raise InsufficientPermissionsError(
+                f"Action requires one of the following roles: {', '.join(sorted(roles))}."
+            )
+        return actor
+
+    return _guard
 
 
 def require_roles(*allowed_roles: Role | str) -> Callable:
