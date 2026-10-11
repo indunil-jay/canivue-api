@@ -16,6 +16,18 @@ from app.core.middlewares.logging_middleware import LoggingMiddleware
 from app.core.response import APIResponse
 
 
+async def seed_reference_data() -> None:
+    """Idempotently adds the rows the app cannot work without: permissions and communities."""
+    from app.core.database import AsyncSessionLocal
+    from app.features.auth.infrastructure.persistence.seed import seed_rbac_catalog
+    from app.features.community.infrastructure.persistence.repositories import seed_communities
+
+    async with AsyncSessionLocal() as session:
+        await seed_rbac_catalog(session)
+        await seed_communities(session)
+        await session.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup and shutdown lifespan event handler."""
@@ -23,6 +35,7 @@ async def lifespan(app: FastAPI):
     if settings.DEBUG:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        await seed_reference_data()
 
     # Pre-warm real ML engines on startup if configured (lifespan eager loading)
     if settings.USE_REAL_ML_MODELS:
@@ -125,6 +138,10 @@ def create_app() -> FastAPI:
     from app.features.dashboard.presentation.router import router as dashboard_router
 
     app.include_router(dashboard_router, prefix="/api/v1/dogs", tags=["Dashboard"])
+
+    from app.features.community.presentation.router import router as community_router
+
+    app.include_router(community_router, prefix="/api/v1/community", tags=["Community"])
 
     from app.features.symptom_nlp.presentation.router import router as symptom_nlp_router
 
