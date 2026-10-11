@@ -63,6 +63,9 @@ from app.features.auth.application.interfaces.services.password_hasher import (
 from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
+from app.features.auth.application.interfaces.services.veterinarian_onboarding import (
+    VeterinarianOnboardingPort,
+)
 from app.features.auth.application.queries.get_current_user.get_current_user_query import (
     GetCurrentUserQuery,
 )
@@ -133,6 +136,18 @@ def get_password_reset_token_repository(
     return SqlAlchemyPasswordResetTokenRepository(session=session)
 
 
+def get_veterinarian_onboarding_port(
+    session: AsyncSession = Depends(get_db_session),
+) -> VeterinarianOnboardingPort:
+    # Composition root: the veterinarians module owns professional profiles.
+    from app.features.veterinarians.application.use_cases import VeterinarianOnboarding
+    from app.features.veterinarians.infrastructure.persistence.repositories import (
+        SqlAlchemyVetProfileRepository,
+    )
+
+    return VeterinarianOnboarding(SqlAlchemyVetProfileRepository(session=session))
+
+
 def get_email_verification_code_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> EmailVerificationCodeRepository:
@@ -150,9 +165,13 @@ def get_create_client_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
     verification_issuer: EmailVerificationIssuer = Depends(get_email_verification_issuer),
+    vet_onboarding: VeterinarianOnboardingPort = Depends(get_veterinarian_onboarding_port),
 ) -> CreateClientCommandHandler:
     return CreateClientCommandHandler(
-        user_repo=user_repo, hasher=hasher, verification_issuer=verification_issuer
+        user_repo=user_repo,
+        hasher=hasher,
+        verification_issuer=verification_issuer,
+        vet_onboarding=vet_onboarding,
     )
 
 
@@ -175,8 +194,11 @@ def get_resend_verification_command_handler(
 def get_create_staff_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
+    vet_onboarding: VeterinarianOnboardingPort = Depends(get_veterinarian_onboarding_port),
 ) -> CreateStaffCommandHandler:
-    return CreateStaffCommandHandler(user_repo=user_repo, hasher=hasher)
+    return CreateStaffCommandHandler(
+        user_repo=user_repo, hasher=hasher, vet_onboarding=vet_onboarding
+    )
 
 
 def get_login_command_handler(

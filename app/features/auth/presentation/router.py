@@ -129,12 +129,13 @@ async def register_client(
         email=payload.email,
         password=payload.password,
         full_name=payload.full_name,
+        role=Role(payload.role),
     )
     result = await handler.handle(command)
 
     return APIResponse(
         success=True,
-        message="Client account registered successfully",
+        message="Account registered successfully",
         data=AuthPresentationMapper.to_user_response(result),
     )
 

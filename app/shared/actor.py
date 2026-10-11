@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from app.shared.text import initials_of
+
 
 @dataclass(frozen=True)
 class Actor:
@@ -22,5 +24,4 @@ class Actor:
 
     @property
     def initials(self) -> str:
-        parts = [p for p in self.display_name.replace(".", " ").split() if p.lower() != "dr"]
-        return "".join(p[0] for p in parts[:2]).upper() or "U"
+        return initials_of(self.display_name)

@@ -62,3 +62,27 @@ async def admin_headers(
         )
     )
     return await login_headers(client, email)
+
+
+async def vet_headers(client: AsyncClient, email: str = "vet@example.com", **extra) -> dict:
+    await register_verified(client, email, role="VET", **extra)
+    return await login_headers(client, email)
+
+
+async def verified_vet(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    email: str = "vet@example.com",
+    full_name: str = "Dr. Sarah Jenkins",
+    **profile,
+) -> tuple[dict, str]:
+    """A veterinarian an admin has verified. Returns (auth headers, veterinarian id)."""
+    headers = await vet_headers(client, email, full_name=full_name)
+    profile.setdefault("consultation_fee_usd", 40.0)
+    resp = await client.patch("/api/v1/veterinarians/me", headers=headers, json=profile)
+    assert resp.status_code == 200, resp.text
+    vet_id = resp.json()["data"]["id"]
+    admin = await admin_headers(client, db_session, f"admin-for-{email}")
+    verify = await client.post(f"/api/v1/veterinarians/{vet_id}/verify", headers=admin)
+    assert verify.status_code == 200, verify.text
+    return headers, vet_id
