@@ -118,9 +118,7 @@ async def test_reputation_is_for_veterinarians_only(client, scene):
 
 
 async def test_better_rated_veterinarians_are_listed_first(client, scene, db_session):
-    _, other_id = await verified_vet(
-        client, db_session, "aaa@example.com", "Dr. Aaron First"
-    )
+    _, other_id = await verified_vet(client, db_session, "aaa@example.com", "Dr. Aaron First")
     appointment = await _completed(client, scene)
     await _review(client, scene["owner"], appointment["id"], 5)
 
