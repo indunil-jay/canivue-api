@@ -17,6 +17,7 @@ class User:
     full_name: str | None = None
     google_id: str | None = None
     is_active: bool = True
+    is_email_verified: bool = True
     permissions: list[str] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

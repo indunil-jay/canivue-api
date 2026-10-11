@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.helpers import verify_email
+
 
 @pytest.mark.asyncio
 async def test_login_success_and_get_me(client: AsyncClient):
@@ -12,6 +14,7 @@ async def test_login_success_and_get_me(client: AsyncClient):
     }
     reg_resp = await client.post("/api/v1/auth/register", json=reg_payload)
     assert reg_resp.status_code == 201
+    await verify_email(client, "loginuser@example.com")
 
     # 2. Login
     login_payload = {

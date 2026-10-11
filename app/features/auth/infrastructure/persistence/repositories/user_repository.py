@@ -36,6 +36,7 @@ class SqlAlchemyUserRepository(
             full_name=model.full_name,
             google_id=model.google_id,
             is_active=model.is_active,
+            is_email_verified=model.is_email_verified,
             permissions=perms,
             created_at=model.created_at,
             updated_at=model.updated_at,
@@ -49,6 +50,7 @@ class SqlAlchemyUserRepository(
             "full_name": entity.full_name,
             "google_id": entity.google_id,
             "is_active": entity.is_active,
+            "is_email_verified": entity.is_email_verified,
             "created_at": entity.created_at,
             "updated_at": entity.updated_at,
         }

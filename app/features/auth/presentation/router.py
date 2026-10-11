@@ -43,10 +43,21 @@ from app.features.auth.application.commands.rotate_token.rotate_refresh_token_co
 from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
+from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
+    ResendVerificationCommandHandler,
+)
+from app.features.auth.application.commands.verify_email.verify_email_command import (
+    VerifyEmailCommand,
+)
+from app.features.auth.application.commands.verify_email.verify_email_command_handler import (
+    VerifyEmailCommandHandler,
+)
 from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.domain.enums.role import Role
 from app.features.auth.presentation.dependencies import (
     get_create_client_command_handler,
+    get_resend_verification_command_handler,
+    get_verify_email_command_handler,
     get_create_staff_command_handler,
     get_current_user,
     get_forgot_password_command_handler,
@@ -75,6 +86,10 @@ from app.features.auth.presentation.requests.register_client_request import (
 )
 from app.features.auth.presentation.requests.reset_password_request import (
     ResetPasswordRequest,
+)
+from app.features.auth.presentation.requests.verify_email_request import (
+    ResendVerificationRequest,
+    VerifyEmailRequest,
 )
 from app.features.auth.presentation.responses.login_response import (
     LoginResponseData,
@@ -111,6 +126,44 @@ async def register_client(
         success=True,
         message="Client account registered successfully",
         data=AuthPresentationMapper.to_user_response(result),
+    )
+
+
+@router.post(
+    "/verify-email",
+    response_model=APIResponse[UserResponseData],
+    status_code=status.HTTP_200_OK,
+    summary="Verify an email address with the emailed one-time code",
+)
+async def verify_email(
+    payload: VerifyEmailRequest,
+    handler: VerifyEmailCommandHandler = Depends(get_verify_email_command_handler),
+) -> APIResponse[UserResponseData]:
+    result = await handler.handle(VerifyEmailCommand(email=payload.email, code=payload.code))
+
+    return APIResponse(
+        success=True,
+        message="Email verified successfully",
+        data=AuthPresentationMapper.to_user_response(result),
+    )
+
+
+@router.post(
+    "/resend-verification",
+    response_model=APIResponse[None],
+    status_code=status.HTTP_200_OK,
+    summary="Send a new email verification code",
+)
+async def resend_verification(
+    payload: ResendVerificationRequest,
+    handler: ResendVerificationCommandHandler = Depends(get_resend_verification_command_handler),
+) -> APIResponse[None]:
+    await handler.handle(payload.email)
+
+    return APIResponse(
+        success=True,
+        message="If that email is awaiting verification, a new code has been sent.",
+        data=None,
     )
 
 

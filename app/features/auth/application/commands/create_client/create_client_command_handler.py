@@ -14,6 +14,9 @@ from app.features.auth.application.interfaces.services.password_hasher import (
     PasswordHasher,
 )
 from app.features.auth.application.mappers.user_dto_mapper import UserDTOMapper
+from app.features.auth.application.services.email_verification_issuer import (
+    EmailVerificationIssuer,
+)
 from app.features.auth.domain.entities.user import User
 from app.features.auth.domain.enums.role import Role
 from app.features.auth.domain.events.user_registered import (
@@ -32,10 +35,12 @@ class CreateClientCommandHandler:
         user_repo: UserRepository,
         hasher: PasswordHasher,
         event_handler: UserRegisteredEventHandler | None = None,
+        verification_issuer: EmailVerificationIssuer | None = None,
     ):
         self._user_repo = user_repo
         self._hasher = hasher
         self._event_handler = event_handler or UserRegisteredEventHandler()
+        self._verification_issuer = verification_issuer
 
     async def handle(self, command: CreateClientCommand) -> UserOutputDTO:
         email = command.email.strip().lower()
@@ -58,11 +63,14 @@ class CreateClientCommandHandler:
             role=Role.CLIENT,
             full_name=command.full_name,
             is_active=True,
+            is_email_verified=False,
             created_at=now,
             updated_at=now,
         )
 
         saved = await self._user_repo.create(new_user)
+        if self._verification_issuer:
+            await self._verification_issuer.issue(saved)
 
         event = UserRegisteredDomainEvent(
             user_id=saved.id,

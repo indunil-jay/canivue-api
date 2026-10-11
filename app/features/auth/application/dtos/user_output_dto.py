@@ -14,3 +14,4 @@ class UserOutputDTO:
     permissions: list[str]
     created_at: datetime
     updated_at: datetime
+    is_email_verified: bool = True

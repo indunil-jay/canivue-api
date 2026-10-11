@@ -62,6 +62,11 @@ class GoogleLoginCommandHandler:
             user = await self._user_repo.get_by_email(normalized_email)
             if user:
                 user.google_id = profile.google_id
+                if not user.is_email_verified:
+                    # The password on an unverified account was set by someone who never
+                    # proved they own this address, so it must not survive the takeover.
+                    user.hashed_password = None
+                    user.is_email_verified = True
                 if profile.full_name and not user.full_name:
                     user.full_name = profile.full_name
                 user.updated_at = now

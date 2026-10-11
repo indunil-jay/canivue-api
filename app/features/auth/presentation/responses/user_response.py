@@ -9,6 +9,7 @@ class UserResponseData(BaseModel):
     role: str
     full_name: str | None = None
     is_active: bool
+    is_email_verified: bool = True
     permissions: list[str] = []
     created_at: datetime
     updated_at: datetime

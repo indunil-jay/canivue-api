@@ -1,0 +1,13 @@
+from typing import Protocol
+
+from app.features.auth.domain.entities.email_verification_code import EmailVerificationCode
+
+
+class EmailVerificationCodeRepository(Protocol):
+    async def create(self, code: EmailVerificationCode) -> EmailVerificationCode: ...
+
+    async def get_latest_for_user(self, user_id: int) -> EmailVerificationCode | None: ...
+
+    async def save(self, code: EmailVerificationCode) -> None: ...
+
+    async def invalidate_all_for_user(self, user_id: int) -> None: ...

@@ -23,6 +23,7 @@ class AuthPresentationMapper:
             role=dto.role.value,
             full_name=dto.full_name,
             is_active=dto.is_active,
+            is_email_verified=dto.is_email_verified,
             permissions=dto.permissions,
             created_at=dto.created_at,
             updated_at=dto.updated_at,

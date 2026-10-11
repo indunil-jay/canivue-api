@@ -25,7 +25,22 @@ from app.features.auth.application.commands.reset_password.reset_password_comman
 from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
+from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
+    ResendVerificationCommandHandler,
+)
+from app.features.auth.application.commands.verify_email.verify_email_command_handler import (
+    VerifyEmailCommandHandler,
+)
 from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
+from app.features.auth.application.interfaces.repositories.email_verification_code_repository import (
+    EmailVerificationCodeRepository,
+)
+from app.features.auth.application.services.email_verification_issuer import (
+    EmailVerificationIssuer,
+)
+from app.features.auth.infrastructure.persistence.repositories.email_verification_code_repository import (
+    SqlAlchemyEmailVerificationCodeRepository,
+)
 from app.features.auth.application.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
@@ -114,11 +129,43 @@ def get_password_reset_token_repository(
     return SqlAlchemyPasswordResetTokenRepository(session=session)
 
 
+def get_email_verification_code_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> EmailVerificationCodeRepository:
+    return SqlAlchemyEmailVerificationCodeRepository(session=session)
+
+
+def get_email_verification_issuer(
+    code_repo: EmailVerificationCodeRepository = Depends(get_email_verification_code_repository),
+    email_service: EmailService = Depends(get_email_service),
+) -> EmailVerificationIssuer:
+    return EmailVerificationIssuer(code_repo=code_repo, email_service=email_service)
+
+
 def get_create_client_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
+    verification_issuer: EmailVerificationIssuer = Depends(get_email_verification_issuer),
 ) -> CreateClientCommandHandler:
-    return CreateClientCommandHandler(user_repo=user_repo, hasher=hasher)
+    return CreateClientCommandHandler(
+        user_repo=user_repo, hasher=hasher, verification_issuer=verification_issuer
+    )
+
+
+def get_verify_email_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    code_repo: EmailVerificationCodeRepository = Depends(get_email_verification_code_repository),
+) -> VerifyEmailCommandHandler:
+    return VerifyEmailCommandHandler(user_repo=user_repo, code_repo=code_repo)
+
+
+def get_resend_verification_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    verification_issuer: EmailVerificationIssuer = Depends(get_email_verification_issuer),
+) -> ResendVerificationCommandHandler:
+    return ResendVerificationCommandHandler(
+        user_repo=user_repo, verification_issuer=verification_issuer
+    )
 
 
 def get_create_staff_command_handler(
