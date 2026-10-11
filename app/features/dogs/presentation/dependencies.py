@@ -6,7 +6,14 @@ from app.core.file_storage import get_file_storage
 from app.features.appointments.infrastructure.persistence.repositories import (
     AppointmentPatientRegistry,
 )
-from app.features.dogs.application.access import AnyPatientRegistry, DogAccess
+from app.features.auth.infrastructure.services.owner_sharing_policy import (
+    UserPrivacySharingPolicy,
+)
+from app.features.dogs.application.access import (
+    AnyPatientRegistry,
+    ConsentingPatientRegistry,
+    DogAccess,
+)
 from app.features.dogs.application.use_cases import (
     GetDogPhotoUseCase,
     GetDogUseCase,
@@ -32,9 +39,12 @@ def get_dog_repository(session: AsyncSession = Depends(get_db_session)) -> DogRe
 def get_patient_registry(
     session: AsyncSession = Depends(get_db_session),
 ) -> PatientRegistryProtocol:
-    return AnyPatientRegistry(
-        AppointmentPatientRegistry(session=session),
-        ConversationPatientRegistry(session=session),
+    return ConsentingPatientRegistry(
+        AnyPatientRegistry(
+            AppointmentPatientRegistry(session=session),
+            ConversationPatientRegistry(session=session),
+        ),
+        UserPrivacySharingPolicy(session),
     )
 
 

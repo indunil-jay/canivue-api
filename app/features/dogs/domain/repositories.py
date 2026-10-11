@@ -18,6 +18,12 @@ class DogRepositoryProtocol(Protocol):
     async def update(self, entity: Dog) -> Dog: ...
 
 
+class OwnerSharingPolicyProtocol(Protocol):
+    """Whether an owner lets veterinarians see their Dogs' data (a privacy setting)."""
+
+    async def shares_with_vets(self, owner_id: int) -> bool: ...
+
+
 class PatientRegistryProtocol(Protocol):
     """Answers whether a Dog is a patient of a veterinarian (see spec: authorisation)."""
 

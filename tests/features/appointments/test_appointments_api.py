@@ -234,3 +234,17 @@ async def test_a_dog_becomes_readable_to_its_veterinarian_once_booked(client, sc
     await _act(client, scene["owner"], appointment["id"], "cancel")
 
     assert (await client.get(dog_url, headers=scene["vet"])).status_code == 404
+
+
+async def test_owner_can_stop_sharing_their_dogs_with_veterinarians(client, scene):
+    dog_url = f"{DOGS}/{scene['dog']['id']}"
+    await book_appointment(client, scene)
+    assert (await client.get(dog_url, headers=scene["vet"])).status_code == 200
+
+    await client.patch(
+        "/api/v1/auth/me/privacy", headers=scene["owner"], json={"share_with_vet": False}
+    )
+
+    assert (await client.get(dog_url, headers=scene["vet"])).status_code == 404
+    assert (await client.get(f"{dog_url}/records", headers=scene["vet"])).status_code == 404
+    assert (await client.get(dog_url, headers=scene["owner"])).status_code == 200

@@ -1,6 +1,10 @@
 from app.features.dogs.domain.entities import Dog
 from app.features.dogs.domain.exceptions import DogNotFoundError
-from app.features.dogs.domain.repositories import DogRepositoryProtocol, PatientRegistryProtocol
+from app.features.dogs.domain.repositories import (
+    DogRepositoryProtocol,
+    OwnerSharingPolicyProtocol,
+    PatientRegistryProtocol,
+)
 from app.shared.actor import Actor
 
 
@@ -53,3 +57,16 @@ class AnyPatientRegistry(PatientRegistryProtocol):
             if await registry.is_patient(vet_user_id, dog):
                 return True
         return False
+
+
+class ConsentingPatientRegistry(PatientRegistryProtocol):
+    """Applies the owner's "share with vet" privacy setting on top of another registry."""
+
+    def __init__(self, inner: PatientRegistryProtocol, sharing: OwnerSharingPolicyProtocol):
+        self._inner = inner
+        self._sharing = sharing
+
+    async def is_patient(self, vet_user_id: int, dog: Dog) -> bool:
+        return await self._inner.is_patient(vet_user_id, dog) and (
+            await self._sharing.shares_with_vets(dog.owner_id)
+        )
