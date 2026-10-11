@@ -19,31 +19,28 @@ from app.features.auth.application.commands.login.login_user_command_handler imp
 from app.features.auth.application.commands.oauth_google.google_login_command_handler import (
     GoogleLoginCommandHandler,
 )
+from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
+    ResendVerificationCommandHandler,
+)
 from app.features.auth.application.commands.reset_password.reset_password_command_handler import (
     ResetPasswordCommandHandler,
 )
 from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
-from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
-    ResendVerificationCommandHandler,
+from app.features.auth.application.commands.update_profile.update_profile_command_handler import (
+    UpdateProfileCommandHandler,
 )
 from app.features.auth.application.commands.verify_email.verify_email_command_handler import (
     VerifyEmailCommandHandler,
 )
 from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
-from app.features.auth.application.interfaces.repositories.email_verification_code_repository import (
-    EmailVerificationCodeRepository,
-)
-from app.features.auth.application.services.email_verification_issuer import (
-    EmailVerificationIssuer,
-)
-from app.features.auth.infrastructure.persistence.repositories.email_verification_code_repository import (
-    SqlAlchemyEmailVerificationCodeRepository,
-)
 from app.features.auth.application.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
+)
+from app.features.auth.application.interfaces.repositories.email_verification_code_repository import (
+    EmailVerificationCodeRepository,
 )
 from app.features.auth.application.interfaces.repositories.password_reset_token_repository import (
     PasswordResetTokenRepository,
@@ -72,7 +69,13 @@ from app.features.auth.application.queries.get_current_user.get_current_user_que
 from app.features.auth.application.queries.get_current_user.get_current_user_query_handler import (
     GetCurrentUserQueryHandler,
 )
+from app.features.auth.application.services.email_verification_issuer import (
+    EmailVerificationIssuer,
+)
 from app.features.auth.domain.enums.role import Role
+from app.features.auth.infrastructure.persistence.repositories.email_verification_code_repository import (
+    SqlAlchemyEmailVerificationCodeRepository,
+)
 from app.features.auth.infrastructure.persistence.repositories.password_reset_token_repository import (
     SqlAlchemyPasswordResetTokenRepository,
 )
@@ -239,6 +242,12 @@ def get_google_login_command_handler(
         token_service=token_service,
         refresh_token_repo=refresh_token_repo,
     )
+
+
+def get_update_profile_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+) -> UpdateProfileCommandHandler:
+    return UpdateProfileCommandHandler(user_repo=user_repo)
 
 
 def get_current_user_query_handler(

@@ -15,4 +15,8 @@ class UserDTOMapper:
             created_at=entity.created_at,
             updated_at=entity.updated_at,
             is_email_verified=entity.is_email_verified,
+            phone=entity.phone,
+            address=entity.address,
+            emergency_contact=entity.emergency_contact,
+            privacy=entity.privacy,
         )

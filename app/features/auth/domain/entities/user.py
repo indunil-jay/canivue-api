@@ -6,6 +6,7 @@ from app.features.auth.domain.exceptions import (
     EmptyPasswordHashError,
     InvalidEmailError,
 )
+from app.features.auth.domain.value_objects.privacy_settings import PrivacySettings
 
 
 @dataclass
@@ -18,6 +19,10 @@ class User:
     google_id: str | None = None
     is_active: bool = True
     is_email_verified: bool = True
+    phone: str | None = None
+    address: str | None = None
+    emergency_contact: str | None = None
+    privacy: PrivacySettings = field(default_factory=PrivacySettings)
     permissions: list[str] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

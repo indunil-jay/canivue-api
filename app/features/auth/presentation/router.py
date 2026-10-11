@@ -31,6 +31,9 @@ from app.features.auth.application.commands.oauth_google.google_login_command im
 from app.features.auth.application.commands.oauth_google.google_login_command_handler import (
     GoogleLoginCommandHandler,
 )
+from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
+    ResendVerificationCommandHandler,
+)
 from app.features.auth.application.commands.reset_password.reset_password_command import (
     ResetPasswordCommand,
 )
@@ -43,8 +46,9 @@ from app.features.auth.application.commands.rotate_token.rotate_refresh_token_co
 from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
-from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
-    ResendVerificationCommandHandler,
+from app.features.auth.application.commands.update_profile.update_profile_command_handler import (
+    UpdateProfileCommand,
+    UpdateProfileCommandHandler,
 )
 from app.features.auth.application.commands.verify_email.verify_email_command import (
     VerifyEmailCommand,
@@ -56,15 +60,16 @@ from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.domain.enums.role import Role
 from app.features.auth.presentation.dependencies import (
     get_create_client_command_handler,
-    get_resend_verification_command_handler,
-    get_verify_email_command_handler,
     get_create_staff_command_handler,
     get_current_user,
     get_forgot_password_command_handler,
     get_google_login_command_handler,
     get_login_command_handler,
+    get_resend_verification_command_handler,
     get_reset_password_command_handler,
     get_rotate_token_command_handler,
+    get_update_profile_command_handler,
+    get_verify_email_command_handler,
     require_permissions,
 )
 from app.features.auth.presentation.mappers import AuthPresentationMapper
@@ -86,6 +91,11 @@ from app.features.auth.presentation.requests.register_client_request import (
 )
 from app.features.auth.presentation.requests.reset_password_request import (
     ResetPasswordRequest,
+)
+from app.features.auth.presentation.requests.update_profile_request import (
+    PrivacySettingsResponseData,
+    UpdatePrivacySettingsRequest,
+    UpdateProfileRequest,
 )
 from app.features.auth.presentation.requests.verify_email_request import (
     ResendVerificationRequest,
@@ -223,6 +233,67 @@ async def get_me(
         success=True,
         message="User profile retrieved successfully",
         data=AuthPresentationMapper.to_user_response(current_user),
+    )
+
+
+@router.patch(
+    "/me",
+    response_model=APIResponse[UserResponseData],
+    summary="Update the current user's personal information",
+)
+async def update_me(
+    payload: UpdateProfileRequest,
+    current_user: UserOutputDTO = Depends(get_current_user),
+    handler: UpdateProfileCommandHandler = Depends(get_update_profile_command_handler),
+) -> APIResponse[UserResponseData]:
+    result = await handler.handle(
+        UpdateProfileCommand(
+            user_id=current_user.id, changes=payload.model_dump(exclude_unset=True)
+        )
+    )
+
+    return APIResponse(
+        success=True,
+        message="Profile updated successfully",
+        data=AuthPresentationMapper.to_user_response(result),
+    )
+
+
+@router.get(
+    "/me/privacy",
+    response_model=APIResponse[PrivacySettingsResponseData],
+    summary="Get the current user's privacy settings",
+)
+async def get_privacy_settings(
+    current_user: UserOutputDTO = Depends(get_current_user),
+) -> APIResponse[PrivacySettingsResponseData]:
+    return APIResponse(
+        success=True,
+        message="Privacy settings retrieved successfully",
+        data=PrivacySettingsResponseData(**current_user.privacy.to_dict()),
+    )
+
+
+@router.patch(
+    "/me/privacy",
+    response_model=APIResponse[PrivacySettingsResponseData],
+    summary="Update the current user's privacy settings",
+)
+async def update_privacy_settings(
+    payload: UpdatePrivacySettingsRequest,
+    current_user: UserOutputDTO = Depends(get_current_user),
+    handler: UpdateProfileCommandHandler = Depends(get_update_profile_command_handler),
+) -> APIResponse[PrivacySettingsResponseData]:
+    result = await handler.handle(
+        UpdateProfileCommand(
+            user_id=current_user.id, privacy_changes=payload.model_dump(exclude_none=True)
+        )
+    )
+
+    return APIResponse(
+        success=True,
+        message="Privacy settings updated successfully",
+        data=PrivacySettingsResponseData(**result.privacy.to_dict()),
     )
 
 
