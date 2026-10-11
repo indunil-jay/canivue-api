@@ -1,86 +1,47 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db_session
 from app.core.response import APIResponse
 from app.features.auth.presentation.dependencies import get_actor
-from app.features.dogs.application.access import DogAccess
-from app.features.dogs.presentation.dependencies import get_dog_access
-from app.features.preventive_care.application.use_cases import (
-    AddCareTaskUseCase,
-    CompleteCareTaskUseCase,
-    ListCareTasksUseCase,
-    RemoveCareTaskUseCase,
+from app.features.preventive_care.application.commands.add_care_task.add_care_task_command import (
+    AddCareTaskCommand,
 )
-from app.features.preventive_care.domain.entities import (
-    CareTaskCategory,
-    CareTaskRepositoryProtocol,
+from app.features.preventive_care.application.commands.add_care_task.add_care_task_command_handler import (
+    AddCareTaskCommandHandler,
 )
-from app.features.preventive_care.infrastructure.persistence.repositories import (
-    SqlAlchemyCareTaskRepository,
+from app.features.preventive_care.application.commands.complete_care_task.complete_care_task_command import (
+    CompleteCareTaskCommand,
 )
+from app.features.preventive_care.application.commands.complete_care_task.complete_care_task_command_handler import (
+    CompleteCareTaskCommandHandler,
+)
+from app.features.preventive_care.application.commands.remove_care_task.remove_care_task_command import (
+    RemoveCareTaskCommand,
+)
+from app.features.preventive_care.application.commands.remove_care_task.remove_care_task_command_handler import (
+    RemoveCareTaskCommandHandler,
+)
+from app.features.preventive_care.application.queries.list_care_tasks.list_care_tasks_query import (
+    ListCareTasksQuery,
+)
+from app.features.preventive_care.application.queries.list_care_tasks.list_care_tasks_query_handler import (
+    ListCareTasksQueryHandler,
+)
+from app.features.preventive_care.presentation.dependencies import (
+    get_add_care_task_command_handler,
+    get_complete_care_task_command_handler,
+    get_list_care_tasks_query_handler,
+    get_remove_care_task_command_handler,
+)
+from app.features.preventive_care.presentation.requests.add_care_task_request import (
+    AddCareTaskRequest,
+)
+from app.features.preventive_care.presentation.responses.care_task_response import CareTaskResponse
 from app.shared.actor import Actor
 
 router = APIRouter()
 
 
-class AddCareTaskRequest(BaseModel):
-    category: CareTaskCategory
-    title: str = Field(..., min_length=1, max_length=255)
-    due_date: datetime
-
-
-class CareTaskResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    dog_id: str
-    category: CareTaskCategory
-    title: str
-    due_date: datetime
-    completed: bool
-    completed_at: datetime | None
-    is_overdue: bool
-
-
 One = APIResponse[CareTaskResponse]
-
-
-def get_care_task_repository(
-    session: AsyncSession = Depends(get_db_session),
-) -> CareTaskRepositoryProtocol:
-    return SqlAlchemyCareTaskRepository(session=session)
-
-
-def get_list_care_tasks_use_case(
-    tasks: CareTaskRepositoryProtocol = Depends(get_care_task_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> ListCareTasksUseCase:
-    return ListCareTasksUseCase(tasks, access)
-
-
-def get_add_care_task_use_case(
-    tasks: CareTaskRepositoryProtocol = Depends(get_care_task_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> AddCareTaskUseCase:
-    return AddCareTaskUseCase(tasks, access)
-
-
-def get_complete_care_task_use_case(
-    tasks: CareTaskRepositoryProtocol = Depends(get_care_task_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> CompleteCareTaskUseCase:
-    return CompleteCareTaskUseCase(tasks, access)
-
-
-def get_remove_care_task_use_case(
-    tasks: CareTaskRepositoryProtocol = Depends(get_care_task_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> RemoveCareTaskUseCase:
-    return RemoveCareTaskUseCase(tasks, access)
 
 
 @router.get(
@@ -91,9 +52,9 @@ def get_remove_care_task_use_case(
 async def list_care_tasks(
     dog_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: ListCareTasksUseCase = Depends(get_list_care_tasks_use_case),
+    handler: ListCareTasksQueryHandler = Depends(get_list_care_tasks_query_handler),
 ) -> APIResponse[list[CareTaskResponse]]:
-    tasks = await use_case.execute(actor, dog_id)
+    tasks = await handler.handle(ListCareTasksQuery(actor=actor, dog_id=dog_id))
     return APIResponse(
         message="Care tasks retrieved successfully",
         data=[CareTaskResponse.model_validate(t) for t in tasks],
@@ -110,9 +71,17 @@ async def add_care_task(
     dog_id: str,
     payload: AddCareTaskRequest,
     actor: Actor = Depends(get_actor),
-    use_case: AddCareTaskUseCase = Depends(get_add_care_task_use_case),
+    handler: AddCareTaskCommandHandler = Depends(get_add_care_task_command_handler),
 ) -> One:
-    task = await use_case.execute(actor, dog_id, payload.category, payload.title, payload.due_date)
+    task = await handler.handle(
+        AddCareTaskCommand(
+            actor=actor,
+            dog_id=dog_id,
+            category=payload.category,
+            title=payload.title,
+            due_date=payload.due_date,
+        )
+    )
     return APIResponse(message="Care task added", data=CareTaskResponse.model_validate(task))
 
 
@@ -123,9 +92,11 @@ async def complete_care_task(
     dog_id: str,
     task_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: CompleteCareTaskUseCase = Depends(get_complete_care_task_use_case),
+    handler: CompleteCareTaskCommandHandler = Depends(get_complete_care_task_command_handler),
 ) -> One:
-    task = await use_case.execute(actor, dog_id, task_id)
+    task = await handler.handle(
+        CompleteCareTaskCommand(actor=actor, dog_id=dog_id, task_id=task_id)
+    )
     return APIResponse(message="Care task completed", data=CareTaskResponse.model_validate(task))
 
 
@@ -136,7 +107,7 @@ async def remove_care_task(
     dog_id: str,
     task_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: RemoveCareTaskUseCase = Depends(get_remove_care_task_use_case),
+    handler: RemoveCareTaskCommandHandler = Depends(get_remove_care_task_command_handler),
 ) -> APIResponse[None]:
-    await use_case.execute(actor, dog_id, task_id)
+    await handler.handle(RemoveCareTaskCommand(actor=actor, dog_id=dog_id, task_id=task_id))
     return APIResponse(message="Care task removed", data=None)

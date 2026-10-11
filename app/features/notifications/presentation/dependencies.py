@@ -2,14 +2,20 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.features.notifications.application.use_cases import (
-    GetInboxUseCase,
-    MarkAllNotificationsReadUseCase,
-    MarkNotificationReadUseCase,
-    StoredNotifier,
+from app.features.notifications.application.commands.mark_all_notifications_read.mark_all_notifications_read_command_handler import (
+    MarkAllNotificationsReadCommandHandler,
 )
-from app.features.notifications.domain.repositories import NotificationRepositoryProtocol
-from app.features.notifications.infrastructure.persistence.repositories import (
+from app.features.notifications.application.commands.mark_notification_read.mark_notification_read_command_handler import (
+    MarkNotificationReadCommandHandler,
+)
+from app.features.notifications.application.interfaces.repositories.notification_repository import (
+    NotificationRepositoryProtocol,
+)
+from app.features.notifications.application.queries.get_inbox.get_inbox_query_handler import (
+    GetInboxQueryHandler,
+)
+from app.features.notifications.application.services.stored_notifier import StoredNotifier
+from app.features.notifications.infrastructure.persistence.repositories.notification_repository import (
     SqlAlchemyNotificationRepository,
 )
 from app.shared.notifier import NotifierProtocol
@@ -27,19 +33,19 @@ def get_notifier(
     return StoredNotifier(notifications)
 
 
-def get_inbox_use_case(
+def get_inbox_query_handler(
     notifications: NotificationRepositoryProtocol = Depends(get_notification_repository),
-) -> GetInboxUseCase:
-    return GetInboxUseCase(notifications)
+) -> GetInboxQueryHandler:
+    return GetInboxQueryHandler(notifications)
 
 
-def get_mark_notification_read_use_case(
+def get_mark_notification_read_command_handler(
     notifications: NotificationRepositoryProtocol = Depends(get_notification_repository),
-) -> MarkNotificationReadUseCase:
-    return MarkNotificationReadUseCase(notifications)
+) -> MarkNotificationReadCommandHandler:
+    return MarkNotificationReadCommandHandler(notifications)
 
 
-def get_mark_all_notifications_read_use_case(
+def get_mark_all_notifications_read_command_handler(
     notifications: NotificationRepositoryProtocol = Depends(get_notification_repository),
-) -> MarkAllNotificationsReadUseCase:
-    return MarkAllNotificationsReadUseCase(notifications)
+) -> MarkAllNotificationsReadCommandHandler:
+    return MarkAllNotificationsReadCommandHandler(notifications)

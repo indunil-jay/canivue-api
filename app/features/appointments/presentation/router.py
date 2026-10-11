@@ -1,44 +1,65 @@
-from enum import Enum
-
 from fastapi import APIRouter, Depends, status
 
 from app.core.response import APIResponse
-from app.features.appointments.application.use_cases import (
-    BookAppointmentInput,
-    BookAppointmentUseCase,
-    ChangeAppointmentStatusUseCase,
-    GetAppointmentUseCase,
-    ListDogAppointmentsUseCase,
-    ListMyAppointmentsUseCase,
+from app.features.appointments.application.commands.book_appointment.book_appointment_command import (
+    BookAppointmentCommand,
 )
-from app.features.appointments.domain.entities import AppointmentStatus
+from app.features.appointments.application.commands.book_appointment.book_appointment_command_handler import (
+    BookAppointmentCommandHandler,
+)
+from app.features.appointments.application.commands.change_appointment_status.change_appointment_status_command import (
+    ChangeAppointmentStatusCommand,
+)
+from app.features.appointments.application.commands.change_appointment_status.change_appointment_status_command_handler import (
+    ChangeAppointmentStatusCommandHandler,
+)
+from app.features.appointments.application.dtos.book_appointment_input import BookAppointmentInput
+from app.features.appointments.application.queries.get_appointment.get_appointment_query import (
+    GetAppointmentQuery,
+)
+from app.features.appointments.application.queries.get_appointment.get_appointment_query_handler import (
+    GetAppointmentQueryHandler,
+)
+from app.features.appointments.application.queries.list_dog_appointments.list_dog_appointments_query import (
+    ListDogAppointmentsQuery,
+)
+from app.features.appointments.application.queries.list_dog_appointments.list_dog_appointments_query_handler import (
+    ListDogAppointmentsQueryHandler,
+)
+from app.features.appointments.application.queries.list_my_appointments.list_my_appointments_query import (
+    ListMyAppointmentsQuery,
+)
+from app.features.appointments.application.queries.list_my_appointments.list_my_appointments_query_handler import (
+    ListMyAppointmentsQueryHandler,
+)
+from app.features.appointments.domain.enums.appointment_status import AppointmentStatus
 from app.features.appointments.presentation.dependencies import (
-    get_book_appointment_use_case,
-    get_change_appointment_status_use_case,
-    get_get_appointment_use_case,
-    get_list_dog_appointments_use_case,
-    get_list_my_appointments_use_case,
+    get_appointment_query_handler,
+    get_book_appointment_command_handler,
+    get_change_appointment_status_command_handler,
+    get_list_dog_appointments_query_handler,
+    get_list_my_appointments_query_handler,
 )
-from app.features.appointments.presentation.schemas import (
-    AppointmentResponse,
+from app.features.appointments.presentation.requests.appointment_action import AppointmentAction
+from app.features.appointments.presentation.requests.book_appointment_request import (
     BookAppointmentRequest,
+)
+from app.features.appointments.presentation.responses.appointment_response import (
+    AppointmentResponse,
 )
 from app.features.auth.presentation.dependencies import get_actor
 from app.shared.actor import Actor
 
 router = APIRouter()
+
+
 dog_router = APIRouter()
 
+
 One = APIResponse[AppointmentResponse]
+
+
 Many = APIResponse[list[AppointmentResponse]]
-
-
-class AppointmentAction(str, Enum):
-    CONFIRM = "confirm"
-    START = "start"
-    COMPLETE = "complete"
-    NO_SHOW = "no-show"
-    CANCEL = "cancel"
 
 
 _TARGETS = {
@@ -60,10 +81,12 @@ async def book_appointment(
     dog_id: str,
     payload: BookAppointmentRequest,
     actor: Actor = Depends(get_actor),
-    use_case: BookAppointmentUseCase = Depends(get_book_appointment_use_case),
+    handler: BookAppointmentCommandHandler = Depends(get_book_appointment_command_handler),
 ) -> One:
-    appointment = await use_case.execute(
-        actor, BookAppointmentInput(dog_id=dog_id, **payload.model_dump())
+    appointment = await handler.handle(
+        BookAppointmentCommand(
+            actor=actor, data=BookAppointmentInput(dog_id=dog_id, **payload.model_dump())
+        )
     )
     return APIResponse(
         message="Appointment requested successfully",
@@ -75,9 +98,9 @@ async def book_appointment(
 async def list_dog_appointments(
     dog_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: ListDogAppointmentsUseCase = Depends(get_list_dog_appointments_use_case),
+    handler: ListDogAppointmentsQueryHandler = Depends(get_list_dog_appointments_query_handler),
 ) -> Many:
-    appointments = await use_case.execute(actor, dog_id)
+    appointments = await handler.handle(ListDogAppointmentsQuery(actor=actor, dog_id=dog_id))
     return APIResponse(
         message="Appointments retrieved successfully",
         data=[AppointmentResponse.model_validate(a) for a in appointments],
@@ -92,9 +115,9 @@ async def list_dog_appointments(
 async def list_my_appointments(
     status: AppointmentStatus | None = None,
     actor: Actor = Depends(get_actor),
-    use_case: ListMyAppointmentsUseCase = Depends(get_list_my_appointments_use_case),
+    handler: ListMyAppointmentsQueryHandler = Depends(get_list_my_appointments_query_handler),
 ) -> Many:
-    appointments = await use_case.execute(actor, status)
+    appointments = await handler.handle(ListMyAppointmentsQuery(actor=actor, status=status))
     return APIResponse(
         message="Appointments retrieved successfully",
         data=[AppointmentResponse.model_validate(a) for a in appointments],
@@ -105,9 +128,11 @@ async def list_my_appointments(
 async def get_appointment(
     appointment_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: GetAppointmentUseCase = Depends(get_get_appointment_use_case),
+    handler: GetAppointmentQueryHandler = Depends(get_appointment_query_handler),
 ) -> One:
-    appointment = await use_case.execute(actor, appointment_id)
+    appointment = await handler.handle(
+        GetAppointmentQuery(actor=actor, appointment_id=appointment_id)
+    )
     return APIResponse(
         message="Appointment retrieved successfully",
         data=AppointmentResponse.model_validate(appointment),
@@ -124,9 +149,15 @@ async def change_appointment_status(
     appointment_id: str,
     action: AppointmentAction,
     actor: Actor = Depends(get_actor),
-    use_case: ChangeAppointmentStatusUseCase = Depends(get_change_appointment_status_use_case),
+    handler: ChangeAppointmentStatusCommandHandler = Depends(
+        get_change_appointment_status_command_handler
+    ),
 ) -> One:
-    appointment = await use_case.execute(actor, appointment_id, _TARGETS[action])
+    appointment = await handler.handle(
+        ChangeAppointmentStatusCommand(
+            actor=actor, appointment_id=appointment_id, target=_TARGETS[action]
+        )
+    )
     return APIResponse(
         message="Appointment updated successfully",
         data=AppointmentResponse.model_validate(appointment),

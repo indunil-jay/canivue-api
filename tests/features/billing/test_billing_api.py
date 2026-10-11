@@ -2,8 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from app.features.billing.domain.entities import PaymentGatewayProtocol
-from app.features.billing.presentation.router import get_payment_gateway
+from app.features.billing.application.interfaces.services.payment_gateway import (
+    PaymentGatewayProtocol,
+)
+from app.features.billing.presentation.dependencies import get_payment_gateway
 from tests.helpers import book_appointment, create_dog, owner_headers, verified_vet
 
 BILLING = "/api/v1/billing"

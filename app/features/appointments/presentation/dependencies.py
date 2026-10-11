@@ -2,22 +2,36 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.features.appointments.application.use_cases import (
-    AppointmentParticipation,
-    BookAppointmentUseCase,
-    ChangeAppointmentStatusUseCase,
-    GetAppointmentUseCase,
-    ListDogAppointmentsUseCase,
-    ListMyAppointmentsUseCase,
+from app.features.appointments.application.commands.book_appointment.book_appointment_command_handler import (
+    BookAppointmentCommandHandler,
 )
-from app.features.appointments.domain.repositories import AppointmentRepositoryProtocol
-from app.features.appointments.infrastructure.persistence.repositories import (
+from app.features.appointments.application.commands.change_appointment_status.change_appointment_status_command_handler import (
+    ChangeAppointmentStatusCommandHandler,
+)
+from app.features.appointments.application.interfaces.repositories.appointment_repository import (
+    AppointmentRepositoryProtocol,
+)
+from app.features.appointments.application.queries.get_appointment.get_appointment_query_handler import (
+    GetAppointmentQueryHandler,
+)
+from app.features.appointments.application.queries.list_dog_appointments.list_dog_appointments_query_handler import (
+    ListDogAppointmentsQueryHandler,
+)
+from app.features.appointments.application.queries.list_my_appointments.list_my_appointments_query_handler import (
+    ListMyAppointmentsQueryHandler,
+)
+from app.features.appointments.application.services.appointment_participation import (
+    AppointmentParticipation,
+)
+from app.features.appointments.infrastructure.persistence.repositories.appointment_repository import (
     SqlAlchemyAppointmentRepository,
 )
-from app.features.dogs.application.access import DogAccess
+from app.features.dogs.application.services.dog_access import DogAccess
 from app.features.dogs.presentation.dependencies import get_dog_access
 from app.features.notifications.presentation.dependencies import get_notifier
-from app.features.veterinarians.domain.repositories import VetProfileRepositoryProtocol
+from app.features.veterinarians.application.interfaces.repositories.vet_profile_repository import (
+    VetProfileRepositoryProtocol,
+)
 from app.features.veterinarians.presentation.dependencies import get_vet_profile_repository
 from app.shared.notifier import NotifierProtocol
 
@@ -34,37 +48,37 @@ def get_appointment_participation(
     return AppointmentParticipation(appointments)
 
 
-def get_book_appointment_use_case(
+def get_book_appointment_command_handler(
     appointments: AppointmentRepositoryProtocol = Depends(get_appointment_repository),
     vets: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     access: DogAccess = Depends(get_dog_access),
     notifier: NotifierProtocol = Depends(get_notifier),
-) -> BookAppointmentUseCase:
-    return BookAppointmentUseCase(appointments, vets, access, notifier)
+) -> BookAppointmentCommandHandler:
+    return BookAppointmentCommandHandler(appointments, vets, access, notifier)
 
 
-def get_list_dog_appointments_use_case(
+def get_list_dog_appointments_query_handler(
     appointments: AppointmentRepositoryProtocol = Depends(get_appointment_repository),
     access: DogAccess = Depends(get_dog_access),
-) -> ListDogAppointmentsUseCase:
-    return ListDogAppointmentsUseCase(appointments, access)
+) -> ListDogAppointmentsQueryHandler:
+    return ListDogAppointmentsQueryHandler(appointments, access)
 
 
-def get_list_my_appointments_use_case(
+def get_list_my_appointments_query_handler(
     appointments: AppointmentRepositoryProtocol = Depends(get_appointment_repository),
-) -> ListMyAppointmentsUseCase:
-    return ListMyAppointmentsUseCase(appointments)
+) -> ListMyAppointmentsQueryHandler:
+    return ListMyAppointmentsQueryHandler(appointments)
 
 
-def get_get_appointment_use_case(
+def get_appointment_query_handler(
     participation: AppointmentParticipation = Depends(get_appointment_participation),
-) -> GetAppointmentUseCase:
-    return GetAppointmentUseCase(participation)
+) -> GetAppointmentQueryHandler:
+    return GetAppointmentQueryHandler(participation)
 
 
-def get_change_appointment_status_use_case(
+def get_change_appointment_status_command_handler(
     appointments: AppointmentRepositoryProtocol = Depends(get_appointment_repository),
     participation: AppointmentParticipation = Depends(get_appointment_participation),
     notifier: NotifierProtocol = Depends(get_notifier),
-) -> ChangeAppointmentStatusUseCase:
-    return ChangeAppointmentStatusUseCase(appointments, participation, notifier)
+) -> ChangeAppointmentStatusCommandHandler:
+    return ChangeAppointmentStatusCommandHandler(appointments, participation, notifier)

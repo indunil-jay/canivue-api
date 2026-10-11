@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
-from app.features.dashboard.domain.entities import (
-    HealthInsight,
+from app.features.dashboard.application.interfaces.services.insight_engine import (
     InsightEngineProtocol,
-    MetricTrend,
-    TrendDirection,
 )
-from app.features.health_metrics.domain.entities import HealthMetric
+from app.features.dashboard.domain.enums.trend_direction import TrendDirection
+from app.features.dashboard.domain.value_objects.health_insight import HealthInsight
+from app.features.dashboard.domain.value_objects.metric_trend import MetricTrend
+from app.features.health_metrics.domain.enums.health_metric import HealthMetric
 
 STABLE_BAND_PERCENT = 5.0
 

@@ -17,8 +17,9 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.features.appointments.domain.entities import Appointment, AppointmentStatus
-from app.features.appointments.infrastructure.persistence.repositories import (
+from app.features.appointments.domain.entities.appointment import Appointment
+from app.features.appointments.domain.enums.appointment_status import AppointmentStatus
+from app.features.appointments.infrastructure.persistence.repositories.appointment_repository import (
     SqlAlchemyAppointmentRepository,
 )
 from app.features.auth.domain.entities.user import User
@@ -28,27 +29,36 @@ from app.features.auth.infrastructure.persistence.repositories.user_repository i
 )
 from app.features.auth.infrastructure.persistence.seed import seed_rbac_catalog
 from app.features.auth.infrastructure.services.hasher import Argon2PasswordHasher
-from app.features.community.domain.entities import CommunityPost
-from app.features.community.infrastructure.persistence.repositories import (
+from app.features.community.domain.entities.community_post import CommunityPost
+from app.features.community.infrastructure.persistence.repositories.community_repository import (
     SqlAlchemyCommunityRepository,
-    seed_communities,
 )
-from app.features.devices.domain.entities import SmartCollar
-from app.features.devices.infrastructure.persistence.repositories import (
+from app.features.community.infrastructure.persistence.seed import seed_communities
+from app.features.devices.domain.entities.smart_collar import SmartCollar
+from app.features.devices.infrastructure.persistence.repositories.smart_collar_repository import (
     SqlAlchemySmartCollarRepository,
 )
-from app.features.dogs.domain.entities import Dog, DogSex, Insurance, Medication, Vaccination
-from app.features.dogs.infrastructure.persistence.repositories import SqlAlchemyDogRepository
-from app.features.health_metrics.domain.entities import HealthMetric, MetricReading
-from app.features.health_metrics.infrastructure.persistence.repositories import (
+from app.features.dogs.domain.entities.dog import Dog
+from app.features.dogs.domain.enums.dog_sex import DogSex
+from app.features.dogs.domain.value_objects.insurance import Insurance
+from app.features.dogs.domain.value_objects.medication import Medication
+from app.features.dogs.domain.value_objects.vaccination import Vaccination
+from app.features.dogs.infrastructure.persistence.repositories.dog_repository import (
+    SqlAlchemyDogRepository,
+)
+from app.features.health_metrics.domain.entities.metric_reading import MetricReading
+from app.features.health_metrics.domain.enums.health_metric import HealthMetric
+from app.features.health_metrics.infrastructure.persistence.repositories.metric_reading_repository import (
     SqlAlchemyMetricReadingRepository,
 )
-from app.features.preventive_care.domain.entities import CareTask, CareTaskCategory
-from app.features.preventive_care.infrastructure.persistence.repositories import (
+from app.features.preventive_care.domain.entities.care_task import CareTask
+from app.features.preventive_care.domain.enums.care_task_category import CareTaskCategory
+from app.features.preventive_care.infrastructure.persistence.repositories.care_task_repository import (
     SqlAlchemyCareTaskRepository,
 )
-from app.features.veterinarians.domain.entities import ConsultationType, VetProfile
-from app.features.veterinarians.infrastructure.persistence.repositories import (
+from app.features.veterinarians.domain.entities.vet_profile import VetProfile
+from app.features.veterinarians.domain.enums.consultation_type import ConsultationType
+from app.features.veterinarians.infrastructure.persistence.repositories.vet_profile_repository import (
     SqlAlchemyVetProfileRepository,
 )
 

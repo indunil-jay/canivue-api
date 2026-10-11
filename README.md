@@ -255,11 +255,12 @@ pytest
 
 To add a new feature (e.g. `dogs` or `users`):
 
-1. **Create the folder structure inside `app/features/<feature_name>/`**:
-   - `domain/` (`entities.py`, `exceptions.py`, `repositories.py`)
-   - `application/` (`dtos.py`, `use_cases.py`)
-   - `infrastructure/` (`models.py`, `repositories.py`)
-   - `presentation/` (`schemas.py`, `dependencies.py`, `router.py`)
+1. **Create the folder structure inside `app/features/<feature_name>/`**, one concept per
+   file, following `app/features/auth/` (the full tree is in [AGENTS.md](AGENTS.md)):
+   - `domain/` (`entities/`, `enums/`, `value_objects/`, `services/`, `constants.py`, `exceptions.py`)
+   - `application/` (`commands/<name>/`, `queries/<name>/`, `interfaces/`, `dtos/`, `services/`)
+   - `infrastructure/` (`persistence/models/`, `persistence/repositories/`, `services/`)
+   - `presentation/` (`requests/`, `responses/`, `mappers.py`, `dependencies.py`, `router.py`)
 2. **Implement layers from inner (domain) to outer (presentation)**.
 3. **Register the router** in [app/main.py](file:///c:/Users/shyam/Desktop/canivue-api/app/main.py):
    ```python

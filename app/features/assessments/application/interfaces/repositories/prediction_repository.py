@@ -1,0 +1,19 @@
+from collections.abc import Sequence
+from datetime import datetime
+from typing import Protocol
+
+from app.features.assessments.domain.entities.prediction import Prediction
+
+
+class PredictionRepositoryProtocol(Protocol):
+    async def get_by_id(self, entity_id: str) -> Prediction | None: ...
+
+    async def list_for_dog(self, dog_id: str) -> Sequence[Prediction]: ...
+
+    async def latest_active(self, dog_id: str) -> Prediction | None: ...
+
+    async def count_since(self, dog_ids: Sequence[str], since: datetime) -> int: ...
+
+    async def create(self, entity: Prediction) -> Prediction: ...
+
+    async def update(self, entity: Prediction) -> Prediction: ...

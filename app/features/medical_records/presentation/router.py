@@ -1,121 +1,59 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, Form, UploadFile, status
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.database import get_db_session
-from app.core.file_storage import file_response, get_file_storage, read_upload
+from app.core.file_storage import file_response, read_upload
 from app.core.response import APIResponse
 from app.features.auth.presentation.dependencies import get_actor
-from app.features.dogs.application.access import DogAccess
-from app.features.dogs.presentation.dependencies import get_dog_access
-from app.features.medical_records.application.use_cases import (
-    AddMedicalRecordUseCase,
-    DeleteMedicalRecordUseCase,
-    GetRecordAttachmentUseCase,
-    ListMedicalRecordsUseCase,
-    NewRecordInput,
-    UploadMedicalDocumentUseCase,
+from app.features.medical_records.application.commands.add_medical_record.add_medical_record_command import (
+    AddMedicalRecordCommand,
 )
-from app.features.medical_records.domain.entities import (
-    MedicalRecord,
-    MedicalRecordRepositoryProtocol,
-    MedicalRecordType,
+from app.features.medical_records.application.commands.add_medical_record.add_medical_record_command_handler import (
+    AddMedicalRecordCommandHandler,
 )
-from app.features.medical_records.infrastructure.persistence.repositories import (
-    SqlAlchemyMedicalRecordRepository,
+from app.features.medical_records.application.commands.delete_medical_record.delete_medical_record_command import (
+    DeleteMedicalRecordCommand,
+)
+from app.features.medical_records.application.commands.delete_medical_record.delete_medical_record_command_handler import (
+    DeleteMedicalRecordCommandHandler,
+)
+from app.features.medical_records.application.commands.upload_medical_document.upload_medical_document_command import (
+    UploadMedicalDocumentCommand,
+)
+from app.features.medical_records.application.commands.upload_medical_document.upload_medical_document_command_handler import (
+    UploadMedicalDocumentCommandHandler,
+)
+from app.features.medical_records.application.dtos.new_record_input import NewRecordInput
+from app.features.medical_records.application.queries.get_record_attachment.get_record_attachment_query import (
+    GetRecordAttachmentQuery,
+)
+from app.features.medical_records.application.queries.get_record_attachment.get_record_attachment_query_handler import (
+    GetRecordAttachmentQueryHandler,
+)
+from app.features.medical_records.application.queries.list_medical_records.list_medical_records_query import (
+    ListMedicalRecordsQuery,
+)
+from app.features.medical_records.application.queries.list_medical_records.list_medical_records_query_handler import (
+    ListMedicalRecordsQueryHandler,
+)
+from app.features.medical_records.presentation.dependencies import (
+    get_add_medical_record_command_handler,
+    get_delete_medical_record_command_handler,
+    get_list_medical_records_query_handler,
+    get_record_attachment_query_handler,
+    get_upload_medical_document_command_handler,
+)
+from app.features.medical_records.presentation.mappers import MedicalRecordsPresentationMapper
+from app.features.medical_records.presentation.requests.add_record_request import AddRecordRequest
+from app.features.medical_records.presentation.responses.medical_record_response import (
+    MedicalRecordResponse,
 )
 from app.shared.actor import Actor
-from app.shared.files import FileStorageProtocol
 
 router = APIRouter()
 
 
-class AddRecordRequest(BaseModel):
-    type: MedicalRecordType
-    title: str = Field(..., min_length=1, max_length=255)
-    description: str = Field("", max_length=8000)
-    date: datetime | None = None
-
-
-class MedicalRecordResponse(BaseModel):
-    id: str
-    dog_id: str
-    type: MedicalRecordType
-    title: str
-    description: str
-    date: datetime
-    attachment_url: str | None
-    author_name: str
-    authored_by_vet: bool
-
-    @classmethod
-    def of(cls, record: MedicalRecord) -> "MedicalRecordResponse":
-        return cls(
-            id=record.id,
-            dog_id=record.dog_id,
-            type=record.type,
-            title=record.title,
-            description=record.description,
-            date=record.date,
-            attachment_url=(
-                f"/api/v1/dogs/{record.dog_id}/records/{record.id}/attachment"
-                if record.file_id
-                else None
-            ),
-            author_name=record.author_name,
-            authored_by_vet=record.authored_by_vet,
-        )
-
-
 One = APIResponse[MedicalRecordResponse]
-
-
-def get_record_repository(
-    session: AsyncSession = Depends(get_db_session),
-) -> MedicalRecordRepositoryProtocol:
-    return SqlAlchemyMedicalRecordRepository(session=session)
-
-
-def get_list_records_use_case(
-    records: MedicalRecordRepositoryProtocol = Depends(get_record_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> ListMedicalRecordsUseCase:
-    return ListMedicalRecordsUseCase(records, access)
-
-
-def get_add_record_use_case(
-    records: MedicalRecordRepositoryProtocol = Depends(get_record_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> AddMedicalRecordUseCase:
-    return AddMedicalRecordUseCase(records, access)
-
-
-def get_upload_document_use_case(
-    records: MedicalRecordRepositoryProtocol = Depends(get_record_repository),
-    access: DogAccess = Depends(get_dog_access),
-    storage: FileStorageProtocol = Depends(get_file_storage),
-) -> UploadMedicalDocumentUseCase:
-    return UploadMedicalDocumentUseCase(records, access, storage)
-
-
-def get_record_attachment_use_case(
-    records: MedicalRecordRepositoryProtocol = Depends(get_record_repository),
-    access: DogAccess = Depends(get_dog_access),
-    storage: FileStorageProtocol = Depends(get_file_storage),
-) -> GetRecordAttachmentUseCase:
-    return GetRecordAttachmentUseCase(records, access, storage)
-
-
-def get_delete_record_use_case(
-    records: MedicalRecordRepositoryProtocol = Depends(get_record_repository),
-    access: DogAccess = Depends(get_dog_access),
-    storage: FileStorageProtocol = Depends(get_file_storage),
-) -> DeleteMedicalRecordUseCase:
-    return DeleteMedicalRecordUseCase(records, access, storage)
 
 
 @router.get(
@@ -126,12 +64,12 @@ def get_delete_record_use_case(
 async def list_records(
     dog_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: ListMedicalRecordsUseCase = Depends(get_list_records_use_case),
+    handler: ListMedicalRecordsQueryHandler = Depends(get_list_medical_records_query_handler),
 ) -> APIResponse[list[MedicalRecordResponse]]:
-    records = await use_case.execute(actor, dog_id)
+    records = await handler.handle(ListMedicalRecordsQuery(actor=actor, dog_id=dog_id))
     return APIResponse(
         message="Medical records retrieved successfully",
-        data=[MedicalRecordResponse.of(r) for r in records],
+        data=[MedicalRecordsPresentationMapper.to_medical_record_response(r) for r in records],
     )
 
 
@@ -147,10 +85,17 @@ async def add_record(
     dog_id: str,
     payload: AddRecordRequest,
     actor: Actor = Depends(get_actor),
-    use_case: AddMedicalRecordUseCase = Depends(get_add_record_use_case),
+    handler: AddMedicalRecordCommandHandler = Depends(get_add_medical_record_command_handler),
 ) -> One:
-    record = await use_case.execute(actor, dog_id, NewRecordInput(**payload.model_dump()))
-    return APIResponse(message="Medical record added", data=MedicalRecordResponse.of(record))
+    record = await handler.handle(
+        AddMedicalRecordCommand(
+            actor=actor, dog_id=dog_id, data=NewRecordInput(**payload.model_dump())
+        )
+    )
+    return APIResponse(
+        message="Medical record added",
+        data=MedicalRecordsPresentationMapper.to_medical_record_response(record),
+    )
 
 
 @router.post(
@@ -164,12 +109,24 @@ async def upload_document(
     file: UploadFile,
     title: str = Form(..., min_length=1, max_length=255),
     actor: Actor = Depends(get_actor),
-    use_case: UploadMedicalDocumentUseCase = Depends(get_upload_document_use_case),
+    handler: UploadMedicalDocumentCommandHandler = Depends(
+        get_upload_medical_document_command_handler
+    ),
 ) -> One:
-    record = await use_case.execute(
-        actor, dog_id, title, await read_upload(file), file.content_type, settings.MAX_UPLOAD_BYTES
+    record = await handler.handle(
+        UploadMedicalDocumentCommand(
+            actor=actor,
+            dog_id=dog_id,
+            title=title,
+            content=await read_upload(file),
+            content_type=file.content_type,
+            max_bytes=settings.MAX_UPLOAD_BYTES,
+        )
     )
-    return APIResponse(message="Document uploaded", data=MedicalRecordResponse.of(record))
+    return APIResponse(
+        message="Document uploaded",
+        data=MedicalRecordsPresentationMapper.to_medical_record_response(record),
+    )
 
 
 @router.get(
@@ -181,9 +138,13 @@ async def get_attachment(
     dog_id: str,
     record_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: GetRecordAttachmentUseCase = Depends(get_record_attachment_use_case),
+    handler: GetRecordAttachmentQueryHandler = Depends(get_record_attachment_query_handler),
 ) -> Response:
-    return file_response(await use_case.execute(actor, dog_id, record_id))
+    return file_response(
+        await handler.handle(
+            GetRecordAttachmentQuery(actor=actor, dog_id=dog_id, record_id=record_id)
+        )
+    )
 
 
 @router.delete(
@@ -195,7 +156,9 @@ async def delete_record(
     dog_id: str,
     record_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: DeleteMedicalRecordUseCase = Depends(get_delete_record_use_case),
+    handler: DeleteMedicalRecordCommandHandler = Depends(get_delete_medical_record_command_handler),
 ) -> APIResponse[None]:
-    await use_case.execute(actor, dog_id, record_id)
+    await handler.handle(
+        DeleteMedicalRecordCommand(actor=actor, dog_id=dog_id, record_id=record_id)
+    )
     return APIResponse(message="Medical record deleted", data=None)

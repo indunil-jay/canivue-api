@@ -1,6 +1,6 @@
 import pytest
 
-from app.features.community.infrastructure.persistence.repositories import seed_communities
+from app.features.community.infrastructure.persistence.seed import seed_communities
 from tests.helpers import owner_headers, vet_headers
 
 COMMUNITY = "/api/v1/community"

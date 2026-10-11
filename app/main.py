@@ -21,7 +21,7 @@ async def seed_reference_data() -> None:
     """Idempotently adds the rows the app cannot work without: permissions and communities."""
     from app.core.database import AsyncSessionLocal
     from app.features.auth.infrastructure.persistence.seed import seed_rbac_catalog
-    from app.features.community.infrastructure.persistence.repositories import seed_communities
+    from app.features.community.infrastructure.persistence.seed import seed_communities
 
     async with AsyncSessionLocal() as session:
         await seed_rbac_catalog(session)

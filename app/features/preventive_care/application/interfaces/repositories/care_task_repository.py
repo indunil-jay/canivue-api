@@ -1,0 +1,16 @@
+from collections.abc import Sequence
+from typing import Protocol
+
+from app.features.preventive_care.domain.entities.care_task import CareTask
+
+
+class CareTaskRepositoryProtocol(Protocol):
+    async def get_by_id(self, entity_id: str) -> CareTask | None: ...
+
+    async def list_for_dog(self, dog_id: str) -> Sequence[CareTask]: ...
+
+    async def create(self, entity: CareTask) -> CareTask: ...
+
+    async def update(self, entity: CareTask) -> CareTask: ...
+
+    async def delete(self, entity_id: str) -> bool: ...

@@ -1,4 +1,3 @@
-from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = "default_dev_secret_key_change_in_production"
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    ALLOWED_ORIGINS: list[str] = ["*"]
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 14
 

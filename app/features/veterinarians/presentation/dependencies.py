@@ -2,26 +2,44 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.features.reviews.infrastructure.persistence.repositories import (
+from app.features.reviews.infrastructure.services.reputation_stats_provider import (
     ReputationStatsProvider,
 )
-from app.features.veterinarians.application.use_cases import (
-    GetMyAvailabilityUseCase,
-    GetMyVetProfileUseCase,
-    GetVeterinarianUseCase,
-    ListPendingVeterinariansUseCase,
-    SearchVeterinariansUseCase,
-    SetDayAvailabilityUseCase,
-    UpdateMyVetProfileUseCase,
-    VerifyVeterinarianUseCase,
-    VeterinarianOnboarding,
-    VeterinarianViews,
+from app.features.veterinarians.application.commands.set_day_availability.set_day_availability_command_handler import (
+    SetDayAvailabilityCommandHandler,
 )
-from app.features.veterinarians.domain.repositories import (
+from app.features.veterinarians.application.commands.update_my_vet_profile.update_my_vet_profile_command_handler import (
+    UpdateMyVetProfileCommandHandler,
+)
+from app.features.veterinarians.application.commands.verify_veterinarian.verify_veterinarian_command_handler import (
+    VerifyVeterinarianCommandHandler,
+)
+from app.features.veterinarians.application.interfaces.repositories.vet_profile_repository import (
     VetProfileRepositoryProtocol,
+)
+from app.features.veterinarians.application.interfaces.services.vet_stats_provider import (
     VetStatsProviderProtocol,
 )
-from app.features.veterinarians.infrastructure.persistence.repositories import (
+from app.features.veterinarians.application.queries.get_my_availability.get_my_availability_query_handler import (
+    GetMyAvailabilityQueryHandler,
+)
+from app.features.veterinarians.application.queries.get_my_vet_profile.get_my_vet_profile_query_handler import (
+    GetMyVetProfileQueryHandler,
+)
+from app.features.veterinarians.application.queries.get_veterinarian.get_veterinarian_query_handler import (
+    GetVeterinarianQueryHandler,
+)
+from app.features.veterinarians.application.queries.list_pending_veterinarians.list_pending_veterinarians_query_handler import (
+    ListPendingVeterinariansQueryHandler,
+)
+from app.features.veterinarians.application.queries.search_veterinarians.search_veterinarians_query_handler import (
+    SearchVeterinariansQueryHandler,
+)
+from app.features.veterinarians.application.services.veterinarian_onboarding import (
+    VeterinarianOnboarding,
+)
+from app.features.veterinarians.application.services.veterinarian_views import VeterinarianViews
+from app.features.veterinarians.infrastructure.persistence.repositories.vet_profile_repository import (
     SqlAlchemyVetProfileRepository,
 )
 
@@ -50,57 +68,57 @@ def get_veterinarian_onboarding(
     return VeterinarianOnboarding(profiles)
 
 
-def get_my_vet_profile_use_case(
+def get_my_vet_profile_query_handler(
     onboarding: VeterinarianOnboarding = Depends(get_veterinarian_onboarding),
     views: VeterinarianViews = Depends(get_veterinarian_views),
-) -> GetMyVetProfileUseCase:
-    return GetMyVetProfileUseCase(onboarding, views)
+) -> GetMyVetProfileQueryHandler:
+    return GetMyVetProfileQueryHandler(onboarding, views)
 
 
-def get_update_my_vet_profile_use_case(
+def get_update_my_vet_profile_command_handler(
     profiles: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     onboarding: VeterinarianOnboarding = Depends(get_veterinarian_onboarding),
     views: VeterinarianViews = Depends(get_veterinarian_views),
-) -> UpdateMyVetProfileUseCase:
-    return UpdateMyVetProfileUseCase(profiles, onboarding, views)
+) -> UpdateMyVetProfileCommandHandler:
+    return UpdateMyVetProfileCommandHandler(profiles, onboarding, views)
 
 
-def get_search_veterinarians_use_case(
+def get_search_veterinarians_query_handler(
     profiles: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     views: VeterinarianViews = Depends(get_veterinarian_views),
-) -> SearchVeterinariansUseCase:
-    return SearchVeterinariansUseCase(profiles, views)
+) -> SearchVeterinariansQueryHandler:
+    return SearchVeterinariansQueryHandler(profiles, views)
 
 
-def get_get_veterinarian_use_case(
+def get_veterinarian_query_handler(
     profiles: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     views: VeterinarianViews = Depends(get_veterinarian_views),
-) -> GetVeterinarianUseCase:
-    return GetVeterinarianUseCase(profiles, views)
+) -> GetVeterinarianQueryHandler:
+    return GetVeterinarianQueryHandler(profiles, views)
 
 
-def get_list_pending_veterinarians_use_case(
+def get_list_pending_veterinarians_query_handler(
     profiles: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     views: VeterinarianViews = Depends(get_veterinarian_views),
-) -> ListPendingVeterinariansUseCase:
-    return ListPendingVeterinariansUseCase(profiles, views)
+) -> ListPendingVeterinariansQueryHandler:
+    return ListPendingVeterinariansQueryHandler(profiles, views)
 
 
-def get_verify_veterinarian_use_case(
+def get_verify_veterinarian_command_handler(
     profiles: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     views: VeterinarianViews = Depends(get_veterinarian_views),
-) -> VerifyVeterinarianUseCase:
-    return VerifyVeterinarianUseCase(profiles, views)
+) -> VerifyVeterinarianCommandHandler:
+    return VerifyVeterinarianCommandHandler(profiles, views)
 
 
-def get_my_availability_use_case(
+def get_my_availability_query_handler(
     onboarding: VeterinarianOnboarding = Depends(get_veterinarian_onboarding),
-) -> GetMyAvailabilityUseCase:
-    return GetMyAvailabilityUseCase(onboarding)
+) -> GetMyAvailabilityQueryHandler:
+    return GetMyAvailabilityQueryHandler(onboarding)
 
 
-def get_set_day_availability_use_case(
+def get_set_day_availability_command_handler(
     profiles: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
     onboarding: VeterinarianOnboarding = Depends(get_veterinarian_onboarding),
-) -> SetDayAvailabilityUseCase:
-    return SetDayAvailabilityUseCase(profiles, onboarding)
+) -> SetDayAvailabilityCommandHandler:
+    return SetDayAvailabilityCommandHandler(profiles, onboarding)

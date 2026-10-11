@@ -1,57 +1,44 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.response import APIResponse
 from app.features.auth.presentation.dependencies import get_actor
-from app.features.notifications.application.use_cases import (
-    GetInboxUseCase,
-    MarkAllNotificationsReadUseCase,
-    MarkNotificationReadUseCase,
+from app.features.notifications.application.commands.mark_all_notifications_read.mark_all_notifications_read_command import (
+    MarkAllNotificationsReadCommand,
+)
+from app.features.notifications.application.commands.mark_all_notifications_read.mark_all_notifications_read_command_handler import (
+    MarkAllNotificationsReadCommandHandler,
+)
+from app.features.notifications.application.commands.mark_notification_read.mark_notification_read_command import (
+    MarkNotificationReadCommand,
+)
+from app.features.notifications.application.commands.mark_notification_read.mark_notification_read_command_handler import (
+    MarkNotificationReadCommandHandler,
+)
+from app.features.notifications.application.queries.get_inbox.get_inbox_query import GetInboxQuery
+from app.features.notifications.application.queries.get_inbox.get_inbox_query_handler import (
+    GetInboxQueryHandler,
 )
 from app.features.notifications.presentation.dependencies import (
-    get_inbox_use_case,
-    get_mark_all_notifications_read_use_case,
-    get_mark_notification_read_use_case,
+    get_inbox_query_handler,
+    get_mark_all_notifications_read_command_handler,
+    get_mark_notification_read_command_handler,
+)
+from app.features.notifications.presentation.responses.inbox_response import InboxResponse
+from app.features.notifications.presentation.responses.unread_count_response import (
+    UnreadCountResponse,
 )
 from app.shared.actor import Actor
-from app.shared.notifier import NotificationType
 
 router = APIRouter()
-
-
-class NotificationResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
-
-    id: str
-    title: str
-    message: str
-    timestamp: datetime = Field(validation_alias="created_at")
-    type: NotificationType
-    dog_name: str
-    is_read: bool
-    action_label: str | None
-
-
-class InboxResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    items: list[NotificationResponse]
-    unread_count: int
-
-
-class UnreadCountResponse(BaseModel):
-    unread_count: int
 
 
 @router.get("", response_model=APIResponse[InboxResponse], summary="List my notifications")
 async def get_inbox(
     limit: int = Query(100, ge=1, le=200),
     actor: Actor = Depends(get_actor),
-    use_case: GetInboxUseCase = Depends(get_inbox_use_case),
+    handler: GetInboxQueryHandler = Depends(get_inbox_query_handler),
 ) -> APIResponse[InboxResponse]:
-    inbox = await use_case.execute(actor, limit)
+    inbox = await handler.handle(GetInboxQuery(actor=actor, limit=limit))
     return APIResponse(
         message="Notifications retrieved successfully", data=InboxResponse.model_validate(inbox)
     )
@@ -64,9 +51,11 @@ async def get_inbox(
 )
 async def mark_all_read(
     actor: Actor = Depends(get_actor),
-    use_case: MarkAllNotificationsReadUseCase = Depends(get_mark_all_notifications_read_use_case),
+    handler: MarkAllNotificationsReadCommandHandler = Depends(
+        get_mark_all_notifications_read_command_handler
+    ),
 ) -> APIResponse[UnreadCountResponse]:
-    unread = await use_case.execute(actor)
+    unread = await handler.handle(MarkAllNotificationsReadCommand(actor=actor))
     return APIResponse(
         message="All notifications marked read", data=UnreadCountResponse(unread_count=unread)
     )
@@ -80,9 +69,13 @@ async def mark_all_read(
 async def mark_read(
     notification_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: MarkNotificationReadUseCase = Depends(get_mark_notification_read_use_case),
+    handler: MarkNotificationReadCommandHandler = Depends(
+        get_mark_notification_read_command_handler
+    ),
 ) -> APIResponse[UnreadCountResponse]:
-    unread = await use_case.execute(actor, notification_id)
+    unread = await handler.handle(
+        MarkNotificationReadCommand(actor=actor, notification_id=notification_id)
+    )
     return APIResponse(
         message="Notification marked read", data=UnreadCountResponse(unread_count=unread)
     )

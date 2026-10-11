@@ -1,79 +1,51 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db_session
 from app.core.response import APIResponse
 from app.features.auth.presentation.dependencies import get_actor
-from app.features.devices.application.use_cases import (
-    DisconnectCollarUseCase,
-    GetCollarUseCase,
-    PairCollarUseCase,
-    RenameCollarUseCase,
-    SyncCollarUseCase,
+from app.features.devices.application.commands.disconnect_collar.disconnect_collar_command import (
+    DisconnectCollarCommand,
 )
-from app.features.devices.domain.entities import (
-    CollarConnectionState,
-    SmartCollarRepositoryProtocol,
+from app.features.devices.application.commands.disconnect_collar.disconnect_collar_command_handler import (
+    DisconnectCollarCommandHandler,
 )
-from app.features.devices.infrastructure.persistence.repositories import (
-    SqlAlchemySmartCollarRepository,
+from app.features.devices.application.commands.pair_collar.pair_collar_command import (
+    PairCollarCommand,
 )
-from app.features.dogs.application.access import DogAccess
-from app.features.dogs.presentation.dependencies import get_dog_access
+from app.features.devices.application.commands.pair_collar.pair_collar_command_handler import (
+    PairCollarCommandHandler,
+)
+from app.features.devices.application.commands.rename_collar.rename_collar_command import (
+    RenameCollarCommand,
+)
+from app.features.devices.application.commands.rename_collar.rename_collar_command_handler import (
+    RenameCollarCommandHandler,
+)
+from app.features.devices.application.commands.sync_collar.sync_collar_command import (
+    SyncCollarCommand,
+)
+from app.features.devices.application.commands.sync_collar.sync_collar_command_handler import (
+    SyncCollarCommandHandler,
+)
+from app.features.devices.application.queries.get_collar.get_collar_query import GetCollarQuery
+from app.features.devices.application.queries.get_collar.get_collar_query_handler import (
+    GetCollarQueryHandler,
+)
+from app.features.devices.presentation.dependencies import (
+    get_collar_query_handler,
+    get_disconnect_collar_command_handler,
+    get_pair_collar_command_handler,
+    get_rename_collar_command_handler,
+    get_sync_collar_command_handler,
+)
+from app.features.devices.presentation.requests.rename_collar_request import RenameCollarRequest
+from app.features.devices.presentation.requests.sync_collar_request import SyncCollarRequest
+from app.features.devices.presentation.responses.smart_collar_response import SmartCollarResponse
 from app.shared.actor import Actor
 
 router = APIRouter()
 
 
-class RenameCollarRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-
-
-class SyncCollarRequest(BaseModel):
-    records_synced: int = Field(0, ge=0)
-    battery_percent: int | None = Field(None, ge=0, le=100)
-
-
-class SyncEventResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    timestamp: datetime
-    records_synced: int
-
-
-class SmartCollarResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    dog_id: str
-    name: str
-    state: CollarConnectionState
-    battery_percent: int | None
-    last_synced_at: datetime | None
-    firmware_version: str
-    sync_history: list[SyncEventResponse]
-    granted_permissions: list[str]
-
-
 Collar = APIResponse[SmartCollarResponse]
-
-
-def get_collar_repository(
-    session: AsyncSession = Depends(get_db_session),
-) -> SmartCollarRepositoryProtocol:
-    return SqlAlchemySmartCollarRepository(session=session)
-
-
-def _provider(use_case_cls):
-    def provide(
-        collars: SmartCollarRepositoryProtocol = Depends(get_collar_repository),
-        access: DogAccess = Depends(get_dog_access),
-    ):
-        return use_case_cls(collars, access)
-
-    return provide
 
 
 def _ok(message: str, collar) -> Collar:
@@ -84,18 +56,21 @@ def _ok(message: str, collar) -> Collar:
 async def get_collar(
     dog_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: GetCollarUseCase = Depends(_provider(GetCollarUseCase)),
+    handler: GetCollarQueryHandler = Depends(get_collar_query_handler),
 ) -> Collar:
-    return _ok("Device retrieved successfully", await use_case.execute(actor, dog_id))
+    return _ok(
+        "Device retrieved successfully",
+        await handler.handle(GetCollarQuery(actor=actor, dog_id=dog_id)),
+    )
 
 
 @router.post("/{dog_id}/device/pair", response_model=Collar, summary="Pair a collar with a Dog")
 async def pair_collar(
     dog_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: PairCollarUseCase = Depends(_provider(PairCollarUseCase)),
+    handler: PairCollarCommandHandler = Depends(get_pair_collar_command_handler),
 ) -> Collar:
-    return _ok("Device paired", await use_case.execute(actor, dog_id))
+    return _ok("Device paired", await handler.handle(PairCollarCommand(actor=actor, dog_id=dog_id)))
 
 
 @router.post(
@@ -104,9 +79,12 @@ async def pair_collar(
 async def disconnect_collar(
     dog_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: DisconnectCollarUseCase = Depends(_provider(DisconnectCollarUseCase)),
+    handler: DisconnectCollarCommandHandler = Depends(get_disconnect_collar_command_handler),
 ) -> Collar:
-    return _ok("Device disconnected", await use_case.execute(actor, dog_id))
+    return _ok(
+        "Device disconnected",
+        await handler.handle(DisconnectCollarCommand(actor=actor, dog_id=dog_id)),
+    )
 
 
 @router.patch("/{dog_id}/device", response_model=Collar, summary="Rename a Dog's collar")
@@ -114,9 +92,12 @@ async def rename_collar(
     dog_id: str,
     payload: RenameCollarRequest,
     actor: Actor = Depends(get_actor),
-    use_case: RenameCollarUseCase = Depends(_provider(RenameCollarUseCase)),
+    handler: RenameCollarCommandHandler = Depends(get_rename_collar_command_handler),
 ) -> Collar:
-    return _ok("Device renamed", await use_case.execute(actor, dog_id, payload.name))
+    return _ok(
+        "Device renamed",
+        await handler.handle(RenameCollarCommand(actor=actor, dog_id=dog_id, name=payload.name)),
+    )
 
 
 @router.post(
@@ -130,8 +111,15 @@ async def sync_collar(
     dog_id: str,
     payload: SyncCollarRequest | None = None,
     actor: Actor = Depends(get_actor),
-    use_case: SyncCollarUseCase = Depends(_provider(SyncCollarUseCase)),
+    handler: SyncCollarCommandHandler = Depends(get_sync_collar_command_handler),
 ) -> Collar:
     payload = payload or SyncCollarRequest()
-    collar = await use_case.execute(actor, dog_id, payload.records_synced, payload.battery_percent)
+    collar = await handler.handle(
+        SyncCollarCommand(
+            actor=actor,
+            dog_id=dog_id,
+            records_synced=payload.records_synced,
+            battery_percent=payload.battery_percent,
+        )
+    )
     return _ok("Device synced", collar)

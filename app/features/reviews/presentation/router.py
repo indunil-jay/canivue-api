@@ -1,90 +1,41 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db_session
 from app.core.response import APIResponse
-from app.features.appointments.domain.repositories import AppointmentRepositoryProtocol
-from app.features.appointments.presentation.dependencies import get_appointment_repository
 from app.features.auth.domain.enums.role import Role
 from app.features.auth.presentation.dependencies import get_actor, require_actor
-from app.features.reviews.application.use_cases import (
-    GetMyReputationUseCase,
-    ListVetReviewsUseCase,
-    ReviewAppointmentUseCase,
+from app.features.reviews.application.commands.review_appointment.review_appointment_command import (
+    ReviewAppointmentCommand,
 )
-from app.features.reviews.domain.entities import ReviewRepositoryProtocol
-from app.features.reviews.infrastructure.persistence.repositories import (
-    SqlAlchemyReviewRepository,
+from app.features.reviews.application.commands.review_appointment.review_appointment_command_handler import (
+    ReviewAppointmentCommandHandler,
 )
-from app.features.veterinarians.domain.repositories import (
-    VetProfileRepositoryProtocol,
-    VetStatsProviderProtocol,
+from app.features.reviews.application.queries.get_my_reputation.get_my_reputation_query import (
+    GetMyReputationQuery,
 )
-from app.features.veterinarians.presentation.dependencies import (
-    get_vet_profile_repository,
-    get_vet_stats_provider,
+from app.features.reviews.application.queries.get_my_reputation.get_my_reputation_query_handler import (
+    GetMyReputationQueryHandler,
+)
+from app.features.reviews.application.queries.list_vet_reviews.list_vet_reviews_query import (
+    ListVetReviewsQuery,
+)
+from app.features.reviews.application.queries.list_vet_reviews.list_vet_reviews_query_handler import (
+    ListVetReviewsQueryHandler,
+)
+from app.features.reviews.presentation.dependencies import (
+    get_list_vet_reviews_query_handler,
+    get_my_reputation_query_handler,
+    get_review_appointment_command_handler,
+)
+from app.features.reviews.presentation.requests.review_request import ReviewRequest
+from app.features.reviews.presentation.responses.patient_review_response import (
+    PatientReviewResponse,
+)
+from app.features.reviews.presentation.responses.vet_reputation_response import (
+    VetReputationResponse,
 )
 from app.shared.actor import Actor
 
 router = APIRouter()
-
-_FROM = ConfigDict(from_attributes=True)
-
-
-class ReviewRequest(BaseModel):
-    appointment_id: str
-    rating: int = Field(..., ge=1, le=5)
-    comment: str = Field("", max_length=2000)
-
-
-class PatientReviewResponse(BaseModel):
-    model_config = _FROM
-
-    owner_name: str
-    rating: int
-    comment: str
-    date: datetime
-
-
-class VetReputationResponse(BaseModel):
-    model_config = _FROM
-
-    average_rating: float
-    total_consultations: int
-    recommendations_accepted_percent: int = Field(..., description="Not tracked yet; always 0.")
-    repeat_consultation_percent: int
-    reviews: list[PatientReviewResponse]
-
-
-def get_review_repository(
-    session: AsyncSession = Depends(get_db_session),
-) -> ReviewRepositoryProtocol:
-    return SqlAlchemyReviewRepository(session=session)
-
-
-def get_review_appointment_use_case(
-    reviews: ReviewRepositoryProtocol = Depends(get_review_repository),
-    appointments: AppointmentRepositoryProtocol = Depends(get_appointment_repository),
-) -> ReviewAppointmentUseCase:
-    return ReviewAppointmentUseCase(reviews, appointments)
-
-
-def get_list_vet_reviews_use_case(
-    reviews: ReviewRepositoryProtocol = Depends(get_review_repository),
-    vets: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
-) -> ListVetReviewsUseCase:
-    return ListVetReviewsUseCase(reviews, vets)
-
-
-def get_my_reputation_use_case(
-    reviews: ReviewRepositoryProtocol = Depends(get_review_repository),
-    vets: VetProfileRepositoryProtocol = Depends(get_vet_profile_repository),
-    stats: VetStatsProviderProtocol = Depends(get_vet_stats_provider),
-) -> GetMyReputationUseCase:
-    return GetMyReputationUseCase(reviews, vets, stats)
 
 
 @router.post(
@@ -96,9 +47,16 @@ def get_my_reputation_use_case(
 async def review_appointment(
     payload: ReviewRequest,
     actor: Actor = Depends(get_actor),
-    use_case: ReviewAppointmentUseCase = Depends(get_review_appointment_use_case),
+    handler: ReviewAppointmentCommandHandler = Depends(get_review_appointment_command_handler),
 ) -> APIResponse[PatientReviewResponse]:
-    review = await use_case.execute(actor, payload.appointment_id, payload.rating, payload.comment)
+    review = await handler.handle(
+        ReviewAppointmentCommand(
+            actor=actor,
+            appointment_id=payload.appointment_id,
+            rating=payload.rating,
+            comment=payload.comment,
+        )
+    )
     return APIResponse(
         message="Review submitted", data=PatientReviewResponse.model_validate(review)
     )
@@ -111,9 +69,9 @@ async def review_appointment(
 )
 async def get_my_reputation(
     actor: Actor = Depends(require_actor(Role.VET)),
-    use_case: GetMyReputationUseCase = Depends(get_my_reputation_use_case),
+    handler: GetMyReputationQueryHandler = Depends(get_my_reputation_query_handler),
 ) -> APIResponse[VetReputationResponse]:
-    reputation = await use_case.execute(actor)
+    reputation = await handler.handle(GetMyReputationQuery(actor=actor))
     return APIResponse(
         message="Reputation retrieved successfully",
         data=VetReputationResponse.model_validate(reputation),
@@ -128,9 +86,9 @@ async def get_my_reputation(
 async def list_vet_reviews(
     vet_id: str,
     actor: Actor = Depends(get_actor),
-    use_case: ListVetReviewsUseCase = Depends(get_list_vet_reviews_use_case),
+    handler: ListVetReviewsQueryHandler = Depends(get_list_vet_reviews_query_handler),
 ) -> APIResponse[list[PatientReviewResponse]]:
-    reviews = await use_case.execute(vet_id)
+    reviews = await handler.handle(ListVetReviewsQuery(vet_id=vet_id))
     return APIResponse(
         message="Reviews retrieved successfully",
         data=[PatientReviewResponse.model_validate(r) for r in reviews],

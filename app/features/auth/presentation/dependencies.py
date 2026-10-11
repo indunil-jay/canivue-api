@@ -140,8 +140,10 @@ def get_veterinarian_onboarding_port(
     session: AsyncSession = Depends(get_db_session),
 ) -> VeterinarianOnboardingPort:
     # Composition root: the veterinarians module owns professional profiles.
-    from app.features.veterinarians.application.use_cases import VeterinarianOnboarding
-    from app.features.veterinarians.infrastructure.persistence.repositories import (
+    from app.features.veterinarians.application.services.veterinarian_onboarding import (
+        VeterinarianOnboarding,
+    )
+    from app.features.veterinarians.infrastructure.persistence.repositories.vet_profile_repository import (
         SqlAlchemyVetProfileRepository,
     )
 

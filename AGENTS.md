@@ -13,6 +13,45 @@ Canivue API is built with **FastAPI**, **Async SQLAlchemy**, and **Feature-Based
   - `domain/`: Pure business entities, exceptions, and `Protocol` interfaces (zero framework imports).
   - `infrastructure/`: SQLAlchemy models, concrete repositories, and `ml/` inference engines.
 - **Inward Dependency Rule**: Presentation -> Application -> Domain <- Infrastructure.
+- **One concept per file.** Every feature module follows the `auth` module's layout. Do not
+  collect a layer into a single `entities.py`, `use_cases.py`, `schemas.py` or `repositories.py`.
+
+```
+app/features/<feature>/
+  domain/
+    entities/<entity>.py            one entity per file
+    enums/<enum>.py
+    value_objects/<value_object>.py
+    services/<function>.py          pure domain functions
+    constants.py
+    exceptions.py                   all of the module's exceptions
+  application/
+    commands/<verb_noun>/<verb_noun>_command.py           frozen dataclass of inputs
+    commands/<verb_noun>/<verb_noun>_command_handler.py   handle(command)
+    queries/<verb_noun>/<verb_noun>_query.py
+    queries/<verb_noun>/<verb_noun>_query_handler.py      handle(query)
+    interfaces/repositories/<x>_repository.py             Protocols the handlers depend on
+    interfaces/services/<x>.py                            engines, gateways, ports
+    dtos/<dto>.py
+    services/<service>.py           logic shared by several handlers
+  infrastructure/
+    persistence/models/<x>_model.py
+    persistence/repositories/<x>_repository.py
+    persistence/seed.py
+    services/<adapter>.py
+    ml/engine.py                    Stub and real Inference Engines
+  presentation/
+    requests/<x>_request.py
+    responses/<x>_response.py
+    schemas/<x>_schema.py           shapes nested inside requests and responses
+    mappers.py                      <Feature>PresentationMapper: domain -> response
+    dependencies.py                 get_<x>_command_handler / get_<x>_query_handler providers
+    router.py                       routes only
+```
+
+- Reads are queries (`Get…`, `List…`, `Search…`); everything that changes state is a command.
+- Domain files import nothing from `application`, `infrastructure` or `presentation`;
+  application files import nothing from `infrastructure`, `presentation`, FastAPI or SQLAlchemy.
 - **AI/ML Engine Protocol**: Heavy ML libraries (`torch`, `transformers`) are NEVER imported into application or domain layers. Use Cases interact strictly with `<X>InferenceEngineProtocol`. Real engines live in `infrastructure/ml/engine.py`; stub engines (`Stub<X>Engine`) are provided for testing and default runs. Offline training lives in `ml/` outside the web application.
 
 ---

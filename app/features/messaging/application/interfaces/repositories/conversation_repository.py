@@ -1,0 +1,16 @@
+from collections.abc import Sequence
+from typing import Protocol
+
+from app.features.messaging.domain.entities.conversation import Conversation
+
+
+class ConversationRepositoryProtocol(Protocol):
+    async def get_by_id(self, entity_id: str) -> Conversation | None: ...
+
+    async def get_for_pair(self, owner_id: int, vet_id: str) -> Conversation | None: ...
+
+    async def list_for_user(self, user_id: int) -> Sequence[Conversation]: ...
+
+    async def create(self, entity: Conversation) -> Conversation: ...
+
+    async def update(self, entity: Conversation) -> Conversation: ...

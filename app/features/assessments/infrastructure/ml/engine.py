@@ -1,14 +1,14 @@
-from app.features.assessments.domain.entities import (
-    AssessmentResult,
-    DogFacts,
+from app.features.assessments.application.interfaces.services.fusion_engine import (
     FusionEngineProtocol,
-    FusionInput,
-    FusionOutput,
-    ModalityResult,
-    ProgressionOutput,
-    RiskFactor,
-    RiskLevel,
 )
+from app.features.assessments.domain.enums.risk_level import RiskLevel
+from app.features.assessments.domain.value_objects.assessment_result import AssessmentResult
+from app.features.assessments.domain.value_objects.dog_facts import DogFacts
+from app.features.assessments.domain.value_objects.fusion_input import FusionInput
+from app.features.assessments.domain.value_objects.fusion_output import FusionOutput
+from app.features.assessments.domain.value_objects.modality_result import ModalityResult
+from app.features.assessments.domain.value_objects.progression_output import ProgressionOutput
+from app.features.assessments.domain.value_objects.risk_factor import RiskFactor
 
 HORIZON_DAYS = 7
 

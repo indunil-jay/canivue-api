@@ -3,30 +3,49 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
 from app.core.file_storage import get_file_storage
-from app.features.appointments.infrastructure.persistence.repositories import (
+from app.features.appointments.infrastructure.services.appointment_patient_registry import (
     AppointmentPatientRegistry,
 )
 from app.features.auth.infrastructure.services.owner_sharing_policy import (
     UserPrivacySharingPolicy,
 )
-from app.features.dogs.application.access import (
-    AnyPatientRegistry,
+from app.features.dogs.application.commands.register_dog.register_dog_command_handler import (
+    RegisterDogCommandHandler,
+)
+from app.features.dogs.application.commands.remove_dog.remove_dog_command_handler import (
+    RemoveDogCommandHandler,
+)
+from app.features.dogs.application.commands.remove_dog_photo.remove_dog_photo_command_handler import (
+    RemoveDogPhotoCommandHandler,
+)
+from app.features.dogs.application.commands.set_dog_photo.set_dog_photo_command_handler import (
+    SetDogPhotoCommandHandler,
+)
+from app.features.dogs.application.commands.update_dog.update_dog_command_handler import (
+    UpdateDogCommandHandler,
+)
+from app.features.dogs.application.interfaces.repositories.dog_repository import (
+    DogRepositoryProtocol,
+)
+from app.features.dogs.application.interfaces.services.patient_registry import (
+    PatientRegistryProtocol,
+)
+from app.features.dogs.application.queries.get_dog.get_dog_query_handler import GetDogQueryHandler
+from app.features.dogs.application.queries.get_dog_photo.get_dog_photo_query_handler import (
+    GetDogPhotoQueryHandler,
+)
+from app.features.dogs.application.queries.list_my_dogs.list_my_dogs_query_handler import (
+    ListMyDogsQueryHandler,
+)
+from app.features.dogs.application.services.any_patient_registry import AnyPatientRegistry
+from app.features.dogs.application.services.consenting_patient_registry import (
     ConsentingPatientRegistry,
-    DogAccess,
 )
-from app.features.dogs.application.use_cases import (
-    GetDogPhotoUseCase,
-    GetDogUseCase,
-    ListMyDogsUseCase,
-    RegisterDogUseCase,
-    RemoveDogPhotoUseCase,
-    RemoveDogUseCase,
-    SetDogPhotoUseCase,
-    UpdateDogUseCase,
+from app.features.dogs.application.services.dog_access import DogAccess
+from app.features.dogs.infrastructure.persistence.repositories.dog_repository import (
+    SqlAlchemyDogRepository,
 )
-from app.features.dogs.domain.repositories import DogRepositoryProtocol, PatientRegistryProtocol
-from app.features.dogs.infrastructure.persistence.repositories import SqlAlchemyDogRepository
-from app.features.messaging.infrastructure.persistence.repositories import (
+from app.features.messaging.infrastructure.services.conversation_patient_registry import (
     ConversationPatientRegistry,
 )
 from app.shared.files import FileStorageProtocol
@@ -55,54 +74,54 @@ def get_dog_access(
     return DogAccess(dogs=dogs, patients=patients)
 
 
-def get_register_dog_use_case(
+def get_register_dog_command_handler(
     dogs: DogRepositoryProtocol = Depends(get_dog_repository),
-) -> RegisterDogUseCase:
-    return RegisterDogUseCase(dogs)
+) -> RegisterDogCommandHandler:
+    return RegisterDogCommandHandler(dogs)
 
 
-def get_list_my_dogs_use_case(
+def get_list_my_dogs_query_handler(
     dogs: DogRepositoryProtocol = Depends(get_dog_repository),
-) -> ListMyDogsUseCase:
-    return ListMyDogsUseCase(dogs)
+) -> ListMyDogsQueryHandler:
+    return ListMyDogsQueryHandler(dogs)
 
 
-def get_get_dog_use_case(access: DogAccess = Depends(get_dog_access)) -> GetDogUseCase:
-    return GetDogUseCase(access)
+def get_dog_query_handler(access: DogAccess = Depends(get_dog_access)) -> GetDogQueryHandler:
+    return GetDogQueryHandler(access)
 
 
-def get_update_dog_use_case(
-    dogs: DogRepositoryProtocol = Depends(get_dog_repository),
-    access: DogAccess = Depends(get_dog_access),
-) -> UpdateDogUseCase:
-    return UpdateDogUseCase(dogs, access)
-
-
-def get_remove_dog_use_case(
+def get_update_dog_command_handler(
     dogs: DogRepositoryProtocol = Depends(get_dog_repository),
     access: DogAccess = Depends(get_dog_access),
-) -> RemoveDogUseCase:
-    return RemoveDogUseCase(dogs, access)
+) -> UpdateDogCommandHandler:
+    return UpdateDogCommandHandler(dogs, access)
 
 
-def get_set_dog_photo_use_case(
+def get_remove_dog_command_handler(
     dogs: DogRepositoryProtocol = Depends(get_dog_repository),
     access: DogAccess = Depends(get_dog_access),
-    storage: FileStorageProtocol = Depends(get_file_storage),
-) -> SetDogPhotoUseCase:
-    return SetDogPhotoUseCase(dogs, access, storage)
+) -> RemoveDogCommandHandler:
+    return RemoveDogCommandHandler(dogs, access)
 
 
-def get_get_dog_photo_use_case(
-    access: DogAccess = Depends(get_dog_access),
-    storage: FileStorageProtocol = Depends(get_file_storage),
-) -> GetDogPhotoUseCase:
-    return GetDogPhotoUseCase(access, storage)
-
-
-def get_remove_dog_photo_use_case(
+def get_set_dog_photo_command_handler(
     dogs: DogRepositoryProtocol = Depends(get_dog_repository),
     access: DogAccess = Depends(get_dog_access),
     storage: FileStorageProtocol = Depends(get_file_storage),
-) -> RemoveDogPhotoUseCase:
-    return RemoveDogPhotoUseCase(dogs, access, storage)
+) -> SetDogPhotoCommandHandler:
+    return SetDogPhotoCommandHandler(dogs, access, storage)
+
+
+def get_dog_photo_query_handler(
+    access: DogAccess = Depends(get_dog_access),
+    storage: FileStorageProtocol = Depends(get_file_storage),
+) -> GetDogPhotoQueryHandler:
+    return GetDogPhotoQueryHandler(access, storage)
+
+
+def get_remove_dog_photo_command_handler(
+    dogs: DogRepositoryProtocol = Depends(get_dog_repository),
+    access: DogAccess = Depends(get_dog_access),
+    storage: FileStorageProtocol = Depends(get_file_storage),
+) -> RemoveDogPhotoCommandHandler:
+    return RemoveDogPhotoCommandHandler(dogs, access, storage)
