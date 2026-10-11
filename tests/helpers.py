@@ -126,3 +126,13 @@ async def book_appointment(
     )
     assert resp.status_code == 201, resp.text
     return resp.json()["data"]
+
+
+async def record_readings(client: AsyncClient, scene: dict, metric: str, readings: list) -> None:
+    """Stores (value, recorded_at) pairs for scene['dog'] as scene['owner']."""
+    resp = await client.post(
+        f"/api/v1/dogs/{scene['dog']['id']}/metrics/{metric}/readings",
+        headers=scene["owner"],
+        json={"readings": [{"value": v, "recorded_at": at.isoformat()} for v, at in readings]},
+    )
+    assert resp.status_code == 201, resp.text
