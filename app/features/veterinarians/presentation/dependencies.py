@@ -2,6 +2,9 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
+from app.features.reviews.infrastructure.persistence.repositories import (
+    ReputationStatsProvider,
+)
 from app.features.veterinarians.application.use_cases import (
     GetMyAvailabilityUseCase,
     GetMyVetProfileUseCase,
@@ -19,7 +22,6 @@ from app.features.veterinarians.domain.repositories import (
     VetStatsProviderProtocol,
 )
 from app.features.veterinarians.infrastructure.persistence.repositories import (
-    NoStatsProvider,
     SqlAlchemyVetProfileRepository,
 )
 
@@ -33,7 +35,7 @@ def get_vet_profile_repository(
 def get_vet_stats_provider(
     session: AsyncSession = Depends(get_db_session),
 ) -> VetStatsProviderProtocol:
-    return NoStatsProvider()
+    return ReputationStatsProvider(session)
 
 
 def get_veterinarian_views(

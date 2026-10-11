@@ -1,11 +1,8 @@
 from collections.abc import Sequence
 
 from app.core.dataclass_repository import DataclassRepository
-from app.features.veterinarians.domain.entities import VetProfile, VetStats
-from app.features.veterinarians.domain.repositories import (
-    VetProfileRepositoryProtocol,
-    VetStatsProviderProtocol,
-)
+from app.features.veterinarians.domain.entities import VetProfile
+from app.features.veterinarians.domain.repositories import VetProfileRepositoryProtocol
 from app.features.veterinarians.infrastructure.persistence.models import VetProfileModel
 
 
@@ -22,8 +19,3 @@ class SqlAlchemyVetProfileRepository(
         return await self.find(
             VetProfileModel.verified.is_(verified), order_by=VetProfileModel.created_at
         )
-
-
-class NoStatsProvider(VetStatsProviderProtocol):
-    async def stats_for(self, vet_ids: Sequence[str]) -> dict[str, VetStats]:
-        return {}

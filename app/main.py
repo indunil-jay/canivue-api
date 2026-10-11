@@ -147,6 +147,14 @@ def create_app() -> FastAPI:
 
     app.include_router(billing_router, prefix="/api/v1/billing", tags=["Billing"])
 
+    from app.features.reviews.presentation.router import router as reviews_router
+
+    app.include_router(reviews_router, prefix="/api/v1", tags=["Reviews"])
+
+    from app.features.vet_portal.presentation.router import router as vet_portal_router
+
+    app.include_router(vet_portal_router, prefix="/api/v1/vet-portal", tags=["Veterinarian Portal"])
+
     from app.features.symptom_nlp.presentation.router import router as symptom_nlp_router
 
     app.include_router(symptom_nlp_router, prefix="/api/v1/symptoms", tags=["Symptoms NLP"])
