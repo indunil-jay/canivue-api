@@ -98,6 +98,10 @@ def create_app() -> FastAPI:
 
     app.include_router(messaging_router, prefix="/api/v1/conversations", tags=["Messaging"])
 
+    from app.features.medical_records.presentation.router import router as medical_records_router
+
+    app.include_router(medical_records_router, prefix="/api/v1/dogs", tags=["Medical Records"])
+
     from app.features.symptom_nlp.presentation.router import router as symptom_nlp_router
 
     app.include_router(symptom_nlp_router, prefix="/api/v1/symptoms", tags=["Symptoms NLP"])
