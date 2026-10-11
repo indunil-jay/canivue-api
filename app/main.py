@@ -94,6 +94,10 @@ def create_app() -> FastAPI:
 
     app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["Notifications"])
 
+    from app.features.messaging.presentation.router import router as messaging_router
+
+    app.include_router(messaging_router, prefix="/api/v1/conversations", tags=["Messaging"])
+
     from app.features.symptom_nlp.presentation.router import router as symptom_nlp_router
 
     app.include_router(symptom_nlp_router, prefix="/api/v1/symptoms", tags=["Symptoms NLP"])

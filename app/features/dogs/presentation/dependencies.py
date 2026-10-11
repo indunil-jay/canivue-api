@@ -6,7 +6,7 @@ from app.core.file_storage import get_file_storage
 from app.features.appointments.infrastructure.persistence.repositories import (
     AppointmentPatientRegistry,
 )
-from app.features.dogs.application.access import DogAccess
+from app.features.dogs.application.access import AnyPatientRegistry, DogAccess
 from app.features.dogs.application.use_cases import (
     GetDogPhotoUseCase,
     GetDogUseCase,
@@ -19,6 +19,9 @@ from app.features.dogs.application.use_cases import (
 )
 from app.features.dogs.domain.repositories import DogRepositoryProtocol, PatientRegistryProtocol
 from app.features.dogs.infrastructure.persistence.repositories import SqlAlchemyDogRepository
+from app.features.messaging.infrastructure.persistence.repositories import (
+    ConversationPatientRegistry,
+)
 from app.shared.files import FileStorageProtocol
 
 
@@ -29,7 +32,10 @@ def get_dog_repository(session: AsyncSession = Depends(get_db_session)) -> DogRe
 def get_patient_registry(
     session: AsyncSession = Depends(get_db_session),
 ) -> PatientRegistryProtocol:
-    return AppointmentPatientRegistry(session=session)
+    return AnyPatientRegistry(
+        AppointmentPatientRegistry(session=session),
+        ConversationPatientRegistry(session=session),
+    )
 
 
 def get_dog_access(

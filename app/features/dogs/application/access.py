@@ -40,3 +40,16 @@ class DogAccess:
         if actor.is_admin or await self._is_treating_vet(actor, dog):
             return dog
         raise DogNotFoundError()
+
+
+class AnyPatientRegistry(PatientRegistryProtocol):
+    """A Dog is a patient if any of the underlying registries says so."""
+
+    def __init__(self, *registries: PatientRegistryProtocol):
+        self._registries = registries
+
+    async def is_patient(self, vet_user_id: int, dog: Dog) -> bool:
+        for registry in self._registries:
+            if await registry.is_patient(vet_user_id, dog):
+                return True
+        return False
