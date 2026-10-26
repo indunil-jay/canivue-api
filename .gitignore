@@ -86,3 +86,18 @@ ml/**/mlruns/
 # Raw/derived datasets (see ml/*/README.md for where real data should live)
 datasets/
 *.csv.gz
+
+#senosr module
+# Python temporary files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local sensor test recordings
+behaviour-sensor/data-logger/*.csv
+behaviour-sensor/data-logger/data/raw/*.csv
+behaviour-sensor/data-logger/data/processed/*.csv
+
+# Local environment files
+.env
