@@ -101,3 +101,15 @@ behaviour-sensor/data-logger/data/processed/*.csv
 
 # Local environment files
 .env
+
+# Local Python environments
+.venv/
+__pycache__/
+
+# Raw sensor recordings
+canivue-api/ml/behavioural/data_logger/data/raw/*.csv
+
+# Generated preprocessing outputs
+canivue-api/ml/behavioural/data_logger/data/processed/*.npz
+canivue-api/ml/behavioural/data_logger/data/processed/*.csv
+canivue-api/ml/behavioural/data_logger/data/processed/*.png
