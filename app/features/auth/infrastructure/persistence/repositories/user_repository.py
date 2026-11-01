@@ -9,6 +9,7 @@ from app.features.auth.application.interfaces.repositories.user_repository impor
 )
 from app.features.auth.domain.entities.user import User
 from app.features.auth.domain.enums.role import Role
+from app.features.auth.domain.value_objects.privacy_settings import PrivacySettings
 from app.features.auth.infrastructure.persistence.models.user_model import UserModel
 from app.features.auth.infrastructure.persistence.repositories.rbac_repository import (
     SqlAlchemyRbacRepository,
@@ -36,6 +37,11 @@ class SqlAlchemyUserRepository(
             full_name=model.full_name,
             google_id=model.google_id,
             is_active=model.is_active,
+            is_email_verified=model.is_email_verified,
+            phone=model.phone,
+            address=model.address,
+            emergency_contact=model.emergency_contact,
+            privacy=PrivacySettings.from_dict(model.privacy_settings),
             permissions=perms,
             created_at=model.created_at,
             updated_at=model.updated_at,
@@ -49,6 +55,11 @@ class SqlAlchemyUserRepository(
             "full_name": entity.full_name,
             "google_id": entity.google_id,
             "is_active": entity.is_active,
+            "is_email_verified": entity.is_email_verified,
+            "phone": entity.phone,
+            "address": entity.address,
+            "emergency_contact": entity.emergency_contact,
+            "privacy_settings": entity.privacy.to_dict(),
             "created_at": entity.created_at,
             "updated_at": entity.updated_at,
         }

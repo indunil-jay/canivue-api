@@ -3,14 +3,22 @@ from pathlib import Path
 from fastapi import Depends
 
 from app.config import settings
-from app.features.symptom_nlp.application.use_cases import (
-    CompleteIntakeSessionUseCase,
-    ConductIntakeTurnUseCase,
-    ParseSymptomTextUseCase,
-    StartIntakeSessionUseCase,
+from app.features.symptom_nlp.application.commands.complete_intake_session.complete_intake_session_command_handler import (
+    CompleteIntakeSessionCommandHandler,
 )
-from app.features.symptom_nlp.domain.repositories import (
+from app.features.symptom_nlp.application.commands.conduct_intake_turn.conduct_intake_turn_command_handler import (
+    ConductIntakeTurnCommandHandler,
+)
+from app.features.symptom_nlp.application.commands.parse_symptom_text.parse_symptom_text_command_handler import (
+    ParseSymptomTextCommandHandler,
+)
+from app.features.symptom_nlp.application.commands.start_intake_session.start_intake_session_command_handler import (
+    StartIntakeSessionCommandHandler,
+)
+from app.features.symptom_nlp.application.interfaces.repositories.intake_session_repository import (
     IntakeSessionRepositoryProtocol,
+)
+from app.features.symptom_nlp.application.interfaces.services.nlp_symptom_engine import (
     NLPSymptomEngineProtocol,
 )
 from app.features.symptom_nlp.infrastructure.ml.engine import (
@@ -51,27 +59,27 @@ def get_intake_session_repository() -> IntakeSessionRepositoryProtocol:
     return _session_repo
 
 
-def get_parse_symptom_use_case(
+def get_parse_symptom_text_command_handler(
     engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
-) -> ParseSymptomTextUseCase:
-    return ParseSymptomTextUseCase(engine=engine)
+) -> ParseSymptomTextCommandHandler:
+    return ParseSymptomTextCommandHandler(engine=engine)
 
 
-def get_start_intake_use_case(
-    engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
-    session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
-) -> StartIntakeSessionUseCase:
-    return StartIntakeSessionUseCase(engine=engine, session_repo=session_repo)
-
-
-def get_conduct_intake_turn_use_case(
+def get_start_intake_session_command_handler(
     engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
     session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
-) -> ConductIntakeTurnUseCase:
-    return ConductIntakeTurnUseCase(engine=engine, session_repo=session_repo)
+) -> StartIntakeSessionCommandHandler:
+    return StartIntakeSessionCommandHandler(engine=engine, session_repo=session_repo)
 
 
-def get_complete_intake_session_use_case(
+def get_conduct_intake_turn_command_handler(
+    engine: NLPSymptomEngineProtocol = Depends(get_symptom_engine),
     session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
-) -> CompleteIntakeSessionUseCase:
-    return CompleteIntakeSessionUseCase(session_repo=session_repo)
+) -> ConductIntakeTurnCommandHandler:
+    return ConductIntakeTurnCommandHandler(engine=engine, session_repo=session_repo)
+
+
+def get_complete_intake_session_command_handler(
+    session_repo: IntakeSessionRepositoryProtocol = Depends(get_intake_session_repository),
+) -> CompleteIntakeSessionCommandHandler:
+    return CompleteIntakeSessionCommandHandler(session_repo=session_repo)

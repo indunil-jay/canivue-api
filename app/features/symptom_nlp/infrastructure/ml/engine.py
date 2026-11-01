@@ -1,14 +1,16 @@
 import re
 from typing import Any
 
-from app.features.symptom_nlp.domain.entities import (
-    BodyLocation,
-    DurationEntity,
-    EmergencyTriageAlert,
-    ExtractedSpan,
-    SymptomParseResult,
+from app.features.symptom_nlp.application.interfaces.services.nlp_symptom_engine import (
+    NLPSymptomEngineProtocol,
 )
-from app.features.symptom_nlp.domain.repositories import NLPSymptomEngineProtocol
+from app.features.symptom_nlp.domain.value_objects.body_location import BodyLocation
+from app.features.symptom_nlp.domain.value_objects.duration_entity import DurationEntity
+from app.features.symptom_nlp.domain.value_objects.emergency_triage_alert import (
+    EmergencyTriageAlert,
+)
+from app.features.symptom_nlp.domain.value_objects.extracted_span import ExtractedSpan
+from app.features.symptom_nlp.domain.value_objects.symptom_parse_result import SymptomParseResult
 from app.features.symptom_nlp.infrastructure.ml.preprocessing import (
     calculate_modality_reliability,
     calculate_text_quality_score,

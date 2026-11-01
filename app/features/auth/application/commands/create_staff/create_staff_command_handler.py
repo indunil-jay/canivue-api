@@ -13,8 +13,12 @@ from app.features.auth.application.interfaces.repositories.user_repository impor
 from app.features.auth.application.interfaces.services.password_hasher import (
     PasswordHasher,
 )
+from app.features.auth.application.interfaces.services.veterinarian_onboarding import (
+    VeterinarianOnboardingPort,
+)
 from app.features.auth.application.mappers.user_dto_mapper import UserDTOMapper
 from app.features.auth.domain.entities.user import User
+from app.features.auth.domain.enums.role import Role
 from app.features.auth.domain.events.staff_user_created import (
     StaffUserCreatedDomainEvent,
 )
@@ -31,10 +35,12 @@ class CreateStaffCommandHandler:
         user_repo: UserRepository,
         hasher: PasswordHasher,
         event_handler: StaffUserCreatedEventHandler | None = None,
+        vet_onboarding: VeterinarianOnboardingPort | None = None,
     ):
         self._user_repo = user_repo
         self._hasher = hasher
         self._event_handler = event_handler or StaffUserCreatedEventHandler()
+        self._vet_onboarding = vet_onboarding
 
     async def handle(self, command: CreateStaffCommand) -> UserOutputDTO:
         email = command.email.strip().lower()
@@ -62,6 +68,10 @@ class CreateStaffCommandHandler:
         )
 
         saved = await self._user_repo.create(new_staff)
+        if self._vet_onboarding and saved.role == Role.VET:
+            await self._vet_onboarding.veterinarian_registered(
+                saved.id, saved.full_name, verified=True
+            )
 
         event = StaffUserCreatedDomainEvent(
             user_id=saved.id,

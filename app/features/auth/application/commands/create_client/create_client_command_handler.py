@@ -13,7 +13,13 @@ from app.features.auth.application.interfaces.repositories.user_repository impor
 from app.features.auth.application.interfaces.services.password_hasher import (
     PasswordHasher,
 )
+from app.features.auth.application.interfaces.services.veterinarian_onboarding import (
+    VeterinarianOnboardingPort,
+)
 from app.features.auth.application.mappers.user_dto_mapper import UserDTOMapper
+from app.features.auth.application.services.email_verification_issuer import (
+    EmailVerificationIssuer,
+)
 from app.features.auth.domain.entities.user import User
 from app.features.auth.domain.enums.role import Role
 from app.features.auth.domain.events.user_registered import (
@@ -32,10 +38,14 @@ class CreateClientCommandHandler:
         user_repo: UserRepository,
         hasher: PasswordHasher,
         event_handler: UserRegisteredEventHandler | None = None,
+        verification_issuer: EmailVerificationIssuer | None = None,
+        vet_onboarding: VeterinarianOnboardingPort | None = None,
     ):
         self._user_repo = user_repo
         self._hasher = hasher
         self._event_handler = event_handler or UserRegisteredEventHandler()
+        self._verification_issuer = verification_issuer
+        self._vet_onboarding = vet_onboarding
 
     async def handle(self, command: CreateClientCommand) -> UserOutputDTO:
         email = command.email.strip().lower()
@@ -55,14 +65,21 @@ class CreateClientCommandHandler:
             id=None,
             email=email,
             hashed_password=hashed_password,
-            role=Role.CLIENT,
+            role=Role.VET if command.role == Role.VET else Role.CLIENT,
             full_name=command.full_name,
             is_active=True,
+            is_email_verified=False,
             created_at=now,
             updated_at=now,
         )
 
         saved = await self._user_repo.create(new_user)
+        if self._vet_onboarding and saved.role == Role.VET:
+            await self._vet_onboarding.veterinarian_registered(
+                saved.id, saved.full_name, verified=False
+            )
+        if self._verification_issuer:
+            await self._verification_issuer.issue(saved)
 
         event = UserRegisteredDomainEvent(
             user_id=saved.id,

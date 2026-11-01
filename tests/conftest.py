@@ -1,9 +1,11 @@
 from collections.abc import AsyncGenerator
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.config import settings
 from app.core.database import Base, get_db_session
 from app.main import create_app
 
@@ -18,6 +20,11 @@ TestingAsyncSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+@pytest.fixture(autouse=True)
+def _isolated_uploads(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "UPLOAD_DIR", str(tmp_path / "uploads"))
 
 
 @pytest_asyncio.fixture

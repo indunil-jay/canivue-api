@@ -1,0 +1,16 @@
+from collections.abc import Sequence
+from typing import Protocol
+
+from app.features.veterinarians.domain.entities.vet_profile import VetProfile
+
+
+class VetProfileRepositoryProtocol(Protocol):
+    async def get_by_id(self, entity_id: str) -> VetProfile | None: ...
+
+    async def get_by_user_id(self, user_id: int) -> VetProfile | None: ...
+
+    async def list_by_verified(self, verified: bool) -> Sequence[VetProfile]: ...
+
+    async def create(self, entity: VetProfile) -> VetProfile: ...
+
+    async def update(self, entity: VetProfile) -> VetProfile: ...

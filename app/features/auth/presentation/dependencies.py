@@ -19,16 +19,28 @@ from app.features.auth.application.commands.login.login_user_command_handler imp
 from app.features.auth.application.commands.oauth_google.google_login_command_handler import (
     GoogleLoginCommandHandler,
 )
+from app.features.auth.application.commands.resend_verification.resend_verification_command_handler import (
+    ResendVerificationCommandHandler,
+)
 from app.features.auth.application.commands.reset_password.reset_password_command_handler import (
     ResetPasswordCommandHandler,
 )
 from app.features.auth.application.commands.rotate_token.rotate_refresh_token_command_handler import (
     RotateRefreshTokenCommandHandler,
 )
+from app.features.auth.application.commands.update_profile.update_profile_command_handler import (
+    UpdateProfileCommandHandler,
+)
+from app.features.auth.application.commands.verify_email.verify_email_command_handler import (
+    VerifyEmailCommandHandler,
+)
 from app.features.auth.application.dtos.user_output_dto import UserOutputDTO
 from app.features.auth.application.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
+)
+from app.features.auth.application.interfaces.repositories.email_verification_code_repository import (
+    EmailVerificationCodeRepository,
 )
 from app.features.auth.application.interfaces.repositories.password_reset_token_repository import (
     PasswordResetTokenRepository,
@@ -51,13 +63,22 @@ from app.features.auth.application.interfaces.services.password_hasher import (
 from app.features.auth.application.interfaces.services.token_service import (
     TokenService,
 )
+from app.features.auth.application.interfaces.services.veterinarian_onboarding import (
+    VeterinarianOnboardingPort,
+)
 from app.features.auth.application.queries.get_current_user.get_current_user_query import (
     GetCurrentUserQuery,
 )
 from app.features.auth.application.queries.get_current_user.get_current_user_query_handler import (
     GetCurrentUserQueryHandler,
 )
+from app.features.auth.application.services.email_verification_issuer import (
+    EmailVerificationIssuer,
+)
 from app.features.auth.domain.enums.role import Role
+from app.features.auth.infrastructure.persistence.repositories.email_verification_code_repository import (
+    SqlAlchemyEmailVerificationCodeRepository,
+)
 from app.features.auth.infrastructure.persistence.repositories.password_reset_token_repository import (
     SqlAlchemyPasswordResetTokenRepository,
 )
@@ -75,6 +96,7 @@ from app.features.auth.infrastructure.services.google_auth_service import (
 )
 from app.features.auth.infrastructure.services.hasher import Argon2PasswordHasher
 from app.features.auth.infrastructure.services.token_service import JwtTokenService
+from app.shared.actor import Actor
 
 _hasher_instance = Argon2PasswordHasher()
 _token_service_instance = JwtTokenService()
@@ -114,18 +136,71 @@ def get_password_reset_token_repository(
     return SqlAlchemyPasswordResetTokenRepository(session=session)
 
 
+def get_veterinarian_onboarding_port(
+    session: AsyncSession = Depends(get_db_session),
+) -> VeterinarianOnboardingPort:
+    # Composition root: the veterinarians module owns professional profiles.
+    from app.features.veterinarians.application.services.veterinarian_onboarding import (
+        VeterinarianOnboarding,
+    )
+    from app.features.veterinarians.infrastructure.persistence.repositories.vet_profile_repository import (
+        SqlAlchemyVetProfileRepository,
+    )
+
+    return VeterinarianOnboarding(SqlAlchemyVetProfileRepository(session=session))
+
+
+def get_email_verification_code_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> EmailVerificationCodeRepository:
+    return SqlAlchemyEmailVerificationCodeRepository(session=session)
+
+
+def get_email_verification_issuer(
+    code_repo: EmailVerificationCodeRepository = Depends(get_email_verification_code_repository),
+    email_service: EmailService = Depends(get_email_service),
+) -> EmailVerificationIssuer:
+    return EmailVerificationIssuer(code_repo=code_repo, email_service=email_service)
+
+
 def get_create_client_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
+    verification_issuer: EmailVerificationIssuer = Depends(get_email_verification_issuer),
+    vet_onboarding: VeterinarianOnboardingPort = Depends(get_veterinarian_onboarding_port),
 ) -> CreateClientCommandHandler:
-    return CreateClientCommandHandler(user_repo=user_repo, hasher=hasher)
+    return CreateClientCommandHandler(
+        user_repo=user_repo,
+        hasher=hasher,
+        verification_issuer=verification_issuer,
+        vet_onboarding=vet_onboarding,
+    )
+
+
+def get_verify_email_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    code_repo: EmailVerificationCodeRepository = Depends(get_email_verification_code_repository),
+) -> VerifyEmailCommandHandler:
+    return VerifyEmailCommandHandler(user_repo=user_repo, code_repo=code_repo)
+
+
+def get_resend_verification_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+    verification_issuer: EmailVerificationIssuer = Depends(get_email_verification_issuer),
+) -> ResendVerificationCommandHandler:
+    return ResendVerificationCommandHandler(
+        user_repo=user_repo, verification_issuer=verification_issuer
+    )
 
 
 def get_create_staff_command_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     hasher: PasswordHasher = Depends(get_password_hasher),
+    vet_onboarding: VeterinarianOnboardingPort = Depends(get_veterinarian_onboarding_port),
 ) -> CreateStaffCommandHandler:
-    return CreateStaffCommandHandler(user_repo=user_repo, hasher=hasher)
+    return CreateStaffCommandHandler(
+        user_repo=user_repo, hasher=hasher, vet_onboarding=vet_onboarding
+    )
 
 
 def get_login_command_handler(
@@ -194,6 +269,12 @@ def get_google_login_command_handler(
     )
 
 
+def get_update_profile_command_handler(
+    user_repo: UserRepository = Depends(get_user_repository),
+) -> UpdateProfileCommandHandler:
+    return UpdateProfileCommandHandler(user_repo=user_repo)
+
+
 def get_current_user_query_handler(
     user_repo: UserRepository = Depends(get_user_repository),
 ) -> GetCurrentUserQueryHandler:
@@ -229,6 +310,28 @@ async def get_current_user(
 
     query = GetCurrentUserQuery(user_id=user_id)
     return await query_handler.handle(query)
+
+
+async def get_actor(current_user: UserOutputDTO = Depends(get_current_user)) -> Actor:
+    return Actor(
+        id=current_user.id,
+        role=current_user.role.value,
+        name=current_user.full_name,
+        email=current_user.email,
+    )
+
+
+def require_actor(*allowed_roles: Role) -> Callable:
+    roles = {r.value for r in allowed_roles}
+
+    async def _guard(actor: Actor = Depends(get_actor)) -> Actor:
+        if actor.role not in roles:
+            raise InsufficientPermissionsError(
+                f"Action requires one of the following roles: {', '.join(sorted(roles))}."
+            )
+        return actor
+
+    return _guard
 
 
 def require_roles(*allowed_roles: Role | str) -> Callable:

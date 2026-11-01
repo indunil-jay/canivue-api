@@ -1,1 +1,0 @@
-"""Symptom NLP feature module."""

@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.helpers import verify_email
+
 
 @pytest.mark.asyncio
 async def test_refresh_token_rotation_success(client: AsyncClient):
@@ -9,6 +11,7 @@ async def test_refresh_token_rotation_success(client: AsyncClient):
         "/api/v1/auth/register",
         json={"email": "refresher@example.com", "password": "Password123!"},
     )
+    await verify_email(client, "refresher@example.com")
     login_resp = await client.post(
         "/api/v1/auth/login",
         json={"email": "refresher@example.com", "password": "Password123!"},

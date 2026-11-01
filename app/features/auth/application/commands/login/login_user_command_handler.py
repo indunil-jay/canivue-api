@@ -9,6 +9,7 @@ from app.features.auth.application.event_handlers.user_logged_in_event_handler i
 )
 from app.features.auth.application.exceptions import (
     AccountDisabledError,
+    EmailNotVerifiedError,
     InvalidCredentialsError,
 )
 from app.features.auth.application.interfaces.repositories.refresh_token_repository import (
@@ -52,11 +53,16 @@ class LoginUserCommandHandler:
         if not user:
             raise InvalidCredentialsError()
 
-        if not self._hasher.verify(command.password, user.hashed_password):
+        if not user.hashed_password or not self._hasher.verify(
+            command.password, user.hashed_password
+        ):
             raise InvalidCredentialsError()
 
         if not user.is_active:
             raise AccountDisabledError()
+
+        if not user.is_email_verified:
+            raise EmailNotVerifiedError()
 
         access_token = self._token_service.create_access_token(
             subject=str(user.id),

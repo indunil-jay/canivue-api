@@ -18,3 +18,7 @@ class LoggingEmailService(EmailService):
             to_email,
             reset_token,
         )
+
+    async def send_verification_code_email(self, to_email: str, code: str) -> None:
+        self.sent_emails.append({"to": to_email, "code": code})
+        logger.info("Email verification code sent to %s: %s", to_email, code)

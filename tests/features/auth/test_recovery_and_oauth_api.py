@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from app.features.auth.presentation.dependencies import (
     _email_service_instance,
 )
+from tests.helpers import verify_email
 
 
 @pytest.mark.asyncio
@@ -16,6 +17,7 @@ async def test_forgot_and_reset_password_flow(client: AsyncClient):
     }
     reg_resp = await client.post("/api/v1/auth/register", json=reg_payload)
     assert reg_resp.status_code == 201
+    await verify_email(client, "resetme@example.com")
 
     # Login to create an active refresh token
     login_resp = await client.post(
@@ -110,6 +112,7 @@ async def test_google_oauth_existing_user_linking(client: AsyncClient):
         "full_name": "Local Account",
     }
     await client.post("/api/v1/auth/register", json=reg_payload)
+    await verify_email(client, "linktarget@gmail.com")
 
     resp = await client.post(
         "/api/v1/auth/oauth/google",

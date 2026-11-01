@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from app.features.symptom_nlp.domain.entities import IntakeSession
-from app.features.symptom_nlp.domain.repositories import IntakeSessionRepositoryProtocol
+from app.features.symptom_nlp.application.interfaces.repositories.intake_session_repository import (
+    IntakeSessionRepositoryProtocol,
+)
+from app.features.symptom_nlp.domain.entities.intake_session import IntakeSession
 
 
 class InMemoryIntakeSessionRepository(IntakeSessionRepositoryProtocol):

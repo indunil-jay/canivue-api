@@ -66,3 +66,13 @@ class GoogleAuthFailedError(UnauthorizedException):
         self, message: str = "Google authentication failed or token is invalid.", details=None
     ):
         super().__init__(message=message, details=details)
+
+
+class EmailNotVerifiedError(ForbiddenException):
+    def __init__(self, message: str = "Email address has not been verified."):
+        super().__init__(message=message, details={"code": "EMAIL_NOT_VERIFIED"})
+
+
+class InvalidVerificationCodeError(UnauthorizedException):
+    def __init__(self, message: str = "Invalid or expired verification code.", details=None):
+        super().__init__(message=message, details=details)

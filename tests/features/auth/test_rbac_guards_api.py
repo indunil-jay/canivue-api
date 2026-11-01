@@ -3,6 +3,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.auth.infrastructure.persistence.seed import seed_rbac_catalog
+from tests.helpers import verify_email
 
 
 @pytest.mark.asyncio
@@ -18,6 +19,7 @@ async def test_rbac_guards_and_admin_staff_provisioning(
         json={"email": "regularclient@example.com", "password": "Password123!"},
     )
     assert reg_resp.status_code == 201
+    await verify_email(client, "regularclient@example.com")
 
     login_resp = await client.post(
         "/api/v1/auth/login",
