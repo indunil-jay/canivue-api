@@ -13,8 +13,13 @@ import argparse
 
 from ml.common.data_splitting import train_val_test_split
 from ml.common.metrics import classification_metrics, expected_calibration_error
-from ml.vision.dataset import LABELS, CanineVisionDataset, load_labels_csv
-from ml.vision.train import build_model
+from ml.vision.dataset import (
+    LABELS,
+    CanineVisionDataset,
+    get_eval_transforms,
+    load_labels_csv,
+)
+from ml.vision.model import build_model
 
 
 def evaluate(checkpoint_path: str, data_dir: str, labels_csv: str) -> None:
@@ -23,7 +28,7 @@ def evaluate(checkpoint_path: str, data_dir: str, labels_csv: str) -> None:
 
     records = load_labels_csv(labels_csv)
     _train_records, _val_records, test_records = train_val_test_split(records, pet_id_key="pet_id")
-    test_ds = CanineVisionDataset(data_dir, test_records)
+    test_ds = CanineVisionDataset(data_dir, test_records, transform=get_eval_transforms())
     test_loader = DataLoader(test_ds, batch_size=32)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
