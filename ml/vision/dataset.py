@@ -1,47 +1,89 @@
-"""Dataset loading for the visual condition classifier.
+"""Dataset loading and transformation pipelines for canine skin disease classification.
 
-Requires `requirements-ml.txt` (torch, torchvision, Pillow).
+Defines the 4-class dermatological condition taxonomy, deterministic and augmented
+torchvision transformation pipelines, manifest parsing, and the PyTorch Dataset.
 """
 
 import csv
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
-# Keep in sync with SUPPORTED_CONDITIONS in the future
-# app/features/vision_diagnosis/infrastructure/ml/engine.py serving engine.
+# Exact four classes from the Kaggle Dogs Skin Diseases dataset.
+# Kept in sync with future app/features/vision_diagnosis/ serving engine.
 LABELS: List[str] = [
-    "healthy",
-    "skin_abnormality",
-    "eye_condition",
-    "ear_inflammation",
-    "open_wound",
+    "Bacterial_dermatosis",
+    "Fungal_infections",
+    "Healthy",
+    "Hypersensitivity_allergic_dermatosis",
 ]
-LABEL_TO_INDEX = {label: i for i, label in enumerate(LABELS)}
+
+LABEL_TO_INDEX: Dict[str, int] = {label: i for i, label in enumerate(LABELS)}
+INDEX_TO_LABEL: Dict[int, str] = {i: label for i, label in enumerate(LABELS)}
+
+# Standard ImageNet normalization parameters matching EfficientNet pretraining.
+IMAGENET_MEAN: List[float] = [0.485, 0.456, 0.406]
+IMAGENET_STD: List[float] = [0.229, 0.224, 0.225]
+
+
+def get_train_transforms(image_size: int = 224) -> Callable:
+    """Training transformations with data augmentation.
+
+    Applies resizing to (image_size, image_size), random horizontal flip,
+    mild color jitter (brightness and contrast), conversion to tensor,
+    and ImageNet normalization.
+    """
+    import torchvision.transforms as T
+
+    return T.Compose(
+        [
+            T.Resize((image_size, image_size)),
+            T.RandomHorizontalFlip(p=0.5),
+            T.ColorJitter(brightness=0.2, contrast=0.2),
+            T.ToTensor(),
+            T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        ]
+    )
+
+
+def get_eval_transforms(image_size: int = 224) -> Callable:
+    """Validation and testing transformations.
+
+    Applies deterministic resizing to (image_size, image_size), conversion to tensor,
+    and ImageNet normalization without any stochastic operations.
+    Guarantees deterministic metric evaluation.
+    """
+    import torchvision.transforms as T
+
+    return T.Compose(
+        [
+            T.Resize((image_size, image_size)),
+            T.ToTensor(),
+            T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        ]
+    )
 
 
 class CanineVisionDataset:
-    """Expects a directory of images plus a `labels.csv` with columns:
-    `image_path,pet_id,label,quality_note` (quality_note is optional, human QA notes).
+    """PyTorch Dataset for canine skin disease condition classification.
 
-    `pet_id` is required (not just for training) so `ml/common/data_splitting.py`
-    can split at the dog level and avoid leaking the same dog's photos across
-    train/val/test.
+    Expects a dataset root `data_dir` and a list of `records` loaded from `labels.csv`
+    containing keys `image_path` (relative to `data_dir`), `pet_id`, and `label`.
+
+    Supports an externally supplied `transform` callable. If not provided,
+    defaults to the deterministic evaluation transform (`get_eval_transforms()`).
     """
 
-    def __init__(self, data_dir: str, records: List[dict], image_size: int = 224):
-        import torchvision.transforms as T
-
+    def __init__(
+        self,
+        data_dir: Union[str, Path],
+        records: List[dict],
+        transform: Optional[Callable] = None,
+        image_size: int = 224,
+    ):
         self.data_dir = Path(data_dir)
         self.records = records
-        self.transform = T.Compose(
-            [
-                T.Resize((image_size, image_size)),
-                T.RandomHorizontalFlip(),
-                T.ColorJitter(brightness=0.2, contrast=0.2),
-                T.ToTensor(),
-                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        )
+        self.image_size = image_size
+        self.transform = transform if transform is not None else get_eval_transforms(image_size)
 
     def __len__(self) -> int:
         return len(self.records)
@@ -50,13 +92,74 @@ class CanineVisionDataset:
         from PIL import Image
 
         record = self.records[idx]
-        image = Image.open(self.data_dir / record["image_path"]).convert("RGB")
+        image_path_str = record.get("image_path")
+        if not image_path_str:
+            raise ValueError(f"Record at index {idx} is missing 'image_path': {record}")
+
+        img_file = self.data_dir / image_path_str
+        if not img_file.exists():
+            raise FileNotFoundError(
+                f"Image file not found at: {img_file} (relative path: '{image_path_str}')"
+            )
+
+        label_name = record.get("label")
+        if label_name not in LABEL_TO_INDEX:
+            raise ValueError(
+                f"Invalid or unrecognized label '{label_name}' at index {idx}. "
+                f"Expected one of: {list(LABEL_TO_INDEX.keys())}"
+            )
+
+        try:
+            image = Image.open(img_file).convert("RGB")
+        except Exception as exc:
+            raise OSError(f"Failed to open or decode image at {img_file}: {exc}") from exc
+
         tensor = self.transform(image)
-        label_idx = LABEL_TO_INDEX[record["label"]]
+        label_idx = LABEL_TO_INDEX[label_name]
         return tensor, label_idx
 
 
-def load_labels_csv(labels_csv_path: str) -> List[dict]:
-    """Read `labels.csv` into a list of record dicts for splitting/loading."""
-    with open(labels_csv_path, newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+def load_labels_csv(labels_csv_path: Union[str, Path]) -> List[dict]:
+    """Read `labels.csv` into a list of validated record dicts.
+
+    Ensures that required columns ('image_path', 'label') are present, that no
+    row is empty, and that labels correspond to the recognized taxonomy.
+    Does not drop invalid rows silently; raises clear exceptions instead.
+    """
+    path = Path(labels_csv_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Labels manifest not found at: {path}")
+
+    records: List[dict] = []
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        required_fields = {"image_path", "label"}
+        fieldnames = set(reader.fieldnames or [])
+
+        if not required_fields.issubset(fieldnames):
+            raise ValueError(
+                f"Labels CSV manifest at {path} is missing required columns. "
+                f"Found {list(fieldnames)}, required {list(required_fields)}"
+            )
+
+        for line_num, row in enumerate(reader, start=2):
+            img_path = (row.get("image_path") or "").strip()
+            label = (row.get("label") or "").strip()
+
+            if not img_path:
+                raise ValueError(
+                    f"Invalid record at line {line_num} in {path}: 'image_path' is empty."
+                )
+            if not label:
+                raise ValueError(
+                    f"Invalid record at line {line_num} in {path}: 'label' is empty."
+                )
+            if label not in LABEL_TO_INDEX:
+                raise ValueError(
+                    f"Invalid label '{label}' at line {line_num} in {path}. "
+                    f"Must be one of: {list(LABEL_TO_INDEX.keys())}"
+                )
+
+            records.append(dict(row))
+
+    return records
