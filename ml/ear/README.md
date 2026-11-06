@@ -84,3 +84,12 @@ Splits are stratified at the **image** level (70/15/15). If the dataset has no d
 | `ModuleNotFoundError: torch` | ML dependencies not installed | `pip install -r requirements-ml.txt` |
 | `CUDA out of memory` | Batch size too large | Use `--batch-size 8` |
 | Paths with spaces fail | Path not quoted | Wrap the path in double quotes |
+
+## Troubleshooting
+
+| Issue | Cause | Fix |
+| :--- | :--- | :--- |
+| `Expected class directory not found` | Dataset folder names differ from `LABELS` | Edit `LABELS` in `dataset.py` and `EXPECTED_CLASSES` in `prepare_dataset.py` |
+| `ModuleNotFoundError: torch` | ML dependencies not installed | `pip install -r requirements-ml.txt` |
+| `CUDA out of memory` | Batch size too large | Use `--batch-size 8` |
+| Paths with spaces fail | Path not quoted | Wrap the path in double quotes |
