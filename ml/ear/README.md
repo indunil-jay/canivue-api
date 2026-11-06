@@ -75,3 +75,12 @@ Splits are stratified at the **image** level (70/15/15). If the dataset has no d
 
 - `evaluate.py` uses the same stratified split and seed as `train.py` and loads `model_state_dict` from the checkpoint (the skin `evaluate.py` still uses the older dog-level split and loads a raw state dict, so it won't read checkpoints written by `train.py`).
 - `verify_pipeline.py` does not hard-code a dataset size.
+
+## Troubleshooting
+
+| Issue | Cause | Fix |
+| :--- | :--- | :--- |
+| `Expected class directory not found` | Dataset folder names differ from `LABELS` | Edit `LABELS` in `dataset.py` and `EXPECTED_CLASSES` in `prepare_dataset.py` |
+| `ModuleNotFoundError: torch` | ML dependencies not installed | `pip install -r requirements-ml.txt` |
+| `CUDA out of memory` | Batch size too large | Use `--batch-size 8` |
+| Paths with spaces fail | Path not quoted | Wrap the path in double quotes |
